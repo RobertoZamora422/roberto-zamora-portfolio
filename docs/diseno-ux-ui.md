@@ -6,7 +6,7 @@
 
 **Editorial contemporánea** como identidad principal. La composición combina titulares serif, fondo marfil y azul profundo con la estructura modular de **Estudio de producto**. De **Cuaderno de ingeniería** se adoptan los metadatos, las fichas de evidencia y los estados de documentación y validación.
 
-La revisión final cubrió Inicio, el catálogo, una página de proyecto de RFM CORE, un caso de estudio completo y CV y contacto en escritorio, 390 px y 320 px. La visualización `editorial-revision-final.html` del chat es la referencia de composición. Las comprobaciones del prototipo se repetirán sobre la aplicación con los [requisitos de fase 1](requisitos.md).
+La revisión final cubrió Inicio, el catálogo, una página de proyecto de RFM CORE, un caso de estudio completo y CV y contacto en escritorio, 390 px y 320 px. El repositorio conserva la [visualización original aprobada](referencias/fase-2/editorial-revision-final.html) del chat. Las comprobaciones del prototipo se repiten sobre la aplicación con los [requisitos de fase 1](requisitos.md).
 
 ## Sistema visual
 

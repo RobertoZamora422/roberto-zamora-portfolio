@@ -6,7 +6,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 
 ## Estado del proyecto
 
-**Fase 3 · Incremento 1 listo para revisión.** La configuración, el sistema de diseño base, la navegación y la prueba local de prerenderizado están implementados. La dirección visual combina Editorial contemporánea, la estructura modular de Estudio de producto y los componentes técnicos de Cuaderno de ingeniería.
+**Fase 3 · Incremento 2 listo para revisión.** Inicio, el catálogo y la ficha de proyecto se generan a partir del registro tipado. La revisión local permite recorrer las tres vistas mientras se aprueba el contenido de publicación.
 
 | Documento | Qué encontrarás |
 | --- | --- |
@@ -16,6 +16,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 | [Cierre de diseño UX/UI](docs/diseno-ux-ui.md) | Identidad aprobada, reglas visuales y patrones por vista. |
 | [Plan técnico de fase 3](docs/plan-tecnico-fase-3.md) | Orden de implementación y comprobaciones por incremento. |
 | [Informe del incremento 1](docs/informe-incremento-1.md) | Archivos, decisiones, comandos, resultados y comprobaciones pendientes. |
+| [Informe del incremento 2](docs/informe-incremento-2.md) | Revisión visual, flujo editorial y resultados de las pruebas. |
 
 ## Desarrollo local
 
@@ -26,7 +27,7 @@ npm ci
 npm run dev
 ```
 
-La vista de desarrollo incluye un proyecto y un caso identificados como datos de prueba. Para servir la compilación estática de prueba con Wrangler, ejecuta:
+La vista de desarrollo incluye la ficha de Portafolio web y un resumen de caso para revisión. Para servir la compilación estática local con Wrangler, ejecuta lo siguiente.
 
 ```text
 npm run typecheck
@@ -34,8 +35,24 @@ npm run build:prueba
 npm run preview:prueba
 ```
 
-Abre `http://127.0.0.1:8788/` y recorre Proyectos → Abrir proyecto de prueba → Abrir caso de prueba. La salida local queda en `.local/prerender/client`. `npm run build` genera la estructura base en `build/client`, con las rutas y los datos de prueba excluidos.
+Abre `http://127.0.0.1:8788/` y recorre Inicio → Proyectos → Portafolio web. Las fichas breves de RFM CORE y Claridez muestran sus descripciones confirmadas. La salida de revisión queda en `.local/prerender/client`. `npm run build` genera el artefacto público en `build/client` a partir del registro aprobado.
+
+## Pruebas y capturas
+
+```text
+npm test
+npx playwright-core install chromium
+npm run revision:visual
+```
+
+`npm test` verifica el registro. `npm run test:sitio` verifica ambas compilaciones y los recorridos en Chromium y Wrangler. `npm run revision:visual` también genera una galería comparativa en `.local/revision-incremento-2/index.html`. Si usas un Chromium instalado, define `CHROMIUM_PATH` con la ruta a su ejecutable antes de ejecutar las pruebas de sitio.
+
+## Registro de contenido
+
+El modelo vive en `app/contenido/modelo.ts` y las entradas para publicación se incorporan a `app/contenido/publico.ts`. Aprueba la ficha y la página individual por separado. Inicio, catálogo y ficha toman sus textos de campos distintos de la misma entrada. Para adjuntar una evidencia local, referencia el archivo relativo a `recursos-contenido/` desde una evidencia aprobada. La compilación copia los archivos aprobados bajo `/recursos/` y valida los identificadores, las referencias y los archivos.
+
+La preparación de RFM CORE y Claridez y la ficha de Portafolio web para revisión usan `app/pruebas/datos.ts`. El registro público se reserva para material autorizado. Los originales de negocio y los borradores sensibles se custodian fuera del repositorio.
 
 El repositorio utiliza la rama `main`. El titular del portafolio gestiona los commits y el push. La configuración del despliegue se definirá al preparar la publicación.
 
-La documentación de RFM CORE y Claridez avanza en paralelo. La publicación pública requiere un caso de negocio aprobado, con evidencia verificable de un aporte personal, y la aprobación del perfil, el CV y el contacto. Los originales de negocio y los borradores sensibles se custodian fuera del repositorio.
+La publicación pública requiere un caso de negocio aprobado, con evidencia verificable de un aporte personal, y la aprobación del perfil, el CV y el contacto.

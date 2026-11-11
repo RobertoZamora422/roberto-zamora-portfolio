@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
-export function PageIntro({ title, children }: { title: string; children?: ReactNode }) {
+export function PageIntro({ title, kicker, children }: { title: string; kicker?: ReactNode; children?: ReactNode }) {
   return (
     <header className="page-intro">
+      {kicker}
       <h1>{title}</h1>
       {children}
     </header>

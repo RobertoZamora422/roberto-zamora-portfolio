@@ -1,0 +1,659 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap">
+<style>
+  #ec-preview { min-width: 0; }
+  #ec-preview .ec-tools {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center;
+    justify-content: space-between; margin-bottom: 12px;
+  }
+  #ec-preview .ec-tools > label { display: flex; align-items: center; gap: 8px; max-width: 100%; }
+  #ec-preview .ec-site {
+    --ec-paper: #f8f5ee;
+    --ec-panel: #fffdfa;
+    --ec-ink: #252720;
+    --ec-muted: #50534d;
+    --ec-blue: #25416a;
+    --ec-edge: #d9d3c7;
+    --ec-tint: #ecf0f5;
+    --ec-tint-edge: #c9d2df;
+    --ec-sample: #f5ebda;
+    --ec-sample-edge: #d9c8ad;
+    --ec-sample-ink: #644421;
+    --ec-sans: "Instrument Sans", Arial, sans-serif;
+    --ec-serif: "Instrument Serif", Georgia, serif;
+    --ec-mono: "IBM Plex Mono", monospace;
+    color-scheme: light;
+    container-type: inline-size;
+    margin-inline: auto; width: 100%; max-width: 100%; min-width: 0;
+    background: var(--ec-paper); color: var(--ec-ink);
+    font: 400 16px/1.55 var(--ec-sans); overflow-wrap: anywhere;
+  }
+  #ec-preview[data-device="mobile"] .ec-site { width: min(100%, 390px); }
+  #ec-preview[data-device="compact"] .ec-site { width: min(100%, 320px); }
+  #ec-preview .ec-wrap { padding-inline: clamp(16px, 5.1cqi, 53px); }
+  #ec-preview .ec-site :is(p, h1, h2, h3, ul, dl, dd, blockquote, figure) { margin: 0; }
+  #ec-preview .ec-site h1 {
+    font: 400 clamp(41px, 6.5cqi, 69px)/.98 var(--ec-serif);
+    letter-spacing: -.023em; text-wrap: balance; max-width: 16ch;
+  }
+  #ec-preview .ec-site h2 {
+    font: 400 clamp(30px, 4.4cqi, 45px)/1.03 var(--ec-serif);
+    letter-spacing: -.015em; text-wrap: balance;
+  }
+  #ec-preview .ec-site h3 { font: 650 17px/1.25 var(--ec-sans); }
+  #ec-preview .ec-site a, #ec-preview .ec-site summary { color: var(--ec-blue); }
+  #ec-preview .ec-site a { text-underline-offset: 4px; }
+  #ec-preview .ec-site a:focus-visible, #ec-preview .ec-site summary:focus-visible {
+    outline: 2px solid var(--ec-blue); outline-offset: 3px; border-radius: 2px;
+  }
+  #ec-preview .ec-site a:hover { text-decoration: underline; }
+  #ec-preview .ec-muted { color: var(--ec-muted); }
+  #ec-preview .ec-kicker { color: var(--ec-blue); font-size: 13px; font-weight: 650; }
+  #ec-preview .ec-mono {
+    color: var(--ec-blue); font: 500 11.5px/1.55 var(--ec-mono);
+    letter-spacing: .035em;
+  }
+  #ec-preview .ec-header {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+    gap: 8px 17px; min-height: 66px; border-bottom: 1px solid var(--ec-edge);
+  }
+  #ec-preview .ec-header a { display: inline-flex; align-items: center; min-height: 38px; text-decoration: none; }
+  #ec-preview .ec-header .ec-brand {
+    display: inline-grid; align-content: center; justify-items: start; gap: 2px;
+    min-width: 0; padding-block: 5px; color: var(--ec-ink);
+  }
+  #ec-preview .ec-brand-name { font: 400 clamp(26px, 3.35cqi, 37px)/.98 var(--ec-serif); }
+  #ec-preview .ec-brand-role { font-size: 11px; color: var(--ec-muted); }
+  #ec-preview .ec-header a[aria-current="page"] { text-decoration: underline; text-decoration-thickness: 2px; }
+  #ec-preview .ec-header .ec-brand[aria-current="page"] { text-decoration: none; }
+  #ec-preview .ec-header .ec-brand[aria-current="page"] .ec-brand-name {
+    text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  #ec-preview .ec-nav, #ec-preview .ec-reach, #ec-preview .ec-actions {
+    display: flex; flex-wrap: wrap; gap: 6px 15px; align-items: center;
+  }
+  #ec-preview .ec-nav { justify-content: center; font-size: 14px; }
+  #ec-preview .ec-nav a { color: var(--ec-ink); }
+  #ec-preview .ec-reach { font-weight: 650; font-size: 14px; }
+  #ec-preview .ec-page { min-height: 450px; padding-block: 24px 40px; }
+  #ec-preview .ec-crumb { font-size: 13px; color: var(--ec-muted); }
+  #ec-preview .ec-crumb a { display: inline-flex; align-items: center; min-height: 30px; }
+  #ec-preview .ec-hero {
+    display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    gap: clamp(22px, 4cqi, 44px); align-items: end; padding-block: 22px 30px;
+    border-bottom: 1px solid var(--ec-edge);
+  }
+  #ec-preview .ec-intro, #ec-preview .ec-stack, #ec-preview .ec-section { display: grid; align-content: start; gap: 10px; }
+  #ec-preview .ec-intro { gap: 14px; }
+  #ec-preview .ec-lead { max-width: 57ch; color: var(--ec-muted); font-size: clamp(16px, 2.15cqi, 20px); }
+  #ec-preview .ec-actions { gap: 8px 12px; }
+  #ec-preview .ec-actions a {
+    display: inline-flex; min-height: 43px; align-items: center; padding: 7px 13px;
+    box-sizing: border-box; border-radius: 5px; font-weight: 650;
+  }
+  #ec-preview .ec-actions .ec-primary { background: var(--ec-blue); color: var(--ec-panel); text-decoration: none; }
+  #ec-preview .ec-actions .ec-secondary { border: 1px solid var(--ec-edge); text-decoration: none; }
+  #ec-preview .ec-meta, #ec-preview .ec-evidence, #ec-preview .ec-module {
+    border: 1px solid var(--ec-edge); border-radius: 8px; background: var(--ec-panel);
+    padding: clamp(14px, 2.3cqi, 23px);
+  }
+  #ec-preview .ec-meta, #ec-preview .ec-evidence {
+    background: var(--ec-tint); border-color: var(--ec-tint-edge);
+  }
+  #ec-preview .ec-meta dl { display: grid; gap: 10px; }
+  #ec-preview .ec-meta dl > div { display: grid; gap: 1px; }
+  #ec-preview .ec-meta dl > div + div { padding-top: 8px; border-top: 1px solid var(--ec-tint-edge); }
+  #ec-preview .ec-meta dd { font-weight: 600; font-size: 14px; }
+  #ec-preview .ec-case-body {
+    display: grid; grid-template-columns: minmax(125px, 1fr) minmax(0, 3.4fr);
+    gap: clamp(21px, 5cqi, 53px); padding-top: 24px;
+  }
+  #ec-preview .ec-contents {
+    min-width: 0; align-self: start; position: sticky; top: 16px;
+    padding: 4px 0 7px;
+  }
+  #ec-preview .ec-contents summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    min-height: 40px; color: var(--ec-blue); font-size: 14px; font-weight: 700;
+    list-style: none;
+  }
+  #ec-preview .ec-contents summary::-webkit-details-marker { display: none; }
+  #ec-preview .ec-contents summary::after {
+    content: ""; width: 7px; height: 7px; flex: 0 0 7px; margin-inline-end: 4px;
+    border-bottom: 1.5px solid currentColor; border-right: 1.5px solid currentColor;
+    transform: rotate(45deg) translateY(-2px);
+  }
+  #ec-preview .ec-contents[open] summary::after { transform: rotate(225deg) translateY(-2px); }
+  #ec-preview .ec-index-current { margin-inline-start: auto; color: var(--ec-muted); font-size: 12px; font-weight: 500; }
+  #ec-preview .ec-contents[open] .ec-index-current { display: none; }
+  #ec-preview .ec-contents ul { list-style: none; padding: 2px 0 0; display: grid; gap: 2px; }
+  #ec-preview .ec-contents a {
+    display: flex; align-items: center; min-height: 36px; padding-inline: 9px; font-size: 14px;
+    border-inline-start: 2px solid transparent; color: var(--ec-muted); text-decoration: none;
+  }
+  #ec-preview .ec-contents a:hover { color: var(--ec-blue); }
+  #ec-preview .ec-contents a[aria-current="location"] {
+    border-inline-start-color: var(--ec-blue); background: var(--ec-tint); color: var(--ec-blue);
+    font-weight: 700; text-decoration: underline;
+  }
+  #ec-preview .ec-article { min-width: 0; }
+  #ec-preview .ec-section { padding-block: 24px; border-bottom: 1px solid var(--ec-edge); scroll-margin-top: 14px; }
+  #ec-preview .ec-section:first-child { padding-top: 0; }
+  #ec-preview .ec-section h2 {
+    font: 650 clamp(23px, 3.05cqi, 31px)/1.17 var(--ec-sans);
+    letter-spacing: -.02em;
+  }
+  #ec-preview .ec-section > p { max-width: 65ch; }
+  #ec-preview .ec-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  #ec-preview .ec-pair > * { min-width: 0; }
+  #ec-preview .ec-module { display: grid; align-content: start; gap: 7px; }
+  #ec-preview .ec-route {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr);
+    align-items: baseline; gap: 6px 12px; border-bottom: 1px solid var(--ec-edge); padding: 8px 0;
+  }
+  #ec-preview .ec-route:last-child { border-bottom: 0; }
+  #ec-preview .ec-route code { font: 500 12px/1.45 var(--ec-mono); color: var(--ec-blue); overflow-wrap: anywhere; }
+  #ec-preview .ec-evidence { display: grid; align-content: start; gap: 8px; }
+  #ec-preview .ec-evidence dl { display: grid; gap: 7px; }
+  #ec-preview .ec-evidence dl > div { display: grid; gap: 1px; }
+  #ec-preview .ec-evidence dd { font-size: 14px; }
+  #ec-preview .ec-evidence details { margin-top: 2px; border-top: 1px solid var(--ec-tint-edge); padding-top: 6px; }
+  #ec-preview .ec-evidence summary { min-height: 34px; padding-block: 4px; font-weight: 650; }
+  #ec-preview .ec-evidence blockquote {
+    border-inline-start: 2px solid var(--ec-tint-edge); padding-inline-start: 10px;
+    color: var(--ec-muted); font-size: 14px;
+  }
+  #ec-preview .ec-checks { list-style: none; padding: 0; display: grid; }
+  #ec-preview .ec-checks li { display: grid; grid-template-columns: 9em minmax(0, 1fr); gap: 5px 12px; padding: 9px 0; border-top: 1px solid var(--ec-edge); }
+  #ec-preview .ec-checks li p { font-size: 14px; }
+  #ec-preview .ec-end { padding-top: 19px; }
+  #ec-preview .ec-simple { display: grid; gap: 23px; }
+  #ec-preview .ec-simple .ec-hero { padding-top: 12px; align-items: start; }
+  #ec-preview .ec-simple .ec-hero h1 { max-width: 18ch; }
+  #ec-preview .ec-simple .ec-slogan { font: italic 400 clamp(22px, 3cqi, 31px)/1.15 var(--ec-serif); color: var(--ec-muted); }
+  #ec-preview .ec-simple .ec-module h2 { font: 650 18px/1.25 var(--ec-sans); }
+  #ec-preview .ec-simple .ec-module a { font-weight: 650; }
+  #ec-preview .ec-project-list { display: grid; gap: 10px; }
+  #ec-preview .ec-project-list .ec-module {
+    grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 16px;
+  }
+  #ec-preview .ec-project-list .ec-module > :is(a, .ec-project-state) {
+    grid-column: 2; grid-row: 1 / span 2;
+  }
+  #ec-preview .ec-project-state { color: var(--ec-muted); font-size: 13px; }
+  #ec-preview .ec-sample {
+    background: var(--ec-sample); border-color: var(--ec-sample-edge); color: var(--ec-sample-ink);
+  }
+  #ec-preview .ec-sample .ec-mono { color: var(--ec-sample-ink); }
+  @container (max-width: 620px) {
+    #ec-preview .ec-header { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0; padding-block: 7px 2px; }
+    #ec-preview .ec-reach { grid-row: 1; grid-column: 2; }
+    #ec-preview .ec-nav { grid-row: 2; grid-column: 1 / -1; justify-content: start; gap: 4px 14px; }
+    #ec-preview .ec-hero, #ec-preview .ec-case-body, #ec-preview .ec-pair { grid-template-columns: minmax(0, 1fr); }
+    #ec-preview .ec-page { padding-block: 15px 30px; }
+    #ec-preview .ec-hero { padding-block: 13px 21px; gap: 17px; }
+    #ec-preview .ec-case-body { padding-top: 16px; gap: 20px; }
+    #ec-preview .ec-contents {
+      position: static; border: 1px solid var(--ec-edge); padding: 0 10px 3px;
+      border-radius: 6px; background: var(--ec-panel);
+    }
+    #ec-preview .ec-contents ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 5px; }
+    #ec-preview .ec-contents a { min-height: 40px; }
+    #ec-preview .ec-section { padding-block: 21px; }
+    #ec-preview .ec-checks li, #ec-preview .ec-route { grid-template-columns: minmax(0, 1fr); }
+    #ec-preview .ec-project-list .ec-module { grid-template-columns: minmax(0, 1fr); }
+    #ec-preview .ec-project-list .ec-module > :is(a, .ec-project-state) { grid-column: 1; grid-row: auto; }
+  }
+  @media (pointer: coarse) {
+    #ec-preview .ec-site :is(.ec-header a, .ec-crumb a, .ec-contents a, .ec-contents summary, .ec-evidence summary, .ec-actions a) { min-height: 44px; }
+  }
+</style>
+<div id="ec-preview">
+  <div class="ec-tools">
+    <label class="form-label">Vista
+      <select class="form-select" data-view-choice>
+        <option value="inicio">Inicio</option>
+        <option value="proyectos">Catálogo de proyectos</option>
+        <option value="rfm">RFM CORE</option>
+        <option value="caso" selected>Caso de estudio</option>
+        <option value="cv">CV y contacto</option>
+        <option value="proyecto">Portafolio web</option>
+        <option value="casos">Índice de casos</option>
+        <option value="perfil">Sobre mí</option>
+      </select>
+    </label>
+    <div class="viz-row" role="group" aria-label="Ancho de la vista">
+      <button class="btn" type="button" data-viewport="desktop" aria-pressed="true">Escritorio</button>
+      <button class="btn" type="button" data-viewport="mobile" aria-pressed="false" aria-label="Móvil, 390 píxeles">390 px</button>
+      <button class="btn" type="button" data-viewport="compact" aria-pressed="false" aria-label="Móvil, 320 píxeles">320 px</button>
+    </div>
+    <span class="sr-only" aria-live="polite" data-preview-status>Caso de estudio · Escritorio</span>
+  </div>
+  <div class="ec-site" lang="es">
+    <div class="ec-wrap">
+      <header class="ec-header">
+        <a class="ec-brand" href="#inicio" data-page="inicio" aria-label="Tu nombre, Ingeniería en Software, inicio">
+          <span class="ec-brand-name">Tu nombre</span>
+          <span class="ec-brand-role">Ingeniería en Software</span>
+        </a>
+        <nav class="ec-nav" aria-label="Navegación principal">
+          <a href="#proyectos" data-page="proyectos">Proyectos</a>
+          <a href="#casos" data-page="casos" aria-current="page">Casos de estudio</a>
+          <a href="#perfil" data-page="perfil">Sobre mí</a>
+        </nav>
+        <nav class="ec-reach" aria-label="CV y contacto">
+          <a href="#cv" data-page="cv">CV</a>
+          <a href="#contacto" data-page="contacto">Contacto</a>
+        </nav>
+      </header>
+      <main class="ec-page" data-page-content></main>
+    </div>
+  </div>
+
+  <template data-view="caso">
+    <article>
+      <nav class="ec-crumb" aria-label="Ubicación del caso">
+        <a href="#casos" data-page="casos">Casos de estudio</a>
+        <span aria-hidden="true"> / </span>
+        <span>Portafolio web</span>
+      </nav>
+      <header class="ec-hero">
+        <div class="ec-intro">
+          <h1>Separar el proyecto del caso de estudio</h1>
+          <p class="ec-lead">Una decisión de diseño para explicar qué resuelve un proyecto y facilitar la revisión de un aporte concreto.</p>
+          <div class="ec-actions">
+            <a class="ec-primary" href="#ec-evidencias" data-jump="ec-evidencias">Ver evidencias ↓</a>
+            <a class="ec-secondary" href="#proyecto" data-page="proyecto">Ver proyecto</a>
+          </div>
+        </div>
+        <aside class="ec-meta" aria-label="Ficha del caso">
+          <dl>
+            <div><dt class="ec-mono">PROYECTO</dt><dd>Portafolio web</dd></div>
+            <div><dt class="ec-mono">COMPETENCIA PRINCIPAL</dt><dd>Arquitectura de información</dd></div>
+            <div><dt class="ec-mono">APORTE PERSONAL</dt><dd>Propuse páginas individuales y definí su relación con los casos.</dd></div>
+            <div><dt class="ec-mono">ESTADO</dt><dd>Decisión documentada</dd></div>
+          </dl>
+        </aside>
+      </header>
+
+      <div class="ec-case-body">
+        <details class="ec-contents" open>
+          <summary><span>En este caso</span><span class="ec-index-current" data-index-current>Contexto</span></summary>
+          <nav aria-label="Secciones del caso">
+            <ul>
+              <li><a href="#ec-contexto" data-jump="ec-contexto" aria-current="location">Contexto</a></li>
+              <li><a href="#ec-alternativas" data-jump="ec-alternativas">Alternativas</a></li>
+              <li><a href="#ec-decision" data-jump="ec-decision">Decisión</a></li>
+              <li><a href="#ec-evidencias" data-jump="ec-evidencias">Evidencias</a></li>
+              <li><a href="#ec-validacion" data-jump="ec-validacion">Validación</a></li>
+              <li><a href="#ec-aprendizaje" data-jump="ec-aprendizaje">Aprendizaje</a></li>
+            </ul>
+          </nav>
+        </details>
+        <div class="ec-article">
+          <section id="ec-contexto" class="ec-section">
+            <h2>Contexto</h2>
+            <p>El portafolio se dirige a reclutadores y equipos técnicos. Una persona puede llegar desde el catálogo buscando entender un proyecto completo o abrir un caso compartido para revisar una decisión y su evidencia. Ambos recorridos necesitan contexto suficiente y un acceso directo al CV y al contacto.</p>
+          </section>
+
+          <section id="ec-alternativas" class="ec-section">
+            <h2>Alternativas</h2>
+            <div class="ec-pair">
+              <div class="ec-module">
+                <h3>Ficha en el catálogo</h3>
+                <p>Permite ver varios proyectos rápidamente. El contexto y la solución deben caber en un resumen breve.</p>
+              </div>
+              <div class="ec-module">
+                <h3>Página individual</h3>
+                <p>Da espacio para explicar el problema, la solución y el estado. Requiere delimitar qué información se desarrolla en cada caso.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="ec-decision" class="ec-section">
+            <h2>Decisión</h2>
+            <p>Propuse añadir páginas individuales para presentar cada solución en su conjunto. Los casos mantienen su propia URL para explicar cómo se realizó o validó un trabajo concreto. Los enlaces entre ambos permiten ampliar la lectura según lo que se busca.</p>
+            <div class="ec-module">
+              <div class="ec-route"><code>/proyectos/&lt;slug&gt;/</code><span>Problema, solución y participación.</span></div>
+              <div class="ec-route"><code>/casos-de-estudio/&lt;slug&gt;/</code><span>Decisión, alcance y evidencia.</span></div>
+            </div>
+          </section>
+
+          <section id="ec-evidencias" class="ec-section">
+            <h2>Evidencias</h2>
+            <div class="ec-pair">
+              <article class="ec-evidence">
+                <p class="ec-mono">DECISIÓN DOCUMENTADA</p>
+                <h3>Responsabilidad de cada página</h3>
+                <dl>
+                  <div><dt class="ec-mono">TIPO</dt><dd>Mapa del sitio</dd></div>
+                  <div><dt class="ec-mono">QUÉ DEMUESTRA</dt><dd>Cómo se delimitó el contenido de los proyectos y los casos.</dd></div>
+                  <div><dt class="ec-mono">FUENTE</dt><dd>Arquitectura de información · Fase 1</dd></div>
+                </dl>
+                <details>
+                  <summary>Consultar extracto del mapa</summary>
+                  <blockquote>La página individual explica qué resuelve el proyecto en su conjunto y cuál fue tu participación. Cada caso desarrolla cómo realizaste o validaste un trabajo concreto.</blockquote>
+                </details>
+              </article>
+              <article class="ec-evidence">
+                <p class="ec-mono">CRITERIO DOCUMENTADO</p>
+                <h3>Qué debe poder hacer el lector</h3>
+                <dl>
+                  <div><dt class="ec-mono">TIPO</dt><dd>Criterio de aceptación</dd></div>
+                  <div><dt class="ec-mono">QUÉ DEMUESTRA</dt><dd>Qué tareas se acordó comprobar, desde encontrar el aporte hasta acceder al CV.</dd></div>
+                  <div><dt class="ec-mono">FUENTE</dt><dd>Requisitos y validación · Fase 1</dd></div>
+                </dl>
+                <details>
+                  <summary>Consultar extracto del requisito</summary>
+                  <blockquote>Desde Inicio y desde una URL de caso compartida, identificar el perfil y un aporte, abrir su evidencia y encontrar el CV y el correo.</blockquote>
+                </details>
+              </article>
+            </div>
+          </section>
+
+          <section id="ec-validacion" class="ec-section">
+            <h2>Validación</h2>
+            <p>Las comprobaciones con lectores y en Cloudflare Pages están pendientes. Los extractos anteriores documentan la decisión y los criterios acordados.</p>
+            <ul class="ec-checks">
+              <li><span class="ec-mono">DOCUMENTADO</span><p>Las rutas previstas, la relación entre proyectos y casos y las tareas de revisión constan en la documentación de fase 1.</p></li>
+              <li><span class="ec-mono">POR COMPROBAR</span><p>Que un lector distinga el propósito del proyecto, identifique el aporte en el caso y encuentre su evidencia, el CV y el contacto.</p></li>
+              <li><span class="ec-mono">POR COMPROBAR</span><p>Acceso directo, recarga y navegación entre las rutas estáticas en Cloudflare Pages durante el desarrollo.</p></li>
+            </ul>
+          </section>
+
+          <section id="ec-aprendizaje" class="ec-section">
+            <h2>Aprendizaje</h2>
+            <p>Definir qué pregunta responde cada página ayudó a decidir dónde explicar la solución y dónde documentar una contribución. La siguiente comprobación es si esa separación sigue siendo clara con un solo proyecto y un solo caso.</p>
+          </section>
+          <div class="ec-actions ec-end">
+            <a class="ec-secondary" href="#proyecto" data-page="proyecto">Ver el proyecto</a>
+            <a class="ec-secondary" href="#cv" data-page="cv">Ver CV</a>
+            <a href="#contacto" data-page="contacto">Contacto</a>
+          </div>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <template data-view="inicio">
+    <section class="ec-simple">
+      <div class="ec-hero">
+        <div class="ec-intro">
+          <p class="ec-kicker">Pasantías y posiciones junior</p>
+          <h1>Estudiante de Ingeniería en Software</h1>
+          <p class="ec-slogan">Comprender problemas. Diseñar soluciones. Generar valor.</p>
+          <div class="ec-actions">
+            <a class="ec-primary" href="#caso" data-page="caso">Leer caso destacado</a>
+            <a class="ec-secondary" href="#cv" data-page="cv">Ver CV</a>
+          </div>
+        </div>
+        <div class="ec-module">
+          <p class="ec-kicker">Caso destacado</p>
+          <h2>Separar el proyecto del caso de estudio</h2>
+          <p>Decisión de arquitectura de información documentada en la fase de definición.</p>
+        </div>
+      </div>
+      <h2>Proyecto destacado</h2>
+      <article class="ec-module">
+        <p class="ec-mono">EXPLORACIÓN UX/UI</p>
+        <h3>Portafolio web</h3>
+        <p>Plataforma personal para presentar proyectos y aportes verificables a reclutadores y equipos técnicos.</p>
+        <a href="#proyecto" data-page="proyecto">Ver el proyecto</a>
+      </article>
+    </section>
+  </template>
+
+  <template data-view="proyectos">
+    <section class="ec-simple">
+      <div class="ec-intro">
+        <h1>Proyectos</h1>
+        <p class="ec-lead">El propósito y el alcance de cada solución.</p>
+      </div>
+      <div class="ec-project-list">
+        <article class="ec-module">
+          <h2>RFM CORE</h2>
+          <p>Sistema de gestión comercial y operativa de un negocio real.</p>
+          <a href="#rfm" data-page="rfm">Ver ficha de muestra</a>
+        </article>
+        <article class="ec-module">
+          <h2>Claridez</h2>
+          <p>Plataforma SaaS B2B para gestión de salones de eventos.</p>
+          <span class="ec-project-state">Ficha pendiente de revisión</span>
+        </article>
+        <article class="ec-module">
+          <h2>Portafolio web</h2>
+          <p>Plataforma personal para presentar proyectos y aportes verificables.</p>
+          <a href="#proyecto" data-page="proyecto">Ver proyecto</a>
+        </article>
+      </div>
+    </section>
+  </template>
+
+  <template data-view="rfm">
+    <article class="ec-simple">
+      <nav class="ec-crumb" aria-label="Ubicación del proyecto"><a href="#proyectos" data-page="proyectos">Proyectos</a></nav>
+      <header class="ec-intro">
+        <p class="ec-kicker">Proyecto</p>
+        <h1>RFM CORE</h1>
+        <p class="ec-lead">Sistema de gestión comercial y operativa de un negocio real.</p>
+      </header>
+      <div class="ec-module ec-sample">
+        <p class="ec-mono">CONTENIDO DE MUESTRA</p>
+        <p>Los campos siguientes muestran la estructura de la ficha. Sus detalles se completarán con material confirmado y autorizado.</p>
+      </div>
+      <div class="ec-pair">
+        <section class="ec-module ec-sample">
+          <h2>Problema, propósito y solución</h2>
+          <p>Campo de muestra para el problema operativo, el propósito del sistema y el alcance de la solución que se pueda describir.</p>
+        </section>
+        <section class="ec-module ec-sample">
+          <h2>Participación y estado</h2>
+          <p>Campo de muestra para el aporte personal, la etapa comprobable del proyecto y las tecnologías pertinentes.</p>
+        </section>
+      </div>
+      <section class="ec-module">
+        <h2>Casos y evidencias</h2>
+        <p>La ficha enlazará a los casos de RFM CORE cuando estén aprobados.</p>
+      </section>
+    </article>
+  </template>
+
+  <template data-view="proyecto">
+    <article class="ec-simple">
+      <nav class="ec-crumb" aria-label="Ubicación del proyecto"><a href="#proyectos" data-page="proyectos">Proyectos</a></nav>
+      <div class="ec-intro">
+        <p class="ec-mono">EXPLORACIÓN UX/UI</p>
+        <h1>Portafolio web</h1>
+        <p class="ec-lead">Plataforma personal para presentar proyectos y aportes verificables a reclutadores y equipos técnicos.</p>
+      </div>
+      <div class="ec-pair">
+        <section class="ec-module">
+          <h2>La solución</h2>
+          <p>Un catálogo da acceso a las páginas de proyecto. Los casos profundizan en decisiones y evidencias. El CV y el contacto están disponibles desde la navegación.</p>
+        </section>
+        <section class="ec-module">
+          <h2>Participación personal</h2>
+          <p>Definí el objetivo profesional, propuse las páginas individuales y aprobé los criterios de contenido y navegación.</p>
+        </section>
+      </div>
+      <section class="ec-module">
+        <p class="ec-kicker">Caso relacionado</p>
+        <h2>Separar el proyecto del caso de estudio</h2>
+        <a href="#caso" data-page="caso">Leer caso</a>
+      </section>
+    </article>
+  </template>
+
+  <template data-view="casos">
+    <section class="ec-simple">
+      <h1>Casos de estudio</h1>
+      <article class="ec-module">
+        <p class="ec-mono">ARQUITECTURA DE INFORMACIÓN</p>
+        <h2>Separar el proyecto del caso de estudio</h2>
+        <p>Una decisión sobre el alcance de cada página y la evidencia que la documenta.</p>
+        <a href="#caso" data-page="caso">Leer caso</a>
+      </article>
+    </section>
+  </template>
+
+  <template data-view="perfil">
+    <section class="ec-simple">
+      <p class="ec-kicker">Sobre mí</p>
+      <h1>Estudiante de Ingeniería en Software</h1>
+      <p>Busco oportunidades de pasantías y posiciones junior.</p>
+      <div class="ec-actions">
+        <a class="ec-primary" href="#cv" data-page="cv">Ver CV</a>
+        <a class="ec-secondary" href="#contacto" data-page="contacto">Contacto</a>
+      </div>
+    </section>
+  </template>
+
+  <template data-view="cv">
+    <section class="ec-simple">
+      <div class="ec-intro">
+        <h1>CV y contacto</h1>
+        <p class="ec-lead">Pasantías y posiciones junior en Ingeniería de Software.</p>
+      </div>
+      <div class="ec-pair">
+        <section class="ec-module">
+          <h2>Formación</h2>
+          <p>Ingeniería en Software · Estudiante</p>
+        </section>
+        <section class="ec-module" id="ec-contacto">
+          <h2>Contacto</h2>
+          <p>Correo profesional pendiente de aprobación.</p>
+        </section>
+      </div>
+    </section>
+  </template>
+</div>
+<script>
+(() => {
+  const root = document.getElementById("ec-preview");
+  const site = root.querySelector(".ec-site");
+  const content = root.querySelector("[data-page-content]");
+  const choice = root.querySelector("[data-view-choice]");
+  const status = root.querySelector("[data-preview-status]");
+  const views = Object.fromEntries(
+    Array.from(root.querySelectorAll("template[data-view]"), (view) => [view.dataset.view, view])
+  );
+  const labels = {
+    caso: "Caso de estudio", inicio: "Inicio", proyecto: "Proyecto", proyectos: "Proyectos", rfm: "RFM CORE",
+    casos: "Casos de estudio", perfil: "Sobre mí", cv: "CV", contacto: "Contacto"
+  };
+  const parents = { caso: "casos", proyecto: "proyectos", rfm: "proyectos" };
+  const widths = { desktop: "Escritorio", mobile: "Móvil, 390 píxeles", compact: "Móvil, 320 píxeles" };
+  let device = "desktop";
+  let page = "caso";
+  let index = null;
+  let indexLinks = [];
+  let sections = [];
+  let narrow = null;
+  let jumpPosition = null;
+  let scrollFrame = 0;
+
+  function updateStatus() {
+    status.textContent = labels[page] + " · " + widths[device];
+  }
+
+  function setActiveSection(id) {
+    if (!index) return;
+    for (const link of indexLinks) {
+      if (link.dataset.jump === id) {
+        link.setAttribute("aria-current", "location");
+        index.querySelector("[data-index-current]").textContent = link.textContent;
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    }
+  }
+
+  function adaptIndex() {
+    const isNarrow = site.clientWidth <= 620;
+    if (index && isNarrow !== narrow) index.open = !isNarrow;
+    narrow = isNarrow;
+  }
+
+  function trackSection() {
+    if (!sections.length) return;
+    if (jumpPosition !== null && Math.abs(window.scrollY - jumpPosition) < 2) return;
+    jumpPosition = null;
+    let current = sections[0];
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= 80) current = section;
+    }
+    if (window.scrollY > 0 && window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2) {
+      current = sections.at(-1);
+    }
+    setActiveSection(current.id);
+  }
+
+  function render(next) {
+    const viewName = next === "contacto" ? "cv" : next;
+    const view = views[viewName];
+    if (!view) return;
+    page = next;
+    content.replaceChildren(view.content.cloneNode(true));
+    choice.value = viewName;
+    index = content.querySelector(".ec-contents");
+    indexLinks = index ? Array.from(index.querySelectorAll("[data-jump]")) : [];
+    sections = indexLinks.map((link) => document.getElementById(link.dataset.jump)).filter(Boolean);
+    narrow = null;
+    jumpPosition = null;
+    adaptIndex();
+    for (const link of root.querySelectorAll(".ec-header [data-page]")) {
+      if (link.dataset.page === (parents[next] || next)) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    }
+    updateStatus();
+  }
+
+  choice.addEventListener("change", () => render(choice.value));
+  new ResizeObserver(adaptIndex).observe(site);
+  window.addEventListener("scroll", () => {
+    if (scrollFrame) return;
+    scrollFrame = requestAnimationFrame(() => {
+      scrollFrame = 0;
+      trackSection();
+    });
+  }, { passive: true });
+
+  root.addEventListener("click", (event) => {
+    const viewport = event.target.closest("[data-viewport]");
+    if (viewport) {
+      device = viewport.dataset.viewport;
+      root.dataset.device = device;
+      for (const button of root.querySelectorAll("[data-viewport]")) {
+        button.setAttribute("aria-pressed", String(button.dataset.viewport === device));
+      }
+      adaptIndex();
+      updateStatus();
+      return;
+    }
+    const jump = event.target.closest("[data-jump]");
+    if (jump) {
+      const target = document.getElementById(jump.dataset.jump);
+      if (target) {
+        event.preventDefault();
+        if (narrow && index?.contains(jump) && event.detail !== 0) index.open = false;
+        target.scrollIntoView({ block: "start" });
+        jumpPosition = window.scrollY;
+        setActiveSection(target.id);
+        if (event.detail === 0) target.querySelector("summary")?.focus({ preventScroll: true });
+      }
+      return;
+    }
+    const link = event.target.closest("[data-page]");
+    if (!link) return;
+    const insideContent = content.contains(link);
+    event.preventDefault();
+    render(link.dataset.page);
+    if (page === "contacto") document.getElementById("ec-contacto")?.scrollIntoView({ block: "nearest" });
+    else if (insideContent) {
+      root.querySelector('.ec-header [aria-current="page"]')?.focus({ preventScroll: true });
+      root.querySelector(".ec-site").scrollIntoView({ block: "start" });
+    }
+  });
+
+  render(page);
+})();
+</script>

@@ -6,3 +6,6 @@ export const paths = {
   cv: "/cv/",
   contacto: "/cv/#contacto",
 } as const;
+
+export const rutaProyecto = (slug: string) => `${paths.proyectos}${slug}/`;
+export const rutaCaso = (slug: string) => `${paths.casos}${slug}/`;

@@ -1,6 +1,6 @@
 # Plan técnico de fase 3
 
-**Estado · Incremento 1 implementado y listo para revisión**
+**Estado · Incremento 1 aprobado. Incremento 2 implementado y listo para revisión**
 
 La fase desarrolla la [dirección visual aprobada](diseno-ux-ui.md) con React, TypeScript y Vite sobre Cloudflare Pages. La preparación de contenido de negocio avanza en paralelo. Los [requisitos de fase 1](requisitos.md) y sus condiciones de publicación son los criterios de aceptación.
 
@@ -24,6 +24,8 @@ El [informe del incremento 1](informe-incremento-1.md) registra las pruebas ejec
 
 **Salida verificable.** Un proyecto aprobado aparece en el catálogo y se puede abrir por enlace directo. Una página en borrador queda fuera de rutas, enlaces y compilación pública. Con un solo proyecto, Inicio, catálogo y ficha presentan información distinta. La compilación pública excluye los datos de prueba, sus recursos y los marcadores.
 
+El [informe del incremento 2](informe-incremento-2.md) registra el estado del contenido, las pruebas reproducibles y la revisión visual.
+
 ## Incremento 3 · Casos, evidencias, perfil y CV
 
 - Construir el índice y la plantilla completa de casos. Integrar el resumen con competencia, el índice lateral con estado activo, su versión móvil plegable y las fichas de evidencia con fuente y consulta. Distinguir evidencia documental de resultados verificados y de comprobaciones pendientes.
@@ -38,4 +40,4 @@ El [informe del incremento 1](informe-incremento-1.md) registra las pruebas ejec
 
 **Salida verificable.** La versión candidata supera los controles de fase 1 en la aplicación implementada. Quedan identificados el caso de negocio con evidencia autorizada, el perfil, CV, correo, decisión sobre el PDF y URL pública para la aprobación de publicación. La verificación en producción corresponde a la fase 4.
 
-El titular del portafolio conserva el control de los commits y del push. El incremento 2 se abre tras la revisión del incremento 1.
+El titular del portafolio conserva el control de los commits y del push. El incremento 3 se abre tras la revisión del incremento 2.

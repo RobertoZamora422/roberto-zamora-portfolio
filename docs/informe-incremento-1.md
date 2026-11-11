@@ -1,6 +1,6 @@
 # Informe del incremento 1
 
-**Estado · Implementado y verificado en local, pendiente de revisión**
+**Estado · Implementado, verificado en local y aprobado**
 
 ## Archivos
 

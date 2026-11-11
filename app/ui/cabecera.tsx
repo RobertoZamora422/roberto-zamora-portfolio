@@ -14,11 +14,11 @@ function QuickLinks({ variant }: { variant: "wide" | "narrow" }) {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ nombre }: { nombre?: string }) {
   return (
     <header className="site-header">
       <NavLink to={paths.inicio} className="site-brand" end>
-        <span className="site-brand__name">Portafolio</span>
+        <span className="site-brand__name">{nombre ?? "Portafolio"}</span>
         <span className="site-brand__role">Ingeniería en Software</span>
       </NavLink>
       <QuickLinks variant="narrow" />

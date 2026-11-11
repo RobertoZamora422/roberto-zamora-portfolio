@@ -1,0 +1,10 @@
+Recurso de revisión local
+
+La arquitectura de información distingue tres funciones editoriales.
+El catálogo resume el propósito y estado de los proyectos. La ficha explica
+la solución y la participación personal. El caso desarrolla un aporte concreto
+y permite consultar la evidencia pertinente.
+
+Fuentes en el repositorio: docs/arquitectura-de-informacion.md y docs/diseno-ux-ui.md.
+La revisión del incremento 1 aprobó la base técnica, la navegación y la estrategia
+inicial de prerenderizado.
