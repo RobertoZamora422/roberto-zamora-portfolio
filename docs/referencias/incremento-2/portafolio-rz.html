@@ -1,0 +1,490 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Geist:wght@400..750&amp;display=swap">
+<style>
+  #portafolio-rz {
+    --paper: #f2f1e9;
+    --ink: #191e19;
+    --muted: #4b564a;
+    --rule: #c9cec1;
+    --forest: #1a2e26;
+    --green: #30503c;
+    --leaf: #d8ecaa;
+    --on-forest: #eef2e6;
+    --body-font: "Geist", "Segoe UI", Arial, sans-serif;
+    --display-font: "Archivo Black", "Arial Black", sans-serif;
+    min-inline-size: 0;
+  }
+
+  #portafolio-rz *, #portafolio-rz *::before, #portafolio-rz *::after { box-sizing: border-box; }
+  #portafolio-rz .review { display: flex; align-items: end; flex-wrap: wrap; gap: 0.625rem 1rem; padding-block-end: 0.75rem; }
+  #portafolio-rz .choice { display: grid; gap: 0.25rem; }
+  #portafolio-rz .photo-choice { max-inline-size: min(100%, 16rem); }
+  #portafolio-rz .photo-choice input { max-inline-size: 100%; }
+  #portafolio-rz .devices { display: flex; gap: 0.125rem; }
+  #portafolio-rz .preview-status { margin: 0; padding-block-end: 0.625rem; }
+  #portafolio-rz .preview-status:empty { display: none; }
+  #portafolio-rz .site {
+    container-type: inline-size;
+    margin-inline: auto;
+    background: var(--paper);
+    color: var(--ink);
+    color-scheme: light;
+    font: 400 1rem/1.55 var(--body-font);
+    overflow-wrap: break-word;
+  }
+  #portafolio-rz[data-size="mobile"] .site { max-inline-size: 390px; }
+  #portafolio-rz .site :is(h1,h2,h3,p,figure,ul,dl,dd) { margin: 0; }
+  #portafolio-rz .site [hidden] { display: none !important; }
+  #portafolio-rz .wrap { padding-inline: clamp(1rem, 4.2cqi, 3.5rem); }
+  #portafolio-rz .site p { text-wrap: pretty; }
+  #portafolio-rz .site a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+
+  #portafolio-rz .bar {
+    min-block-size: 4.125rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    column-gap: clamp(0.875rem, 3cqi, 1.875rem);
+    border-block-end: 1px solid var(--rule);
+  }
+  #portafolio-rz .bar a { display: inline-flex; align-items: center; min-block-size: 2.75rem; color: var(--ink); text-decoration: none; }
+  #portafolio-rz .wordmark {
+    justify-self: start;
+    column-gap: 0.07em;
+    padding-inline-end: 0.375rem;
+    font: 400 clamp(1.5rem, 3.1cqi, 2rem)/1 var(--display-font);
+    letter-spacing: -0.085em;
+  }
+  #portafolio-rz .wordmark span { color: var(--green); letter-spacing: 0; }
+  #portafolio-rz .nav-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 clamp(0.625rem, 2.3cqi, 1.5rem); }
+  #portafolio-rz .nav-links a { font-size: 0.875rem; font-weight: 610; }
+  #portafolio-rz .nav-links a:is([aria-current],:hover) { text-decoration: underline 2px; text-underline-offset: 0.4em; }
+  #portafolio-rz .bar .bar-contact {
+    justify-self: end;
+    padding-inline: 0.8125rem;
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-size: 0.8125rem;
+    font-weight: 670;
+  }
+  #portafolio-rz .bar-contact:hover { background: #e7ecdf; }
+  #portafolio-rz .bar .bar-contact--narrow { display: none; }
+
+  #portafolio-rz .display {
+    max-inline-size: 100%;
+    color: var(--ink);
+    font-family: var(--display-font);
+    font-weight: 400;
+    font-size: clamp(2.125rem, 6.9cqi, 5rem);
+    line-height: 0.99;
+    letter-spacing: -0.073em;
+  }
+  #portafolio-rz .home {
+    display: grid;
+    grid-template-columns: clamp(7.5rem, 17.6cqi, 12rem) minmax(0, 1fr);
+    grid-template-areas: "photo title" "photo intro";
+    align-items: start;
+    gap: clamp(0.75rem, 2cqi, 1.125rem) clamp(1.5rem, 5cqi, 3.375rem);
+    padding-block: clamp(2rem, 6.7cqi, 4.625rem) clamp(2rem, 5.7cqi, 3.5rem);
+  }
+  #portafolio-rz .intro-title { grid-area: title; display: grid; gap: 0.375rem; align-self: end; }
+  #portafolio-rz .intro-title .display { font-size: clamp(2.375rem, 6.75cqi, 4.875rem); }
+  #portafolio-rz .intro-role { color: var(--green); font-size: clamp(0.875rem, 2.05cqi, 1.375rem); font-weight: 670; line-height: 1.35; }
+  #portafolio-rz .intro-body { grid-area: intro; display: grid; gap: clamp(0.875rem, 2.6cqi, 1.5rem); }
+  #portafolio-rz .intro-body .lead { max-inline-size: 49ch; }
+  #portafolio-rz .intro-actions { display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem; }
+  #portafolio-rz .intro-actions .action { font-size: 0.875rem; }
+  #portafolio-rz .intro-actions .action-secondary {
+    border: 1px solid var(--green);
+    background: transparent;
+    color: var(--green);
+  }
+  #portafolio-rz .intro-actions .action-secondary:hover { background: #e7ecdf; }
+  #portafolio-rz .lead { max-inline-size: 46ch; color: var(--muted); font-size: clamp(1rem, 1.85cqi, 1.1875rem); line-height: 1.55; }
+  #portafolio-rz .plain-link, #portafolio-rz .action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-block-size: 2.75rem;
+    justify-self: start;
+    color: var(--green);
+    font-weight: 660;
+    text-decoration: none;
+    text-underline-offset: 0.26em;
+  }
+  #portafolio-rz .plain-link .link-label { text-decoration: underline; text-underline-offset: 0.26em; }
+  #portafolio-rz .plain-link:hover .link-label { text-decoration-thickness: 2px; }
+  #portafolio-rz .action {
+    min-block-size: 3rem;
+    padding-inline: 0.875rem;
+    background: var(--green);
+    color: var(--on-forest);
+    text-decoration: none;
+  }
+  #portafolio-rz .action:hover { background: var(--forest); text-decoration: underline; }
+  #portafolio-rz .action:focus-visible { outline-color: var(--green); }
+  #portafolio-rz .arrow { font: 400 1.125rem/1 "Segoe UI Symbol", Arial, sans-serif; }
+
+  #portafolio-rz .portrait-frame {
+    position: relative;
+    isolation: isolate;
+    grid-area: photo;
+    inline-size: 100%;
+    padding: 0 0.5rem 0.5rem 0;
+  }
+  #portafolio-rz .portrait-frame::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0.875rem 0 0 0.875rem;
+    border: 1px solid var(--green);
+  }
+  #portafolio-rz .portrait {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: #dfe5d9;
+  }
+  #portafolio-rz .portrait-photo, #portafolio-rz .portrait-placeholder {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+  #portafolio-rz .portrait-photo { object-fit: cover; object-position: 50% 42%; }
+  #portafolio-rz .portrait-placeholder {
+    display: grid;
+    place-items: center;
+    padding: 0.5rem;
+    color: var(--green);
+    font-size: 0.875rem;
+    font-weight: 630;
+  }
+  #portafolio-rz .portrait-placeholder::before, #portafolio-rz .portrait-placeholder::after {
+    content: "";
+    position: absolute;
+    inline-size: 1rem;
+    block-size: 1rem;
+    border: 0 solid var(--green);
+  }
+  #portafolio-rz .portrait-placeholder::before {
+    inset: 1rem auto auto 1rem;
+    border-block-start-width: 1px;
+    border-inline-start-width: 1px;
+  }
+  #portafolio-rz .portrait-placeholder::after {
+    inset: auto 1rem 1rem auto;
+    border-block-end-width: 1px;
+    border-inline-end-width: 1px;
+  }
+  #portafolio-rz .home-view { padding-block-end: clamp(1.5rem, 5cqi, 3rem); }
+  #portafolio-rz .featured-project {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+    border: 1px solid var(--rule);
+  }
+  #portafolio-rz :is(.featured-title,.featured-detail) {
+    display: grid;
+    align-content: center;
+    gap: 0.5rem;
+    padding: clamp(1rem, 3cqi, 1.875rem);
+  }
+  #portafolio-rz .featured-title { background: var(--forest); color: var(--on-forest); }
+  #portafolio-rz .featured-title h2 { color: var(--leaf); font-size: 0.8125rem; font-weight: 640; }
+  #portafolio-rz .featured-title h3 { font-size: clamp(1.375rem, 3.3cqi, 2rem); font-weight: 740; line-height: 1.12; letter-spacing: -0.045em; }
+  #portafolio-rz .featured-detail p { max-inline-size: 48ch; color: var(--muted); }
+  #portafolio-rz .featured-project .plain-link { font-size: 0.875rem; }
+
+  #portafolio-rz .interests { display: grid; gap: 0.875rem; padding-block-start: clamp(1.625rem, 4.6cqi, 2.875rem); }
+  #portafolio-rz .interests h2 { font-size: clamp(1.375rem, 3cqi, 1.875rem); font-weight: 740; letter-spacing: -0.045em; }
+  #portafolio-rz .interest-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 1rem; padding: 0; list-style: none; }
+  #portafolio-rz .interest-list li { display: grid; gap: 0.3125rem; align-content: start; border-block-start: 1px solid var(--rule); padding-block: 0.75rem; }
+  #portafolio-rz .interest-list h3 { font-size: 1rem; font-weight: 700; line-height: 1.35; }
+  #portafolio-rz .interest-list p { color: var(--muted); font-size: 0.875rem; }
+
+  #portafolio-rz .interior { padding-block: clamp(1.75rem, 6.25cqi, 4rem) clamp(2rem, 5.75cqi, 3.5rem); }
+  #portafolio-rz .catalog-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.53fr);
+    align-items: end;
+    gap: 1.125rem 2.5rem;
+    margin-block-end: clamp(1.5rem, 5.5cqi, 3.25rem);
+  }
+  #portafolio-rz .catalog-intro .lead { padding-block-end: 0.125rem; }
+  #portafolio-rz .ledger { padding: 0; list-style: none; border-block-end: 1px solid var(--rule); }
+  #portafolio-rz .ledger-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.28fr) minmax(7rem, auto);
+    align-items: center;
+    gap: 0.5rem clamp(1rem, 3cqi, 1.75rem);
+    border-block-start: 1px solid var(--rule);
+    padding: clamp(1.125rem, 3.5cqi, 2rem) clamp(0.875rem, 2.5cqi, 1.625rem);
+  }
+  #portafolio-rz .ledger-row:first-child { background: #e7ecdf; }
+  #portafolio-rz .ledger-row:first-child::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    inline-size: 3px;
+    background: var(--green);
+  }
+  #portafolio-rz .ledger-row h2 { font-size: clamp(1.375rem, 3.6cqi, 2.125rem); font-weight: 740; line-height: 1.16; letter-spacing: -0.06em; }
+  #portafolio-rz .ledger-row p { color: var(--muted); }
+  #portafolio-rz .ledger-row .plain-link, #portafolio-rz .ledger-row .status { justify-self: end; font-size: 0.875rem; }
+
+  #portafolio-rz .detail { padding-block-start: clamp(1.125rem, 3.6cqi, 2.125rem); }
+  #portafolio-rz .detail-intro { display: grid; gap: clamp(0.875rem, 2.5cqi, 1.375rem); padding-block-end: clamp(1.375rem, 4.5cqi, 2.625rem); }
+  #portafolio-rz .detail-intro .plain-link { font-size: 0.875rem; }
+  #portafolio-rz .facts {
+    display: grid;
+    grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.7fr);
+    gap: 0.875rem 1.5rem;
+    padding: clamp(0.875rem, 2.6cqi, 1.375rem) clamp(1rem, 3.2cqi, 1.875rem);
+    background: var(--forest);
+    color: var(--on-forest);
+  }
+  #portafolio-rz .facts div { display: grid; gap: 0.125rem; }
+  #portafolio-rz .facts dt { color: var(--leaf); font-size: 0.8125rem; font-weight: 620; }
+  #portafolio-rz .facts dd { font-weight: 590; }
+  #portafolio-rz .project-story { margin-block-start: clamp(1.5rem, 4cqi, 2.5rem); border-block-end: 1px solid var(--rule); }
+  #portafolio-rz .project-story section {
+    display: grid;
+    grid-template-columns: minmax(0, 0.77fr) minmax(0, 1.6fr);
+    gap: 0.5rem 1.5rem;
+    border-block-start: 1px solid var(--rule);
+    padding-block: clamp(1rem, 3.2cqi, 1.875rem);
+  }
+  #portafolio-rz .project-story h2 { font-size: clamp(1.125rem, 2.6cqi, 1.5625rem); font-weight: 740; line-height: 1.2; letter-spacing: -0.042em; }
+  #portafolio-rz .project-story p { max-inline-size: 57ch; color: var(--muted); }
+
+  @container (max-width: 735px) {
+    #portafolio-rz .catalog-intro { grid-template-columns: minmax(0,1fr); }
+    #portafolio-rz .bar { grid-template-columns: 1fr auto; padding-block-start: 0.375rem; }
+    #portafolio-rz .nav-links { grid-column: 1 / -1; grid-row: 2; justify-content: start; }
+    #portafolio-rz .bar-contact { grid-column: 2; grid-row: 1; }
+    #portafolio-rz .bar .bar-contact--narrow { display: inline-flex; }
+    #portafolio-rz .bar .bar-contact--wide { display: none; }
+  }
+  @container (max-width: 540px) {
+    #portafolio-rz .nav-links { gap: 0 clamp(0.4375rem, 3cqi, 0.875rem); }
+    #portafolio-rz .nav-links a { font-size: 0.78125rem; }
+    #portafolio-rz .display { font-size: clamp(2.0625rem, 10.4cqi, 3.5rem); letter-spacing: -0.069em; }
+    #portafolio-rz .home { grid-template-columns: clamp(4.5rem, 23cqi, 6rem) minmax(0,1fr); grid-template-areas: "photo title" "intro intro"; align-items: center; gap: 1rem 0.875rem; }
+    #portafolio-rz .intro-title { align-self: center; }
+    #portafolio-rz .intro-title .display { font-size: clamp(1.875rem, 8.85cqi, 2.875rem); }
+    #portafolio-rz .portrait-frame { padding: 0 0.25rem 0.25rem 0; }
+    #portafolio-rz .portrait-placeholder { font-size: 0.75rem; text-align: center; }
+    #portafolio-rz .portrait-placeholder::before, #portafolio-rz .portrait-placeholder::after { display: none; }
+    #portafolio-rz :is(.featured-project,.interest-list) { grid-template-columns: minmax(0,1fr); }
+    #portafolio-rz :is(.ledger-row,.project-story section) { grid-template-columns: minmax(0,1fr); }
+    #portafolio-rz .ledger-row :is(.plain-link,.status) { justify-self: start; }
+    #portafolio-rz .facts { grid-template-columns: minmax(0,1fr); }
+  }
+  @container (max-width: 315px) {
+    #portafolio-rz .nav-links { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 0.625rem; }
+    #portafolio-rz .nav-links a { justify-self: start; }
+  }
+</style>
+
+<div id="portafolio-rz" lang="es" data-size="desktop">
+  <div class="review">
+    <div class="choice">
+      <label for="rz-vista">Vista</label>
+      <select id="rz-vista" class="form-select" data-view>
+        <option value="inicio">Inicio</option>
+        <option value="proyectos">Proyectos</option>
+        <option value="ficha">Ficha individual</option>
+      </select>
+    </div>
+    <div class="devices" role="group" aria-label="Tamaño de vista">
+      <button type="button" class="btn" data-size="desktop" aria-pressed="true">Escritorio</button>
+      <button type="button" class="btn" data-size="mobile" aria-pressed="false">Móvil</button>
+    </div>
+    <div class="choice photo-choice">
+      <label for="rz-foto">Probar con mi foto</label>
+      <input id="rz-foto" class="form-control" type="file" accept="image/*" data-file>
+    </div>
+    <span class="sr-only" aria-live="polite" data-announcement></span>
+  </div>
+  <p class="preview-status text-small" aria-hidden="true" data-route-status></p>
+
+  <div class="site">
+    <header class="bar wrap">
+      <a class="wordmark" href="#rz-inicio" data-to="inicio" aria-label="RZ. Volver a Inicio">RZ<span>.</span></a>
+      <a class="bar-contact bar-contact--narrow" href="/cv/" data-planned="CV y contacto">CV y contacto</a>
+      <nav class="nav-links" aria-label="Navegación del portafolio">
+        <a href="#rz-inicio" data-to="inicio" aria-current="page">Inicio</a>
+        <a href="#rz-proyectos" data-to="proyectos">Proyectos</a>
+        <a href="/casos-de-estudio/" data-planned="Casos de estudio">Casos de estudio</a>
+        <a href="/sobre-mi/" data-planned="Sobre mí">Sobre mí</a>
+      </nav>
+      <a class="bar-contact bar-contact--wide" href="/cv/" data-planned="CV y contacto">CV y contacto</a>
+    </header>
+
+    <main class="wrap" aria-label="Contenido del portafolio">
+      <section class="home-view" id="rz-inicio" data-panel="inicio" aria-labelledby="rz-titulo-inicio">
+        <div class="home">
+          <header class="intro-title">
+            <h1 class="display" id="rz-titulo-inicio">Roberto Zamora</h1>
+            <p class="intro-role">Estudiante de Ingeniería en Software</p>
+          </header>
+          <div class="intro-body">
+            <p class="lead">Me interesa entender cómo funciona un negocio y desarrollar software que le ayude en el día a día. Busco una pasantía o un puesto junior.</p>
+            <div class="intro-actions">
+              <a class="action" href="#rz-proyectos" data-to="proyectos">Ver proyectos <span class="arrow" aria-hidden="true">→</span></a>
+              <a class="action action-secondary" href="/cv/" data-planned="CV y contacto">Ver mi CV</a>
+            </div>
+          </div>
+          <div class="portrait-frame">
+            <div class="portrait">
+              <img class="portrait-photo" alt="Retrato personal" data-portrait hidden>
+              <div class="portrait-placeholder" data-placeholder>Tu foto</div>
+            </div>
+          </div>
+        </div>
+        <section class="featured-project" aria-labelledby="rz-destacado">
+          <div class="featured-title">
+            <h2 id="rz-destacado">Proyecto destacado</h2>
+            <h3>Portafolio web</h3>
+          </div>
+          <div class="featured-detail">
+            <p>Un sitio que reúne fichas de proyecto y casos de estudio para conocer el contexto de cada solución y revisar aportes concretos.</p>
+            <a class="plain-link" href="#rz-ficha" data-to="ficha" aria-label="Ver ficha de Portafolio web"><span class="link-label">Ver ficha</span> <span class="arrow" aria-hidden="true">→</span></a>
+          </div>
+        </section>
+        <section class="interests" aria-labelledby="rz-intereses">
+          <h2 id="rz-intereses">Áreas de interés</h2>
+          <ul class="interest-list" role="list">
+            <li><h3>Análisis funcional</h3><p>Procesos y requisitos.</p></li>
+            <li><h3>Calidad de software</h3><p>Pruebas y seguimiento de defectos.</p></li>
+            <li><h3>Desarrollo web</h3><p>Diseño e implementación de aplicaciones.</p></li>
+          </ul>
+        </section>
+      </section>
+
+      <section class="interior" id="rz-proyectos" data-panel="proyectos" aria-labelledby="rz-titulo-proyectos" hidden>
+        <header class="catalog-intro">
+          <h1 class="display" id="rz-titulo-proyectos">Proyectos</h1>
+          <p class="lead">Qué resuelve cada proyecto y qué puedes consultar.</p>
+        </header>
+        <ul class="ledger" role="list">
+          <li class="ledger-row">
+            <h2>Portafolio web</h2>
+            <p>Sitio profesional para presentar proyectos y aportes verificables.</p>
+            <a class="plain-link" href="#rz-ficha" data-to="ficha" aria-label="Ver ficha de Portafolio web"><span class="link-label">Ver ficha</span> <span class="arrow" aria-hidden="true">→</span></a>
+          </li>
+          <li class="ledger-row">
+            <h2>RFM CORE</h2>
+            <p>Sistema de gestión comercial y operativa de un negocio real.</p>
+            <p class="status">Ficha pendiente</p>
+          </li>
+          <li class="ledger-row">
+            <h2>Claridez</h2>
+            <p>Plataforma SaaS B2B para gestión de salones de eventos.</p>
+            <p class="status">Ficha pendiente</p>
+          </li>
+        </ul>
+      </section>
+
+      <article class="interior detail" id="rz-ficha" data-panel="ficha" aria-labelledby="rz-titulo-ficha" hidden>
+        <header class="detail-intro">
+          <a class="plain-link" href="#rz-proyectos" data-to="proyectos"><span class="arrow" aria-hidden="true">←</span> <span class="link-label">Volver a Proyectos</span></a>
+          <h1 class="display" id="rz-titulo-ficha">Portafolio web</h1>
+          <p class="lead">Un espacio para entender qué resuelve cada proyecto y examinar una contribución concreta.</p>
+        </header>
+        <dl class="facts" aria-label="Datos del proyecto">
+          <div><dt>Estado</dt><dd>Desarrollo en curso</dd></div>
+          <div><dt>Tecnologías</dt><dd>React, TypeScript y Vite</dd></div>
+        </dl>
+        <div class="project-story">
+          <section aria-labelledby="rz-problema">
+            <h2 id="rz-problema">El problema</h2>
+            <p>Reclutadores y equipos técnicos necesitan entender la solución completa y encontrar el aporte personal que pueden evaluar.</p>
+          </section>
+          <section aria-labelledby="rz-solucion">
+            <h2 id="rz-solucion">La solución</h2>
+            <p>El catálogo facilita la exploración. La ficha explica qué resuelve el proyecto y el caso presenta una decisión y la evidencia que la respalda.</p>
+          </section>
+          <section aria-labelledby="rz-participacion">
+            <h2 id="rz-participacion">Mi participación</h2>
+            <p>Revisé el código y la documentación y aprobé la configuración técnica, la navegación y la estrategia inicial de prerenderizado.</p>
+          </section>
+        </div>
+      </article>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document.getElementById("portafolio-rz");
+  const select = root.querySelector("[data-view]");
+  const announcement = root.querySelector("[data-announcement]");
+  const routeStatus = root.querySelector("[data-route-status]");
+  const panels = [...root.querySelectorAll("[data-panel]")];
+  const nav = [...root.querySelectorAll(".nav-links [data-to]")];
+  const sizes = [...root.querySelectorAll("button[data-size]")];
+  const photoInput = root.querySelector("[data-file]");
+  const portrait = root.querySelector("[data-portrait]");
+  const placeholder = root.querySelector("[data-placeholder]");
+  let portraitUrl;
+
+  function show(view) {
+    routeStatus.textContent = "";
+    for (const panel of panels) panel.hidden = panel.dataset.panel !== view;
+    select.value = view;
+    for (const item of nav) {
+      if (item.dataset.to === (view === "ficha" ? "proyectos" : view)) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
+    }
+    announcement.textContent = select.selectedOptions[0].text;
+  }
+
+  select.addEventListener("change", () => show(select.value));
+  photoInput.addEventListener("change", () => {
+    const file = photoInput.files[0];
+    if (!file) return;
+    photoInput.setCustomValidity("");
+    if (portraitUrl) URL.revokeObjectURL(portraitUrl);
+    portraitUrl = URL.createObjectURL(file);
+    portrait.src = portraitUrl;
+  });
+  portrait.addEventListener("load", () => {
+    portrait.hidden = false;
+    placeholder.hidden = true;
+    show("inicio");
+    announcement.textContent = "Retrato actualizado";
+  });
+  portrait.addEventListener("error", () => {
+    portrait.hidden = true;
+    placeholder.hidden = false;
+    photoInput.value = "";
+    photoInput.setCustomValidity("Elige una imagen que pueda abrirse, como JPEG, PNG o WebP.");
+    photoInput.reportValidity();
+  });
+  root.addEventListener("click", (event) => {
+    const planned = event.target.closest("a[data-planned]");
+    if (planned) {
+      event.preventDefault();
+      routeStatus.textContent = `${planned.dataset.planned} se muestra como parte de la navegación prevista.`;
+      announcement.textContent = routeStatus.textContent;
+      routeStatus.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    const link = event.target.closest("a[data-to]");
+    if (link) {
+      event.preventDefault();
+      show(link.dataset.to);
+      if (link.closest("[data-panel]")) root.querySelector('.nav-links [aria-current="page"]').focus({ preventScroll: true });
+      root.querySelector(".bar").scrollIntoView({ block: "nearest" });
+    }
+    const size = event.target.closest("button[data-size]");
+    if (size) {
+      root.dataset.size = size.dataset.size;
+      for (const button of sizes) button.setAttribute("aria-pressed", String(button === size));
+    }
+  });
+})();
+</script>
+
+

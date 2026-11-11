@@ -1,14 +1,16 @@
 # Informe del incremento 2
 
-**Estado · Implementado para revisión local**
+**Estado · Primera implementación disponible en local. Dirección RZ. aprobada para integrar.**
 
-## Revisión visual
+La referencia vigente para la integración es RZ. Las capturas y los resultados que siguen corresponden a la primera implementación. [Diseño aprobado](diseno-ux-ui.md#rz--dirección-vigente)
+
+## Revisión visual de la primera implementación
 
 Ejecuta `npm run build:prueba` y `npm run preview:prueba`. En `http://127.0.0.1:8788/`, recorre Inicio → Proyectos → Portafolio web. Inicio incluye el acceso al caso destacado de revisión y al CV. El contacto se mantiene en la cabecera. En Proyectos, cada fila resume el propósito y el estado. La ficha individual añade contexto, problema, propósito, solución, participación, tecnologías y enlaces a la documentación y al caso disponible.
 
 `npm run revision:visual` genera `.local/revision-incremento-2/index.html` con el prototipo y la implementación en paralelo a 1280, 390 y 320 px. Las tres vistas conservan la tipografía, la paleta, la jerarquía y el reflujo de la referencia. La aplicación usa el marco de 1120 px de la base aprobada en el incremento 1. Los objetivos de interacción de 44 px y la longitud del contenido documentado aumentan la altura de algunos bloques.
 
-Se archivó el HTML original de fase 2. Su SHA-256 coincide con el artefacto del chat y es `ccb211da19058ef9473e6d269249fbef11aa5c20eab461ab49374cf24f4e3b9b`. Para generar las capturas comparativas, el script carga las fuentes locales de la aplicación en ambas vistas. [Prototipo aprobado](referencias/fase-2/editorial-revision-final.html)
+Se archivó el HTML original de fase 2. Su SHA-256 coincide con el artefacto del chat y es `ccb211da19058ef9473e6d269249fbef11aa5c20eab461ab49374cf24f4e3b9b`. Para generar las capturas comparativas, el script carga las fuentes locales de la aplicación en ambas vistas. [Prototipo original de fase 2](referencias/fase-2/editorial-revision-final.html)
 
 ## Contenido y publicación
 

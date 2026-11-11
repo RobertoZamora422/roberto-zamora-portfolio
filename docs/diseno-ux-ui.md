@@ -1,14 +1,30 @@
 # Cierre de diseño UX/UI
 
-**Estado · Dirección visual aprobada el 11 de noviembre de 2026**
+**Estado · RZ. aprobado como dirección visual del incremento 2. Integración pendiente.**
 
-## Dirección aprobada
+## RZ. · Dirección vigente
+
+La aprobación cubre la cabecera compartida, Inicio, Proyectos y la ficha individual en escritorio y móvil. La referencia archivada conserva la maqueta aprobada. [Maqueta RZ.](referencias/incremento-2/portafolio-rz.html)
+
+| Elemento | Criterio aprobado |
+| --- | --- |
+| Identidad visual | **RZ.** como firma y enlace a Inicio, con el punto en verde. **Archivo Black** en titulares y **Geist** en lectura y controles. Fondo `#F2F1E9`, texto `#191E19`, verde `#30503C` para acciones y verde oscuro `#1A2E26` para superficies destacadas. |
+| Cabecera | Inicio, Proyectos, Casos de estudio y Sobre mí en la navegación principal. **CV y contacto** como acceso destacado. En móvil, la firma y ese acceso ocupan la primera fila y los demás enlaces pasan a la siguiente. |
+| Inicio | El nombre y la presentación profesional llevan el peso visual. El retrato acompaña a la izquierda y ocupa aproximadamente una quinta parte del ancho en escritorio. En móvil se mantiene pequeño junto al nombre. Después de la presentación aparecen los accesos a Proyectos y al CV, el proyecto destacado y las áreas de interés. |
+| Proyectos | Catálogo con filas abiertas y divisores finos. Cada entrada muestra nombre, alcance y estado de consulta. |
+| Ficha individual | Nombre y entradilla al abrir. Una franja reúne estado y tecnologías. El cuerpo distingue problema, solución y participación personal. |
+
+La fotografía, el nombre público y los textos de perfil se incorporan según la aprobación editorial de cada recurso. La maqueta representa las rutas de Casos de estudio, Sobre mí y CV y contacto en la cabecera. [Condiciones de publicación](requisitos.md#condiciones-de-publicación)
+
+## Cierre histórico de fase 2
+
+### Dirección original
 
 **Editorial contemporánea** como identidad principal. La composición combina titulares serif, fondo marfil y azul profundo con la estructura modular de **Estudio de producto**. De **Cuaderno de ingeniería** se adoptan los metadatos, las fichas de evidencia y los estados de documentación y validación.
 
 La revisión final cubrió Inicio, el catálogo, una página de proyecto de RFM CORE, un caso de estudio completo y CV y contacto en escritorio, 390 px y 320 px. El repositorio conserva la [visualización original aprobada](referencias/fase-2/editorial-revision-final.html) del chat. Las comprobaciones del prototipo se repiten sobre la aplicación con los [requisitos de fase 1](requisitos.md).
 
-## Sistema visual
+### Sistema visual original
 
 | Elemento | Criterio de implementación |
 | --- | --- |
@@ -21,7 +37,7 @@ La revisión final cubrió Inicio, el catálogo, una página de proyecto de RFM 
 
 Centralizar tipografía, color, espaciado y estados en estilos compartidos. Reutilizar las mismas reglas en las páginas, los índices, el CV y el 404. Comprobar contraste y foco sobre las superficies finales.
 
-## Patrones por vista
+### Patrones del prototipo original
 
 | Vista | Jerarquía y comportamiento |
 | --- | --- |
@@ -35,7 +51,7 @@ La cabecera vincula el nombre con Inicio y mantiene accesos separados al CV y al
 
 En la composición estrecha, como en 390 y 320 px, la identidad, el CV y Contacto ocupan la primera fila y los enlaces principales pasan a la segunda. Los bloques pasan a una columna. El índice del caso se vuelve un desplegable en el flujo del documento e indica la sección activa cuando está cerrado. El cambio de composición se produce en torno a 620 px de ancho disponible. Se comprobarán el reflujo y el foco en la aplicación.
 
-## Contenido para lanzamiento
+### Contenido previsto para lanzamiento
 
 - Sustituir «Tu nombre» y los demás marcadores tras confirmar el nombre profesional, la propuesta de valor, el CV y el contacto públicos.
 - Priorizar **RFM CORE** como proyecto destacado si su contenido está verificado y aprobado. Si queda pendiente y otro proyecto de negocio habilita el lanzamiento, destacar ese proyecto aprobado.

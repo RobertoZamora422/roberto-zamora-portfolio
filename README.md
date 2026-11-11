@@ -6,7 +6,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 
 ## Estado del proyecto
 
-**Fase 3 · Incremento 2 listo para revisión.** Inicio, el catálogo y la ficha de proyecto se generan a partir del registro tipado. La revisión local permite recorrer las tres vistas mientras se aprueba el contenido de publicación.
+**Fase 3 · Incremento 2.** Inicio, el catálogo y la ficha de proyecto se generan a partir del registro tipado. La dirección visual RZ. está aprobada para integrar en estas vistas.
 
 | Documento | Qué encontrarás |
 | --- | --- |

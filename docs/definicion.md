@@ -55,6 +55,7 @@ Los ajustes menores se resuelven dentro de cada fase. La revisión se concentra 
 | Desarrollo independiente de la preparación de evidencias y primer lanzamiento con un caso de negocio aprobado. | Acordada. |
 | React, TypeScript, Vite y Cloudflare Pages, con contenido versionado y sin backend inicial. | Acordada. |
 | React Router con prerenderizado estático de las rutas públicas. | Recomendación provisional aprobada, sujeta a la prueba de fase 3. |
-| Editorial contemporánea con estructura modular de Estudio de producto y documentación técnica de Cuaderno de ingeniería. | Aprobada al cerrar fase 2. |
+| Editorial contemporánea con estructura modular de Estudio de producto y documentación técnica de Cuaderno de ingeniería. | Dirección original de fase 2. Sustituida por RZ. durante la revisión del incremento 2. |
+| RZ. con presentación profesional, retrato secundario a la izquierda y navegación compartida. | Aprobada como dirección visual del incremento 2. |
 | Nombre profesional y propuesta de valor en portada, con prioridad a RFM CORE si su contenido está aprobado. | Acordada. Los datos y materiales públicos se confirmarán antes de publicar. |
 | Primer caso, materiales autorizados, CV, correo y URL pública. | Pendientes de confirmación antes de publicar. |

@@ -1,6 +1,6 @@
 # Plan técnico de fase 3
 
-**Estado · Incremento 1 aprobado. Incremento 2 implementado y listo para revisión**
+**Estado · Incremento 1 aprobado. Dirección RZ. aprobada para integrar en el incremento 2.**
 
 La fase desarrolla la [dirección visual aprobada](diseno-ux-ui.md) con React, TypeScript y Vite sobre Cloudflare Pages. La preparación de contenido de negocio avanza en paralelo. Los [requisitos de fase 1](requisitos.md) y sus condiciones de publicación son los criterios de aceptación.
 
@@ -21,6 +21,7 @@ El [informe del incremento 1](informe-incremento-1.md) registra las pruebas ejec
 
 - Implementar el registro TypeScript de perfil, proyectos, casos y evidencias según el [modelo acordado](arquitectura-de-informacion.md). Generar rutas y listados desde las entradas aprobadas. Detectar slugs duplicados por entidad, referencias inválidas y archivos requeridos ausentes.
 - Construir Inicio, el catálogo y la plantilla de proyecto. Preparar los espacios para nombre y propuesta de valor, caso destacado y proyecto principal. Priorizar RFM CORE al disponer de contenido verificado y aprobado.
+- Aplicar la dirección RZ. a Inicio, el catálogo, la ficha y la cabecera compartida. Comparar la integración con la maqueta aprobada en escritorio, 390 px y 320 px. [Dirección vigente](diseno-ux-ui.md#rz--dirección-vigente)
 
 **Salida verificable.** Un proyecto aprobado aparece en el catálogo y se puede abrir por enlace directo. Una página en borrador queda fuera de rutas, enlaces y compilación pública. Con un solo proyecto, Inicio, catálogo y ficha presentan información distinta. La compilación pública excluye los datos de prueba, sus recursos y los marcadores.
 
