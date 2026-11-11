@@ -1,6 +1,6 @@
 # Plan técnico de fase 3
 
-**Estado · Preparado para iniciar el incremento 1**
+**Estado · Incremento 1 implementado y listo para revisión**
 
 La fase desarrolla la [dirección visual aprobada](diseno-ux-ui.md) con React, TypeScript y Vite sobre Cloudflare Pages. La preparación de contenido de negocio avanza en paralelo. Los [requisitos de fase 1](requisitos.md) y sus condiciones de publicación son los criterios de aceptación.
 
@@ -14,6 +14,8 @@ La fase desarrolla la [dirección visual aprobada](diseno-ux-ui.md) con React, T
 **Salida verificable.** Una instalación con `npm ci` puede verificar tipos y compilar. La cabecera y la navegación se recorren con teclado y funcionan a 320 px y en escritorio. La prueba local confirma HTML legible sin JavaScript, acceso directo, recarga, navegación interna y retroceso, respuestas a las peticiones de los archivos de navegación `.data` y HTTP 404 real para un slug desconocido. Registrar la comprobación y cualquier desviación antes de ampliar las páginas.
 
 La prueba en el alojamiento real se hará cuando haya contenido autorizado para una vista previa. Si la prueba local o la alojada requiere un servidor en ejecución o una capa adicional de enrutamiento, revisar Vite multipágina antes de continuar con esa estrategia. La prueba alojada sigue siendo necesaria antes de aprobar una versión pública.
+
+El [informe del incremento 1](informe-incremento-1.md) registra las pruebas ejecutadas y sus resultados.
 
 ## Incremento 2 · Contenido, Inicio y Proyectos
 
@@ -36,4 +38,4 @@ La prueba en el alojamiento real se hará cuando haya contenido autorizado para 
 
 **Salida verificable.** La versión candidata supera los controles de fase 1 en la aplicación implementada. Quedan identificados el caso de negocio con evidencia autorizada, el perfil, CV, correo, decisión sobre el PDF y URL pública para la aprobación de publicación. La verificación en producción corresponde a la fase 4.
 
-El titular del portafolio conserva el control de los commits y del push. El primer trabajo de implementación será el incremento 1.
+El titular del portafolio conserva el control de los commits y del push. El incremento 2 se abre tras la revisión del incremento 1.

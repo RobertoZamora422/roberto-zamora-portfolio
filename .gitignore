@@ -5,6 +5,7 @@
 /coverage/
 /.vite/
 /.wrangler/
+/.react-router/
 
 # Configuración local y material de prueba
 /.local/
