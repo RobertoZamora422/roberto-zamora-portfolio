@@ -1,19 +1,22 @@
-import { Link, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import { presentacionBase } from "../contenido/publico";
-import { cargarContenido } from "../contenido/registro.server";
+import { cargarContenido, urlRecursoLocal } from "../contenido/registro.server";
 import { paths, rutaCaso, rutaProyecto } from "../rutas";
-import { ActionLink, PageIntro } from "../ui/elementos";
+import { ActionLink, Arrow, TextLink } from "../ui/elementos";
 
 export async function loader() {
   const { perfil, proyectoDestacado, casoDestacado } = await cargarContenido();
+  const retrato = perfil?.retrato?.revision === "aprobado" ? perfil.retrato : undefined;
   return {
     nombre: perfil?.nombre,
     presentacion: perfil?.presentacion ?? presentacionBase.presentacion,
     propuesta: perfil?.propuesta ?? presentacionBase.propuesta,
     oportunidades: perfil?.oportunidades ?? presentacionBase.oportunidades,
+    intereses: perfil?.intereses,
+    retrato: retrato && { src: urlRecursoLocal(retrato.archivo), alt: retrato.alt },
+    retratoDeRevision: process.env.PORTFOLIO_PREVIEW === "1" ? "Tu foto" : undefined,
     proyecto: proyectoDestacado && {
       nombre: proyectoDestacado.ficha.nombre,
-      estado: proyectoDestacado.ficha.estado,
       resumen: proyectoDestacado.pagina.destacado,
       ruta: rutaProyecto(proyectoDestacado.slug),
     },
@@ -26,38 +29,62 @@ export async function loader() {
 }
 
 export default function Inicio() {
-  const { nombre, presentacion, propuesta, oportunidades, proyecto, caso } = useLoaderData<typeof loader>();
+  const { nombre, presentacion, propuesta, oportunidades, proyecto, caso, intereses, retrato, retratoDeRevision } =
+    useLoaderData<typeof loader>();
+  const mostrarRetrato = retrato || retratoDeRevision;
 
   return (
-    <div className="editorial-page page-stack">
-      <div className={caso ? "home-hero home-hero--featured" : "home-hero"}>
-        <PageIntro title={nombre ?? presentacion} kicker={<p className="editorial-kicker">{oportunidades}</p>}>
-          {nombre && <p className="editorial-lead">{presentacion}</p>}
-          <p className="editorial-line">{propuesta}</p>
+    <div className="home-page">
+      <div className={mostrarRetrato ? "home-hero home-hero--portrait" : "home-hero"}>
+        <header className="home-title">
+          <h1>{nombre ?? presentacion}</h1>
+          <p className="home-role">{nombre ? presentacion : oportunidades}</p>
+        </header>
+        <div className="home-intro">
+          <p className="lead">{propuesta}{nombre && ` ${oportunidades}`}</p>
           <div className="actions">
-            <ActionLink to={caso?.ruta ?? paths.proyectos} primary>
-              {caso ? "Leer caso destacado" : "Ver proyectos"}
-            </ActionLink>
-            <ActionLink to={paths.cv}>Ver CV</ActionLink>
+            <ActionLink to={paths.proyectos} primary>Ver proyectos <Arrow /></ActionLink>
+            <ActionLink to={paths.cv}>Ver mi CV</ActionLink>
           </div>
-        </PageIntro>
-        {caso && (
-          <section className="panel" aria-labelledby="caso-destacado">
-            <p className="editorial-kicker">Caso destacado</p>
-            <h2 id="caso-destacado">{caso.titulo}</h2>
-            <p>{caso.resumen}</p>
-          </section>
+        </div>
+        {mostrarRetrato && (
+          <div className="portrait-frame">
+            <div className="portrait">
+              {retrato
+                ? <img src={retrato.src} alt={retrato.alt} />
+                : <div className="portrait-placeholder">{retratoDeRevision}</div>}
+            </div>
+          </div>
         )}
       </div>
       {proyecto && (
         <section className="featured-project" aria-labelledby="proyecto-destacado">
-          <h2 className="editorial-heading" id="proyecto-destacado">Proyecto destacado</h2>
-          <article className="panel">
-            <p className="editorial-meta">{proyecto.estado}</p>
+          <div className="featured-project__title">
+            <h2 id="proyecto-destacado">Proyecto destacado</h2>
             <h3>{proyecto.nombre}</h3>
+          </div>
+          <div className="featured-project__detail">
             <p>{proyecto.resumen}</p>
-            <Link className="editorial-link" to={proyecto.ruta}>Ver el proyecto</Link>
-          </article>
+            <TextLink to={proyecto.ruta} label={`Ver ficha de ${proyecto.nombre}`}>Ver ficha</TextLink>
+          </div>
+        </section>
+      )}
+      {!!intereses?.length && (
+        <section className="home-interests" aria-labelledby="areas-de-interes">
+          <h2 id="areas-de-interes">Áreas de interés</h2>
+          <ul className="interest-list" role="list">
+            {intereses.map(({ titulo, descripcion }) => (
+              <li key={titulo}><h3>{titulo}</h3><p>{descripcion}</p></li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {caso && (
+        <section className="home-case" aria-labelledby="caso-destacado">
+          <h2 id="caso-destacado">Caso destacado</h2>
+          <h3>{caso.titulo}</h3>
+          <p>{caso.resumen}</p>
+          <TextLink to={caso.ruta}>Leer caso destacado</TextLink>
         </section>
       )}
     </div>

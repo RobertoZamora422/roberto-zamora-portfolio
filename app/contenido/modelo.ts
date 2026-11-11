@@ -8,6 +8,8 @@ export interface Perfil {
   oportunidades: string;
   formacion: readonly { programa: string; institucion: string; periodo: string }[];
   trayectoria: readonly { descripcion: string; evidencias: readonly string[] }[];
+  retrato?: { revision: Revision; archivo: string; alt: string };
+  intereses?: readonly { titulo: string; descripcion: string }[];
   correo?: string;
   enlaces?: readonly { titulo: string; url: string }[];
   casos?: readonly string[];

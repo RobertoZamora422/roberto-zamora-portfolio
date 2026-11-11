@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { seleccionarContenido } from "../app/contenido/seleccion.ts";
 import { validarRegistro } from "../app/contenido/validar.ts";
-import { registroFixture } from "./registro-fixture.mjs";
+import { perfilAprobado, registroFixture } from "./registro-fixture.mjs";
 
 test("La ficha y la página se aprueban de forma independiente y RFM CORE tiene prioridad", () => {
   const registro = registroFixture();
@@ -65,4 +65,20 @@ test("Devuelve solo los archivos aprobados aunque el borrador exista en disco", 
   registro.evidencias.push({ ...evidencia, id: "borrador", revision: "borrador", recurso: { archivo: "borrador.txt" } });
   await Promise.all([writeFile(join(carpeta, evidencia.recurso.archivo), "QA"), writeFile(join(carpeta, "borrador.txt"), "QA")]);
   assert.deepEqual([...await validarRegistro(registro, carpeta)].map(([archivo]) => archivo), [evidencia.recurso.archivo]);
+});
+
+test("El retrato requiere aprobación propia y del perfil", async (t) => {
+  const carpeta = await mkdtemp(join(tmpdir(), "portafolio-retrato-"));
+  t.after(() => rm(carpeta, { recursive: true, force: true }));
+  const perfil = structuredClone(perfilAprobado);
+  const registro = { proyectos: [], casos: [], evidencias: [], perfil };
+  const { archivo } = perfil.retrato;
+  await assert.rejects(validarRegistro(registro, carpeta), /Falta el archivo «retrato-qa.png»/);
+  await writeFile(join(carpeta, archivo), "QA");
+  assert.deepEqual([...await validarRegistro(registro, carpeta)].map(([ruta]) => ruta), [archivo]);
+  perfil.retrato.revision = "borrador";
+  assert.equal((await validarRegistro(registro, carpeta)).size, 0);
+  perfil.retrato.revision = "aprobado";
+  perfil.revision = "borrador";
+  assert.equal((await validarRegistro(registro, carpeta)).size, 0);
 });

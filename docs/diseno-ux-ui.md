@@ -1,6 +1,6 @@
 # Cierre de diseño UX/UI
 
-**Estado · RZ. aprobado como dirección visual del incremento 2. Integración pendiente.**
+**Estado · RZ. aprobado e integrado en el incremento 2.**
 
 ## RZ. · Dirección vigente
 
@@ -15,6 +15,8 @@ La aprobación cubre la cabecera compartida, Inicio, Proyectos y la ficha indivi
 | Ficha individual | Nombre y entradilla al abrir. Una franja reúne estado y tecnologías. El cuerpo distingue problema, solución y participación personal. |
 
 La fotografía, el nombre público y los textos de perfil se incorporan según la aprobación editorial de cada recurso. La maqueta representa las rutas de Casos de estudio, Sobre mí y CV y contacto en la cabecera. [Condiciones de publicación](requisitos.md#condiciones-de-publicación)
+
+La comparación en escritorio y móvil y las diferencias de integración están registradas en el [informe de integración de RZ.](informe-integracion-rz.md).
 
 ## Cierre histórico de fase 2
 

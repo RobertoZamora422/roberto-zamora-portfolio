@@ -26,3 +26,22 @@ export function ActionLink({
     </Link>
   );
 }
+
+export function Arrow({ back = false }: { back?: boolean }) {
+  return <span className="link-arrow" aria-hidden="true">{back ? "←" : "→"}</span>;
+}
+
+export function TextLink({ to, children, back = false, label }: {
+  to: string;
+  children: ReactNode;
+  back?: boolean;
+  label?: string;
+}) {
+  return (
+    <Link className="text-link" to={to} aria-label={label}>
+      {back && <Arrow back />}
+      <span className="text-link__label">{children}</span>
+      {!back && <Arrow />}
+    </Link>
+  );
+}

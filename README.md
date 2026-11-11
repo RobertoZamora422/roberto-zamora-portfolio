@@ -6,7 +6,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 
 ## Estado del proyecto
 
-**Fase 3 · Incremento 2.** Inicio, el catálogo y la ficha de proyecto se generan a partir del registro tipado. La dirección visual RZ. está aprobada para integrar en estas vistas.
+**Fase 3 · Incremento 2.** La cabecera, Inicio, el catálogo y la ficha de proyecto integran la dirección visual RZ. Las vistas se generan a partir del registro tipado.
 
 | Documento | Qué encontrarás |
 | --- | --- |
@@ -17,6 +17,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 | [Plan técnico de fase 3](docs/plan-tecnico-fase-3.md) | Orden de implementación y comprobaciones por incremento. |
 | [Informe del incremento 1](docs/informe-incremento-1.md) | Archivos, decisiones, comandos, resultados y comprobaciones pendientes. |
 | [Informe del incremento 2](docs/informe-incremento-2.md) | Revisión visual, flujo editorial y resultados de las pruebas. |
+| [Informe de integración de RZ.](docs/informe-integracion-rz.md) | Cambios, pruebas y comparación con la maqueta aprobada. |
 
 ## Desarrollo local
 
@@ -45,11 +46,13 @@ npx playwright-core install chromium
 npm run revision:visual
 ```
 
-`npm test` verifica el registro. `npm run test:sitio` verifica ambas compilaciones y los recorridos en Chromium y Wrangler. `npm run revision:visual` también genera una galería comparativa en `.local/revision-incremento-2/index.html`. Si usas un Chromium instalado, define `CHROMIUM_PATH` con la ruta a su ejecutable antes de ejecutar las pruebas de sitio.
+`npm test` verifica el registro. `npm run test:sitio` verifica ambas compilaciones y los recorridos en Chromium y Wrangler. `npm run revision:visual` también genera la galería comparativa de RZ. en `.local/revision-rz/index.html`. Si usas un Chromium instalado, define `CHROMIUM_PATH` con la ruta a su ejecutable antes de ejecutar las pruebas de sitio.
 
 ## Registro de contenido
 
 El modelo vive en `app/contenido/modelo.ts` y las entradas para publicación se incorporan a `app/contenido/publico.ts`. Aprueba la ficha y la página individual por separado. Inicio, catálogo y ficha toman sus textos de campos distintos de la misma entrada. Para adjuntar una evidencia local, referencia el archivo relativo a `recursos-contenido/` desde una evidencia aprobada. La compilación copia los archivos aprobados bajo `/recursos/` y valida los identificadores, las referencias y los archivos.
+
+El retrato es opcional. Para incorporar uno, registra `perfil.retrato` con la ruta relativa a `recursos-contenido/`, el texto alternativo y su estado de aprobación. El perfil y el retrato requieren aprobación para aparecer en el artefacto público.
 
 La preparación de RFM CORE y Claridez y la ficha de Portafolio web para revisión usan `app/pruebas/datos.ts`. El registro público se reserva para material autorizado. Los originales de negocio y los borradores sensibles se custodian fuera del repositorio.
 

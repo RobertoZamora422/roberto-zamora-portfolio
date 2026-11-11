@@ -1,6 +1,6 @@
 # Plan técnico de fase 3
 
-**Estado · Incremento 1 aprobado. Dirección RZ. aprobada para integrar en el incremento 2.**
+**Estado · Incremento 1 aprobado. Integración de RZ. en el incremento 2 disponible para revisión.**
 
 La fase desarrolla la [dirección visual aprobada](diseno-ux-ui.md) con React, TypeScript y Vite sobre Cloudflare Pages. La preparación de contenido de negocio avanza en paralelo. Los [requisitos de fase 1](requisitos.md) y sus condiciones de publicación son los criterios de aceptación.
 
@@ -25,7 +25,7 @@ El [informe del incremento 1](informe-incremento-1.md) registra las pruebas ejec
 
 **Salida verificable.** Un proyecto aprobado aparece en el catálogo y se puede abrir por enlace directo. Una página en borrador queda fuera de rutas, enlaces y compilación pública. Con un solo proyecto, Inicio, catálogo y ficha presentan información distinta. La compilación pública excluye los datos de prueba, sus recursos y los marcadores.
 
-El [informe del incremento 2](informe-incremento-2.md) registra el estado del contenido, las pruebas reproducibles y la revisión visual.
+El [informe del incremento 2](informe-incremento-2.md) registra el contenido y las pruebas iniciales. El [informe de integración de RZ.](informe-integracion-rz.md) documenta la implementación vigente y su comparación visual.
 
 ## Incremento 3 · Casos, evidencias, perfil y CV
 

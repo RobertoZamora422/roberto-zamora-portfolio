@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import {
+  Link,
   Links,
   Meta,
   Outlet,
@@ -10,12 +11,11 @@ import {
   useRouteError,
   useRouteLoaderData,
 } from "react-router";
-import "@fontsource/instrument-serif/latin-400.css";
-import "@fontsource/instrument-serif/latin-400-italic.css";
-import "@fontsource-variable/instrument-sans";
-import "@fontsource/ibm-plex-mono/latin-500.css";
+import "@fontsource/archivo-black/latin-400.css";
+import "@fontsource-variable/geist";
 import { SiteHeader } from "./ui/cabecera";
 import { cargarContenido } from "./contenido/registro.server";
+import { paths } from "./rutas";
 import { NoEncontrada } from "./routes/no-encontrada";
 import { PageIntro } from "./ui/elementos";
 import "./styles.css";
@@ -33,6 +33,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const main = useRef<HTMLElement>(null);
   const datos = useRouteLoaderData<typeof loader>("root");
   const staticError = pathname.replace(/\/$/, "") === "/404";
+  const contactoActivo = pathname.replace(/\/$/, "") === "/cv" && hash === "#contacto";
 
   useEffect(() => {
     if (key === lastKey.current) return;
@@ -57,6 +58,9 @@ export function Layout({ children }: { children: ReactNode }) {
           <main className="main" id="contenido" ref={main} tabIndex={-1}>
             {children}
           </main>
+          <footer className="site-footer">
+            <Link to={paths.contacto} aria-current={contactoActivo ? "location" : undefined}>Contacto</Link>
+          </footer>
         </div>
         {!staticError && (
           <>

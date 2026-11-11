@@ -45,6 +45,17 @@ export const casoAprobado = {
   evidencias: [evidenciaAprobada.id],
 };
 
+export const perfilAprobado = {
+  revision: "aprobado",
+  nombre: "Perfil QA",
+  presentacion: "Presentación QA",
+  propuesta: "Propuesta QA.",
+  oportunidades: "Oportunidades QA.",
+  formacion: [],
+  trayectoria: [],
+  retrato: { revision: "aprobado", archivo: "retrato-qa.png", alt: "Retrato QA" },
+};
+
 export function registroFixture() {
   return structuredClone({
     proyectos: [proyectoAprobado],

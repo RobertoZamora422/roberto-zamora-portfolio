@@ -64,6 +64,14 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
   const evidencias = indexar("Evidencia", registro.evidencias, ({ id }) => id);
   const archivosAprobados = new Map<string, string>();
 
+  async function validarArchivo(origen: string, archivo: string, revision: Revision) {
+    if (!revisionLocal && archivo.startsWith("pruebas/")) {
+      throw new Error(`${origen}: recurso reservado para revisión local`);
+    }
+    const ruta = await resolverArchivo(carpetaRecursos, archivo);
+    if (revision === "aprobado") archivosAprobados.set(archivo, ruta);
+  }
+
   function validarEvidencias(origen: string, ids: readonly string[], revision: Revision) {
     if (revision === "aprobado" && ids.length === 0) throw new Error(`${origen}: falta evidencia aprobada`);
     for (const id of ids) validarReferencia(origen, id, evidencias, revision, (entrada) => entrada.revision);
@@ -105,20 +113,25 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
     if ("url" in recurso) {
       validarUrl(origen, recurso.url);
     } else {
-      if (!revisionLocal && recurso.archivo.startsWith("pruebas/")) {
-        throw new Error(`${origen}: recurso reservado para revisión local`);
-      }
-      const ruta = await resolverArchivo(carpetaRecursos, recurso.archivo);
-      if (revision === "aprobado") archivosAprobados.set(recurso.archivo, ruta);
+      await validarArchivo(origen, recurso.archivo, revision);
     }
   }
 
   if (registro.perfil) {
-    const { revision, nombre, presentacion, propuesta, oportunidades, formacion, trayectoria, casos: referencias, enlaces } = registro.perfil;
+    const { revision, nombre, presentacion, propuesta, oportunidades, formacion, trayectoria,
+      casos: referencias, enlaces, retrato, intereses } = registro.perfil;
     validarRevision("Perfil", revision);
     if (revision === "aprobado") {
       exigirTextos("Perfil", { nombre, presentacion, propuesta, oportunidades });
       for (const entrada of formacion) exigirTextos("Formación", entrada);
+      for (const entrada of intereses ?? []) exigirTextos("Área de interés", entrada);
+    }
+    if (retrato) {
+      validarRevision("Retrato", retrato.revision);
+      const revisionDelArchivo = revision === "aprobado" ? retrato.revision : "borrador";
+      if (revisionDelArchivo === "aprobado") exigirTextos("Retrato", { alt: retrato.alt });
+      if (!/\.(?:avif|jpe?g|png|webp)$/.test(retrato.archivo)) throw new Error("Retrato: formato de imagen inválido");
+      await validarArchivo("Retrato", retrato.archivo, revisionDelArchivo);
     }
     for (const { descripcion, evidencias: ids } of trayectoria) {
       if (revision === "aprobado") exigirTextos("Trayectoria", { descripcion });
