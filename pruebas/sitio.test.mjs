@@ -8,7 +8,7 @@ import { test } from "node:test";
 import { promisify } from "node:util";
 import { chromium } from "playwright-core";
 import { registroPublico } from "../app/contenido/publico.ts";
-import { anchos, capturarCasos, capturarRevision, vistas, vistasCasos } from "./capturas.mjs";
+import { anchos, capturarCasos, capturarEditorial, capturarRevision, vistas, vistasCasos } from "./capturas.mjs";
 import { perfilAprobado, registroFixture } from "./registro-fixture.mjs";
 import { conPages } from "./servidor.mjs";
 
@@ -21,7 +21,21 @@ const [catalogoCasos, caso] = vistasCasos.map(({ ruta }) => ruta);
 const recurso = "/recursos/pruebas/decision-portafolio-revision.txt";
 const tituloCaso = "Separar el proyecto del caso de estudio";
 const desconocidas = ["/proyectos/slug-desconocido/", "/casos-de-estudio/slug-desconocido/", "/ruta-desconocida/"];
-const marcasRevision = /decision-portafolio-revision|separar-proyecto-y-caso|Vista local de revisión|Recurso de revisión local|Registro sintético|Datos de prueba|Tu nombre|Tu foto|Probar con mi foto|data-planned/iu;
+const marcasRevision = /decision-portafolio-revision|separar-proyecto-y-caso|revision-editorial|Vista local de revisión|Recurso de revisión local|Registro sintético|Datos de prueba|Tu nombre|Tu foto|Probar con mi foto|data-planned/iu;
+const rutaRfm = "/proyectos/rfm-core/";
+const slugCasoRfm = "del-interes-comercial-al-contrato";
+const rutaCasoRfm = `/casos-de-estudio/${slugCasoRfm}/`;
+const tituloCasoRfm = "Del interés comercial al contrato";
+const evidenciasRfm = ["e01-proceso", "e02-trazabilidad", "e03-decisiones", "e04-verificacion"];
+const rutaEvidencia = (nombre) => `/recursos/revision-editorial/rfm-core/${nombre}.html`;
+const borradorEditorial = await readFile(".local/contenido-editorial/registro.json", "utf8").then(JSON.parse, (error) => {
+  if (error.code !== "ENOENT") throw error;
+});
+const casoRfm = borradorEditorial?.casos.find(({ slug }) => slug === slugCasoRfm);
+
+if (process.env.PORTFOLIO_CAPTURAS_EDITORIAL === "1" && !casoRfm) {
+  throw new Error("Falta el borrador local de RFM CORE para generar la galería editorial");
+}
 
 async function comprobarArtefacto(carpeta, marcas) {
   const archivos = await readdir(carpeta, { recursive: true, withFileTypes: true });
@@ -51,6 +65,14 @@ async function comprobarAccesibilidad(page, vista) {
 
 test("Artefacto público real sin datos locales y recuperación HTTP 404", async () => {
   await comprobarArtefacto(publico, marcasRevision);
+  const rutasExcluidas = evidenciasRfm.map(rutaEvidencia);
+  if (!registroPublico.proyectos.some(({ slug, pagina }) => slug === "rfm-core" && pagina?.revision === "aprobado")) {
+    rutasExcluidas.push(rutaRfm, rutaRfm + "_.data");
+  }
+  if (!registroPublico.casos.some(({ slug, revision }) => slug === slugCasoRfm && revision === "aprobado")) {
+    rutasExcluidas.push(rutaCasoRfm, rutaCasoRfm + "_.data");
+    await comprobarArtefacto(publico, /del-interes-comercial-al-contrato|Del interés comercial al contrato|rfm-e0[1-4]/iu);
+  }
   const html = await readFile(join(publico, "index.html"), "utf8");
   assert.doesNotMatch(html, /noindex/);
   assert.doesNotMatch(html, /<input[^>]+type="file"/);
@@ -66,7 +88,7 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
     if (!registroPublico.casos.some(({ revision }) => revision === "aprobado")) {
       assert.match(htmlCasos, /Por ahora no hay casos de estudio publicados/);
     }
-    await comprobar404(origin, [...desconocidas, caso, caso + "_.data", recurso]);
+    await comprobar404(origin, [...desconocidas, caso, caso + "_.data", recurso, ...rutasExcluidas]);
   });
 });
 
@@ -197,7 +219,7 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
     const evidencia = await fetch(origin + recurso);
     assert.equal(evidencia.status, 200);
     assert.match(await evidencia.text(), /Recurso de revisión local/);
-    await comprobar404(origin, [...desconocidas, "/proyectos/rfm-core/", "/proyectos/claridez/"]);
+    await comprobar404(origin, [...desconocidas, "/proyectos/claridez/"]);
 
     const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
     console.log(`Chromium ${browser.version()}`);
@@ -223,7 +245,7 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
       await page.goto(origin);
       await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Proyectos" }).click();
       await page.getByRole("heading", { name: "Proyectos", exact: true }).waitFor();
-      assert.equal(await page.locator(".project-row a").count(), 1);
+      assert.equal(await page.getByRole("link", { name: "Ver ficha de Portafolio web" }).count(), 1);
       const columnas = await page.locator(".project-row > p").evaluateAll((resumenes) => (
         resumenes.map((resumen) => resumen.getBoundingClientRect().left)
       ));
@@ -351,6 +373,92 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
           await capturarCasos(browser, origin, originPublico);
         }
       });
+    } finally {
+      await browser.close();
+    }
+  });
+});
+
+test("RFM CORE se puede revisar con sus cuatro evidencias y sus límites", {
+  skip: !casoRfm && "Sin borrador editorial local",
+  timeout: 120_000,
+}, async () => {
+  assert.equal(casoRfm.revision, "borrador");
+  const ficha = borradorEditorial.proyectos.find(({ slug }) => slug === "rfm-core");
+  assert.equal(ficha.ficha.revision, "borrador");
+  assert.equal(ficha.pagina.revision, "borrador");
+  assert.equal(casoRfm.evidencias.length, 4);
+  for (const id of casoRfm.evidencias) {
+    assert.equal(borradorEditorial.evidencias.find((evidencia) => evidencia.id === id)?.revision, "borrador");
+  }
+
+  await conPages(preview, async (origin) => {
+    for (const [ruta, titulo] of [[rutaRfm, "RFM CORE"], [rutaCasoRfm, tituloCasoRfm]]) {
+      const documento = await fetch(origin + ruta, { redirect: "manual" });
+      assert.equal(documento.status, 200, ruta);
+      const html = await documento.text();
+      assert(html.includes(`<h1>${titulo}</h1>`), ruta);
+      assert.match(html, /name="robots" content="noindex"/);
+      const datos = await fetch(origin + ruta + "_.data");
+      assert.equal(datos.status, 200, datos.url);
+      assert((await datos.text()).includes(titulo), datos.url);
+    }
+
+    const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
+    try {
+      const page = await browser.newPage();
+      const errores = [];
+      page.on("pageerror", (error) => errores.push(error.message));
+      await page.goto(origin + "/proyectos/");
+      await page.getByRole("link", { name: "Ver ficha de RFM CORE" }).press("Enter");
+      await page.getByRole("heading", { name: "RFM CORE", exact: true }).waitFor();
+      await page.getByRole("link", { name: tituloCasoRfm }).press("Enter");
+      await page.getByRole("heading", { name: tituloCasoRfm, exact: true }).waitFor();
+      await page.getByRole("link", { name: "RFM CORE", exact: true }).press("Enter");
+      await page.getByRole("heading", { name: "RFM CORE", exact: true }).waitFor();
+
+      for (const ancho of anchos) {
+        await page.setViewportSize({ width: ancho, height: 840 });
+        for (const ruta of [rutaRfm, rutaCasoRfm, ...evidenciasRfm.map(rutaEvidencia)]) {
+          const respuesta = await page.goto(origin + ruta);
+          assert.equal(respuesta.status(), 200, ruta);
+          const medida = await page.evaluate(async () => {
+            const fuentes = await Promise.all(['400 16px "Archivo Black"', '610 16px "Geist Variable"']
+              .map((fuente) => document.fonts.load(fuente, "Análisis")));
+            return {
+              fuentes: fuentes.every((caras) => caras.some((cara) => cara.status === "loaded")),
+              ancho: document.documentElement.scrollWidth,
+            };
+          });
+          assert(medida.fuentes && medida.ancho <= ancho, `${ruta} a ${ancho} px`);
+          await page.addScriptTag({ path: axe });
+          await comprobarAccesibilidad(page, `${ruta} a ${ancho} px`);
+        }
+
+        await page.goto(origin + rutaCasoRfm);
+        const indice = page.getByRole("navigation", { name: "Secciones del caso" });
+        const resumen = indice.locator("summary");
+        if (await resumen.isVisible()) await resumen.press("Space");
+        await indice.getByRole("link", { name: "Evidencias", exact: true }).press("Enter");
+        await page.waitForFunction(() => location.hash === "#evidencias" && document.activeElement.id === "evidencias");
+        const fichas = page.getByRole("region", { name: "Evidencias", exact: true }).getByRole("article");
+        assert.equal(await fichas.count(), 4);
+        for (const [indice, evidencia] of evidenciasRfm.entries()) {
+          const tarjeta = fichas.nth(indice);
+          assert.match(await tarjeta.getByRole("heading").textContent(), new RegExp(`^E0${indice + 1} —`));
+          assert.equal(await tarjeta.getByRole("link").getAttribute("href"), rutaEvidencia(evidencia));
+        }
+        await fichas.last().getByRole("link").press("Enter");
+        await page.getByRole("heading", { name: "E04 — Pruebas y resultados" }).waitFor();
+        const resultados = await page.getByRole("table").innerText();
+        for (const total of ["19 de 19", "149 de 149", "171 de 171"]) assert(resultados.includes(total), total);
+        await page.getByRole("link", { name: /Volver al caso/ }).press("Enter");
+        await page.waitForURL(origin + rutaCasoRfm + "#evidencias");
+      }
+      assert.deepEqual(errores, [], "Errores de ejecución e hidratación");
+      if (process.env.PORTFOLIO_CAPTURAS_EDITORIAL === "1") {
+        await capturarEditorial(browser, origin, { proyecto: rutaRfm, caso: rutaCasoRfm });
+      }
     } finally {
       await browser.close();
     }

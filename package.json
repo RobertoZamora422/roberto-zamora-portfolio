@@ -13,7 +13,8 @@
     "preview:prueba": "wrangler pages dev .local/prerender/client --ip 127.0.0.1",
     "test": "node --test pruebas/contenido.test.mjs",
     "test:sitio": "npm run build && npm run build:prueba && node --test pruebas/sitio.test.mjs",
-    "revision:visual": "cross-env PORTFOLIO_CAPTURAS=1 npm run test:sitio"
+    "revision:visual": "cross-env PORTFOLIO_CAPTURAS=1 npm run test:sitio",
+    "revision:editorial": "cross-env PORTFOLIO_CAPTURAS_EDITORIAL=1 npm run test:sitio"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",

@@ -65,7 +65,7 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
   const archivosAprobados = new Map<string, string>();
 
   async function validarArchivo(origen: string, archivo: string, revision: Revision) {
-    if (!revisionLocal && archivo.startsWith("pruebas/")) {
+    if (!revisionLocal && (archivo.startsWith("pruebas/") || archivo.startsWith("revision-editorial/"))) {
       throw new Error(`${origen}: recurso reservado para revisión local`);
     }
     const ruta = await resolverArchivo(carpetaRecursos, archivo);

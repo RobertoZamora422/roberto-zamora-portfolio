@@ -42,6 +42,7 @@ const erroresDeRegistro = [
   ["archivo ausente", () => {}, /Falta el archivo/],
   ["ruta de archivo inválida", (r) => { r.evidencias[0].recurso.archivo = "../fuera.txt"; }, /Ruta de recurso inválida/],
   ["recurso de revisión local en el registro público", (r) => { r.evidencias[0].recurso.archivo = "pruebas/ejemplo.txt"; }, /reservado para revisión local/],
+  ["recurso editorial en el registro público", (r) => { r.evidencias[0].recurso.archivo = "revision-editorial/ejemplo.html"; }, /reservado para revisión local/],
   ["URL de evidencia inválida", (r) => { r.evidencias[0].recurso = { url: "javascript:alert(1)" }; }, /se requiere una URL HTTPS/],
   ["destacado en borrador", (r) => {
     r.casos[0].revision = "borrador";

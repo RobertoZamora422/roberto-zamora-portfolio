@@ -19,6 +19,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 | [Informe del incremento 2](docs/informe-incremento-2.md) | Revisión visual, flujo editorial y resultados de las pruebas. |
 | [Informe de integración de RZ.](docs/informe-integracion-rz.md) | Cambios, pruebas y comparación con la maqueta aprobada. |
 | [Informe del incremento 3A](docs/informe-incremento-3a.md) | Casos de estudio, evidencias y verificación de la publicación estática. |
+| [Revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core.md) | Vista local, fuentes, alcance de E04 y capturas de la revisión. |
 
 ## Desarrollo local
 
@@ -55,7 +56,9 @@ El modelo vive en `app/contenido/modelo.ts` y las entradas para publicación se 
 
 El retrato es opcional. Para incorporar uno, registra `perfil.retrato` con la ruta relativa a `recursos-contenido/`, el texto alternativo y su estado de aprobación. El perfil y el retrato requieren aprobación para aparecer en el artefacto público.
 
-La preparación de RFM CORE y Claridez y la ficha de Portafolio web para revisión usan `app/pruebas/datos.ts`. El registro público se reserva para material autorizado. Los originales de negocio y los borradores sensibles se custodian fuera del repositorio.
+Las muestras usan `app/pruebas/datos.ts`. Cuando existe `.local/contenido-editorial/registro.json`, la vista local carga los borradores editoriales y sus recursos en `recursos-contenido/revision-editorial/`. El registro público se reserva para material autorizado. Los borradores editoriales y sus recursos quedan fuera de Git y de la compilación pública.
+
+Con el borrador de RFM CORE disponible, `npm run revision:editorial` verifica la integración y genera la galería `.local/revision-editorial-rfm-core/index.html`. Para recorrer las páginas y los enlaces de las evidencias, ejecuta `npm run preview:prueba` tras compilar la vista local.
 
 El repositorio utiliza la rama `main`. El titular del portafolio gestiona los commits y el push. La configuración del despliegue se definirá al preparar la publicación.
 

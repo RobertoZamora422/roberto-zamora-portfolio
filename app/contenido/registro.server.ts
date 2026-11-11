@@ -8,8 +8,9 @@ export function urlRecursoLocal(archivo: string) {
 
 export async function cargarRegistro() {
   if (process.env.PORTFOLIO_PREVIEW === "1") {
+    const { incorporarBorradorEditorial } = await import("./editorial.server.ts");
     const { registroParaRevision } = await import("../pruebas/datos.ts");
-    return registroParaRevision(registroPublico);
+    return registroParaRevision(await incorporarBorradorEditorial(registroPublico));
   }
   return registroPublico;
 }

@@ -106,3 +106,49 @@ export async function capturarCasos(browser, revision, publico) {
     @media(max-width:640px){.capturas{grid-template-columns:1fr}}</style><main><h1>Incremento 3A · Casos de estudio y evidencias</h1>
     <p>El caso del portafolio usa material de revisión local. Abre una imagen para verla a tamaño completo.</p>${galeria}</main></html>`);
 }
+
+export async function capturarEditorial(browser, origin, rutas) {
+  const destino = ".local/revision-editorial-rfm-core";
+  await mkdir(destino, { recursive: true });
+  const page = await browser.newPage();
+  const capturas = [];
+  try {
+    for (const ancho of anchos) {
+      await page.setViewportSize({ width: ancho, height: 840 });
+      const imagenes = [];
+      for (const [clave, nombre, ruta] of [
+        ["proyecto", "Página del proyecto", rutas.proyecto],
+        ["caso", "Caso completo", rutas.caso],
+      ]) {
+        const archivo = `${clave}-${ancho}.png`;
+        await page.goto(origin + ruta);
+        if (clave === "caso") await page.locator(".case-index a[aria-current='location']").first().waitFor({ state: "attached" });
+        await page.screenshot({ path: join(destino, archivo), fullPage: true });
+        imagenes.push({ nombre, archivo });
+      }
+      const archivo = `evidencias-${ancho}.png`;
+      await page.getByRole("region", { name: "Evidencias", exact: true }).screenshot({ path: join(destino, archivo) });
+      imagenes.push({ nombre: "Fichas E01 a E04", archivo });
+      capturas.push({ ancho, imagenes });
+    }
+  } finally {
+    await page.close();
+  }
+  const secciones = capturas.map(({ ancho, imagenes }) => `
+    <section><h2>${ancho} px</h2><div class="capturas">${imagenes.map(({ nombre, archivo }) => `
+      <figure><figcaption>${nombre}</figcaption><a href="${archivo}"><img loading="lazy" src="${archivo}" alt="${nombre} a ${ancho} px"></a></figure>`).join("")}
+    </div></section>`).join("");
+  await writeFile(join(destino, "index.html"), `<!doctype html><html lang="es"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
+    <title>RFM CORE · Revisión editorial RZ.</title>
+    <style>body{margin:0 auto;padding:1.5rem;max-width:85rem;background:#f2f1e9;color:#191e19;font:16px/1.5 system-ui}
+    a{color:#30503c;text-underline-offset:.25em}a:focus-visible{outline:2px solid #30503c;outline-offset:3px}
+    h2{border-top:1px solid #c9cec1;padding-top:1rem}figure{margin:0}img{display:block;max-width:100%;border:1px solid #c9cec1}
+    figcaption{margin-bottom:.5rem;font-weight:600}.capturas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+    @media(max-width:720px){.capturas{grid-template-columns:1fr}}</style></head>
+    <body><main><h1>RFM CORE · Revisión editorial RZ.</h1>
+    <p>Borrador para revisión local. Abre una captura para verla a tamaño completo.</p>
+    <p>Con <code>npm run preview:prueba</code> en ejecución, abre <a href="http://127.0.0.1:8788${rutas.proyecto}">la página de RFM CORE</a>
+    o <a href="http://127.0.0.1:8788${rutas.caso}">Del interés comercial al contrato</a>.</p>
+    ${secciones}</main></body></html>`);
+}
