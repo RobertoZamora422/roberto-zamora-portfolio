@@ -15,7 +15,8 @@ export default {
     await validarRegistro(await cargarRegistro(), resolve("recursos-contenido"), { revisionLocal: preview });
     const { paginas, casos } = await cargarContenido();
     return [
-      ...getStaticPaths(),
+      // React Router solicita /ruta/_.data al navegar a las URLs canónicas con barra final.
+      ...getStaticPaths().map((ruta) => ruta.endsWith("/") || ruta === "/404" ? ruta : `${ruta}/`),
       ...paginas.map(({ slug }) => rutaProyecto(slug)),
       ...casos.map(({ slug }) => rutaCaso(slug)),
     ];

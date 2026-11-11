@@ -79,6 +79,7 @@ export function registroParaRevision(publico: Registro): Registro {
         proyecto: "portafolio-web",
         titulo: "Separar el proyecto del caso de estudio",
         resumen: "Decisión de arquitectura de información documentada en la fase de definición.",
+        competencia: "Arquitectura de información",
         contexto: "El catálogo y los casos compartidos son puntos de entrada diferentes.",
         alcance: "Definir el alcance editorial de cada página.",
         decisiones: "Dar URLs propias a la solución completa y a los aportes concretos.",

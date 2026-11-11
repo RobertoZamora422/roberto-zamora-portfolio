@@ -6,7 +6,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 
 ## Estado del proyecto
 
-**Fase 3 · Incremento 2.** La cabecera, Inicio, el catálogo y la ficha de proyecto integran la dirección visual RZ. Las vistas se generan a partir del registro tipado.
+**Fase 3 · Incremento 3A.** El catálogo y las páginas de casos de estudio extienden la dirección visual RZ. y se generan a partir del registro tipado. El catálogo público queda vacío hasta la aprobación editorial de los casos reales.
 
 | Documento | Qué encontrarás |
 | --- | --- |
@@ -18,6 +18,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 | [Informe del incremento 1](docs/informe-incremento-1.md) | Archivos, decisiones, comandos, resultados y comprobaciones pendientes. |
 | [Informe del incremento 2](docs/informe-incremento-2.md) | Revisión visual, flujo editorial y resultados de las pruebas. |
 | [Informe de integración de RZ.](docs/informe-integracion-rz.md) | Cambios, pruebas y comparación con la maqueta aprobada. |
+| [Informe del incremento 3A](docs/informe-incremento-3a.md) | Casos de estudio, evidencias y verificación de la publicación estática. |
 
 ## Desarrollo local
 
@@ -28,7 +29,7 @@ npm ci
 npm run dev
 ```
 
-La vista de desarrollo incluye la ficha de Portafolio web y un resumen de caso para revisión. Para servir la compilación estática local con Wrangler, ejecuta lo siguiente.
+La vista de desarrollo incluye la ficha de Portafolio web y su caso de estudio para revisión. Para servir la compilación estática local con Wrangler, ejecuta lo siguiente.
 
 ```text
 npm run typecheck
@@ -36,7 +37,7 @@ npm run build:prueba
 npm run preview:prueba
 ```
 
-Abre `http://127.0.0.1:8788/` y recorre Inicio → Proyectos → Portafolio web. Las fichas breves de RFM CORE y Claridez muestran sus descripciones confirmadas. La salida de revisión queda en `.local/prerender/client`. `npm run build` genera el artefacto público en `build/client` a partir del registro aprobado.
+Abre `http://127.0.0.1:8788/` y recorre Proyectos → Portafolio web → Separar el proyecto del caso de estudio. El mismo caso aparece en `/casos-de-estudio/`. La salida de revisión queda en `.local/prerender/client`. `npm run build` genera el artefacto público en `build/client` a partir del registro aprobado.
 
 ## Pruebas y capturas
 
@@ -46,7 +47,7 @@ npx playwright-core install chromium
 npm run revision:visual
 ```
 
-`npm test` verifica el registro. `npm run test:sitio` verifica ambas compilaciones y los recorridos en Chromium y Wrangler. `npm run revision:visual` también genera la galería comparativa de RZ. en `.local/revision-rz/index.html`. Si usas un Chromium instalado, define `CHROMIUM_PATH` con la ruta a su ejecutable antes de ejecutar las pruebas de sitio.
+`npm test` verifica el registro. `npm run test:sitio` verifica ambas compilaciones y los recorridos en Chromium y Wrangler. `npm run revision:visual` genera las galerías `.local/revision-rz/index.html` y `.local/revision-incremento-3a/index.html`. Si usas un Chromium instalado, define `CHROMIUM_PATH` con la ruta a su ejecutable antes de ejecutar las pruebas de sitio.
 
 ## Registro de contenido
 

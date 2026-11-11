@@ -15,11 +15,5 @@ export async function cargarRegistro() {
 }
 
 export async function cargarContenido() {
-  const contenido = seleccionarContenido(await cargarRegistro());
-
-  // El índice y la plantilla públicos de casos corresponden al incremento 3.
-  if (process.env.PORTFOLIO_PREVIEW !== "1") {
-    return { ...contenido, casos: [], casoDestacado: undefined };
-  }
-  return contenido;
+  return seleccionarContenido(await cargarRegistro());
 }

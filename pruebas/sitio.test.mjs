@@ -8,7 +8,7 @@ import { test } from "node:test";
 import { promisify } from "node:util";
 import { chromium } from "playwright-core";
 import { registroPublico } from "../app/contenido/publico.ts";
-import { anchos, capturarRevision, vistas } from "./capturas.mjs";
+import { anchos, capturarCasos, capturarRevision, vistas, vistasCasos } from "./capturas.mjs";
 import { perfilAprobado, registroFixture } from "./registro-fixture.mjs";
 import { conPages } from "./servidor.mjs";
 
@@ -17,11 +17,11 @@ const axe = createRequire(import.meta.url).resolve("axe-core/axe.min.js");
 const preview = ".local/prerender/client";
 const publico = "build/client";
 const proyecto = vistas[2].ruta;
-const caso = "/casos-de-estudio/separar-proyecto-y-caso/";
+const [catalogoCasos, caso] = vistasCasos.map(({ ruta }) => ruta);
 const recurso = "/recursos/pruebas/decision-portafolio-revision.txt";
 const tituloCaso = "Separar el proyecto del caso de estudio";
 const desconocidas = ["/proyectos/slug-desconocido/", "/casos-de-estudio/slug-desconocido/", "/ruta-desconocida/"];
-const marcasRevision = /decision-portafolio-revision|Vista local de revisión|Recurso de revisión local|Registro sintético|Datos de prueba|Tu nombre|Tu foto|Probar con mi foto|data-planned/iu;
+const marcasRevision = /decision-portafolio-revision|separar-proyecto-y-caso|Vista local de revisión|Recurso de revisión local|Registro sintético|Datos de prueba|Tu nombre|Tu foto|Probar con mi foto|data-planned/iu;
 
 async function comprobarArtefacto(carpeta, marcas) {
   const archivos = await readdir(carpeta, { recursive: true, withFileTypes: true });
@@ -42,6 +42,13 @@ async function comprobar404(origin, rutas) {
   }
 }
 
+async function comprobarAccesibilidad(page, vista) {
+  const infracciones = await page.evaluate(async () => (await window.axe.run({
+    runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] },
+  })).violations.map(({ id, nodes }) => [id, nodes.map(({ target }) => target)]));
+  assert.deepEqual(infracciones, [], vista);
+}
+
 test("Artefacto público real sin datos locales y recuperación HTTP 404", async () => {
   await comprobarArtefacto(publico, marcasRevision);
   const html = await readFile(join(publico, "index.html"), "utf8");
@@ -51,24 +58,57 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
     assert.doesNotMatch(html, /Roberto Zamora|Me interesa entender cómo funciona un negocio/);
   }
   await assert.rejects(readFile(join(publico, "__spa-fallback.html")), { code: "ENOENT" });
-  await conPages(publico, (origin) => comprobar404(origin, [...desconocidas, recurso]));
+  await conPages(publico, async (origin) => {
+    const catalogo = await fetch(origin + catalogoCasos);
+    assert.equal(catalogo.status, 200);
+    const htmlCasos = await catalogo.text();
+    assert.match(htmlCasos, /<h1>Casos de estudio<\/h1>/);
+    if (!registroPublico.casos.some(({ revision }) => revision === "aprobado")) {
+      assert.match(htmlCasos, /Por ahora no hay casos de estudio publicados/);
+    }
+    await comprobar404(origin, [...desconocidas, caso, caso + "_.data", recurso]);
+  });
 });
 
-test("La compilación pública usa un registro aislado con un único proyecto aprobado", { timeout: 90_000 }, async (t) => {
+test("La compilación pública prerenderiza proyectos y casos aprobados de un registro aislado", { timeout: 90_000 }, async (t) => {
   const carpeta = await mkdtemp(join(tmpdir(), "portafolio-compilacion-"));
   t.after(() => rm(carpeta, { recursive: true, force: true, maxRetries: 3 }));
   const registro = registroFixture();
   registro.perfil = perfilAprobado;
   const [base] = registro.proyectos;
+  const [casoBase] = registro.casos;
+  Object.assign(casoBase, {
+    competencia: "Análisis funcional QA",
+    periodo: "Periodo QA",
+    aprendizajes: "Aprendizajes QA",
+    validacion: "Comprobación pendiente QA",
+    resultadosYLimites: "Medición pendiente QA",
+  });
+  registro.casos.push({
+    ...casoBase, slug: "caso-borrador-qa", revision: "borrador", titulo: "Caso sin aprobar QA",
+    evidencias: ["archivo-borrador-qa"],
+  }, {
+    ...casoBase, slug: "caso-con-ficha-qa", proyecto: "solo-ficha-qa", titulo: "Caso con ficha QA",
+    competencia: undefined, periodo: undefined, aprendizajes: undefined,
+  });
   registro.proyectos.push({
     slug: "borrador-qa",
     ficha: { ...base.ficha, revision: "borrador", nombre: "Borrador aislado QA" },
     pagina: { ...base.pagina, revision: "borrador", evidencias: ["archivo-borrador-qa"] },
-  });
+  }, { slug: "solo-ficha-qa", ficha: { ...base.ficha, nombre: "Proyecto con ficha QA" } });
   registro.evidencias.push({
     ...registro.evidencias[0], revision: "borrador", id: "archivo-borrador-qa",
     recurso: { archivo: "archivo-borrador-qa.txt" },
   });
+  for (const [id, tipo] of [
+    ["artefacto-qa", "Artefacto de análisis y documentación"],
+    ["prueba-qa", "Prueba y resultado verificable"],
+    ["tecnica-qa", "Evidencia técnica"],
+  ]) {
+    const url = `https://example.org/${id}`;
+    registro.evidencias.push({ ...registro.evidencias[0], id, tipo, titulo: tipo, recurso: { url } });
+    casoBase.evidencias.push(id);
+  }
   const entradas = ["app", "package.json", "react-router.config.ts", "tsconfig.json", "vite.config.ts"];
   await Promise.all(entradas.map((entrada) => cp(entrada, join(carpeta, entrada), { recursive: true })));
   await symlink(resolve("node_modules"), join(carpeta, "node_modules"), process.platform === "win32" ? "junction" : "dir");
@@ -87,9 +127,11 @@ test("La compilación pública usa un registro aislado con un único proyecto ap
   await compilar();
 
   const salida = join(carpeta, publico);
-  await comprobarArtefacto(salida, /borrador-qa|Borrador aislado QA|recurso-sin-revision-qa|Copia directa QA|caso-qa|retrato-no-autorizado-qa/iu);
-  const [inicio, catalogo, ficha] = await Promise.all([
-    "index.html", "proyectos/index.html", "proyectos/solucion-qa/index.html",
+  await comprobarArtefacto(salida, /borrador-qa|Borrador aislado QA|Caso sin aprobar QA|recurso-sin-revision-qa|Copia directa QA|retrato-no-autorizado-qa/iu);
+  await comprobarArtefacto(salida, marcasRevision);
+  const [inicio, catalogo, ficha, indice, detalle, soloFicha] = await Promise.all([
+    "index.html", "proyectos/index.html", "proyectos/solucion-qa/index.html", "casos-de-estudio/index.html",
+    "casos-de-estudio/caso-qa/index.html", "casos-de-estudio/caso-con-ficha-qa/index.html",
   ].map((archivo) => readFile(join(salida, archivo), "utf8")));
   assert.match(inicio, /Presentación de portada QA/);
   assert.match(inicio, /<h1>Perfil QA<\/h1>/);
@@ -100,18 +142,40 @@ test("La compilación pública usa un registro aislado con un único proyecto ap
   assert.match(catalogo, /href="\/proyectos\/solucion-qa\/"/);
   assert.match(ficha, /Presentación de ficha QA/);
   assert.doesNotMatch(ficha, /Presentación de portada QA|Resumen de catálogo QA/);
+  for (const html of [inicio, ficha, indice]) assert.match(html, /href="\/casos-de-estudio\/caso-qa\/"/);
+  assert.match(indice, /Análisis funcional QA/);
+  assert.match(indice, /Resumen QA/);
+  assert.match(indice, /Solución QA/);
+  assert.doesNotMatch(indice, /Por ahora no hay casos de estudio publicados/);
+  assert.match(detalle, /<title>Caso QA · Casos de estudio<\/title>/);
+  assert.match(detalle, /name="description" content="Resumen QA"/);
+  assert.match(detalle, /href="\/proyectos\/solucion-qa\/"/);
+  for (const texto of [
+    "Periodo QA", "Aprendizajes QA", "Comprobación pendiente QA", "Medición pendiente QA",
+    "Qué demuestra", "Fuente QA", "Autoría QA", "Decisión documentada", "Artefacto de análisis y documentación",
+    "Prueba y resultado verificable", "Evidencia técnica",
+  ]) assert(detalle.includes(texto), texto);
+  assert.match(detalle, /href="https:\/\/example.org\/tecnica-qa"/);
+  assert.match(soloFicha, /Proyecto con ficha QA/);
+  assert.doesNotMatch(soloFicha, /href="\/proyectos\/solo-ficha-qa\/"|href="#aprendizajes"/);
 
   await conPages(salida, async (origin) => {
-    const [pagina, datos, evidencia, retrato] = await Promise.all([
+    const [pagina, datos, evidencia, retrato, casoHtml, casoDatos] = await Promise.all([
       "/proyectos/solucion-qa/", "/proyectos/solucion-qa/_.data", "/recursos/archivo-aprobado-qa.txt",
-      "/recursos/retrato-qa.png",
+      "/recursos/retrato-qa.png", "/casos-de-estudio/caso-qa/", "/casos-de-estudio/caso-qa/_.data",
     ].map((ruta) => fetch(origin + ruta)));
-    for (const respuesta of [pagina, datos, evidencia, retrato]) assert.equal(respuesta.status, 200, respuesta.url);
+    for (const respuesta of [pagina, datos, evidencia, retrato, casoHtml, casoDatos]) assert.equal(respuesta.status, 200, respuesta.url);
     assert.match(await pagina.text(), /<h1>Solución QA<\/h1>/);
     assert.match(await datos.text(), /Participación documentada QA/);
     assert.equal(await evidencia.text(), "Recurso aprobado QA");
     assert.deepEqual(Buffer.from(await retrato.arrayBuffer()), png);
-    await comprobar404(origin, ["/proyectos/borrador-qa/", "/recursos/archivo-borrador-qa.txt", "/recurso-sin-revision-qa.txt", "/recursos/retrato-no-autorizado-qa.png"]);
+    assert.match(await casoHtml.text(), /<h1>Caso QA<\/h1>/);
+    assert.match(await casoDatos.text(), /\/recursos\/archivo-aprobado-qa.txt/);
+    await comprobar404(origin, [
+      "/proyectos/borrador-qa/", "/proyectos/solo-ficha-qa/", "/casos-de-estudio/caso-borrador-qa/",
+      "/casos-de-estudio/caso-borrador-qa/_.data", "/recursos/archivo-borrador-qa.txt",
+      "/recurso-sin-revision-qa.txt", "/recursos/retrato-no-autorizado-qa.png",
+    ]);
   });
   await rm(aprobado);
   await assert.rejects(compilar, /Falta el archivo «archivo-aprobado-qa.txt»/);
@@ -138,19 +202,27 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
     const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
     console.log(`Chromium ${browser.version()}`);
     try {
-      const sinJs = await browser.newContext({ javaScriptEnabled: false });
+      const sinJs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 840 } });
       const simple = await sinJs.newPage();
       await simple.goto(origin + "/proyectos/");
       await simple.getByRole("link", { name: "Ver ficha de Portafolio web" }).click();
       await simple.getByRole("heading", { name: "Portafolio web", exact: true }).waitFor();
       await simple.getByRole("link", { name: tituloCaso }).click();
       await simple.getByRole("heading", { name: tituloCaso, exact: true }).waitFor();
+      await simple.locator(".case-index summary").press("Enter");
+      await simple.getByRole("navigation", { name: "Secciones del caso" }).getByRole("link", { name: "Evidencias" }).press("Enter");
+      assert.equal(new URL(simple.url()).hash, "#evidencias");
+      assert.equal(await simple.evaluate(() => document.activeElement.id), "evidencias");
+      const archivo = await simple.getByRole("link", { name: /Consultar evidencia/ }).getAttribute("href");
+      assert.equal(archivo, recurso);
       await sinJs.close();
 
       const page = await browser.newPage();
       const errores = [];
       page.on("pageerror", (error) => errores.push(error.message));
-      await page.goto(origin + "/proyectos/");
+      await page.goto(origin);
+      await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Proyectos" }).click();
+      await page.getByRole("heading", { name: "Proyectos", exact: true }).waitFor();
       assert.equal(await page.locator(".project-row a").count(), 1);
       const columnas = await page.locator(".project-row > p").evaluateAll((resumenes) => (
         resumenes.map((resumen) => resumen.getBoundingClientRect().left)
@@ -172,6 +244,11 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
       await page.goBack();
       await page.getByRole("heading", { name: "Portafolio web", exact: true }).waitFor();
       assert.equal((await page.reload()).status(), 200);
+      await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Casos de estudio" }).click();
+      await page.getByRole("link", { name: `Leer caso «${tituloCaso}»` }).click();
+      await page.getByRole("heading", { name: tituloCaso, exact: true }).waitFor();
+      await page.getByRole("link", { name: "Portafolio web", exact: true }).click();
+      await page.getByRole("heading", { name: "Portafolio web", exact: true }).waitFor();
 
       for (const width of anchos) {
         await page.setViewportSize({ width, height: 840 });
@@ -194,7 +271,7 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
         await page.waitForFunction(() => location.hash === "#contacto" && document.activeElement.id === "contacto");
         assert.equal(await page.getByRole("link", { name: "Contacto", exact: true }).getAttribute("aria-current"), "location");
 
-        for (const { ruta } of vistas) {
+        for (const { ruta } of [...vistas, ...vistasCasos]) {
           await page.goto(origin + ruta);
           const resultado = await page.evaluate(async () => {
             const caracteres = "Ingeniería · ñ á é í ó ú ü";
@@ -204,18 +281,56 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
             return {
               fuentes: fuentes.every((familia) => familia.some((fuente) => fuente.status === "loaded")),
               ancho: document.documentElement.scrollWidth,
-              controles: [...document.querySelectorAll(".site-frame a")].map((a) => a.getBoundingClientRect().height).filter(Boolean),
+              controles: [...document.querySelectorAll(".site-frame a, .case-index summary")]
+                .map((control) => control.getBoundingClientRect().height).filter(Boolean),
             };
           });
           assert(resultado.fuentes, ruta);
           assert(resultado.ancho <= width, `${ruta} a ${width} px`);
           assert(resultado.controles.every((altura) => altura >= 44), `${ruta} controles a ${width} px`);
           await page.addScriptTag({ path: axe });
-          const infracciones = await page.evaluate(async () => (await window.axe.run({
-            runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] },
-          })).violations.map(({ id, nodes }) => [id, nodes.map(({ target }) => target)]));
-          assert.deepEqual(infracciones, [], `${ruta} axe a ${width} px`);
+          await comprobarAccesibilidad(page, `${ruta} axe a ${width} px`);
         }
+
+        const indice = page.getByRole("navigation", { name: "Secciones del caso" });
+        const resumen = indice.locator("summary");
+        const esMovil = width < 896;
+        await page.getByRole("link", { name: "Portafolio web", exact: true }).focus();
+        if (esMovil) {
+          assert(await resumen.isVisible());
+          await page.keyboard.press("Tab");
+          assert(await resumen.evaluate((elemento) => elemento === document.activeElement));
+          assert.equal(await resumen.evaluate((elemento) => getComputedStyle(elemento).outlineStyle), "solid");
+          await page.keyboard.press("Space");
+          await comprobarAccesibilidad(page, `Índice abierto a ${width} px`);
+        } else {
+          assert.equal(await indice.evaluate((elemento) => getComputedStyle(elemento).position), "sticky");
+        }
+        for (const href of ["#contexto", "#alcance", "#decisiones", "#trabajo", "#validacion", "#evidencias"]) {
+          await page.keyboard.press("Tab");
+          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), href);
+        }
+        await page.keyboard.press("Enter");
+        await page.waitForFunction(() => location.hash === "#evidencias" && document.activeElement.id === "evidencias");
+        await page.locator('.case-index a[href="#evidencias"][aria-current="location"]').first().waitFor({ state: "attached" });
+        if (esMovil) {
+          assert.equal(await resumen.evaluate((elemento) => elemento.parentElement.open), false);
+          assert.match(await resumen.textContent(), /Evidencias/);
+        }
+        await page.keyboard.press("Tab");
+        assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), recurso);
+
+        await page.goto(origin + catalogoCasos);
+        await page.goto(origin + caso + "#decisiones");
+        await page.locator('.case-index a[href="#decisiones"][aria-current="location"]').first().waitFor({ state: "attached" });
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.locator('.case-index a[href="#contexto"][aria-current="location"]').first().waitFor({ state: "attached" });
+        await page.getByRole("link", { name: "Contacto", exact: true }).click();
+        await page.waitForFunction(() => location.hash === "#contacto" && document.activeElement.id === "contacto");
+        await page.goBack();
+        await page.getByRole("heading", { name: tituloCaso, exact: true }).waitFor();
+        await page.getByRole("link", { name: "CV y contacto", exact: true }).click();
+        await page.waitForURL(origin + "/cv/");
       }
       await page.goto(origin);
       await page.locator(".main h1").evaluate((elemento) => {
@@ -223,7 +338,19 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
       });
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       assert.deepEqual(errores, [], "Errores de ejecución e hidratación");
-      if (process.env.PORTFOLIO_CAPTURAS === "1") await capturarRevision(browser, origin);
+      await conPages(publico, async (originPublico) => {
+        for (const width of anchos) {
+          await page.setViewportSize({ width, height: 840 });
+          await page.goto(originPublico + catalogoCasos);
+          assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+          await page.addScriptTag({ path: axe });
+          await comprobarAccesibilidad(page, `Catálogo público a ${width} px`);
+        }
+        if (process.env.PORTFOLIO_CAPTURAS === "1") {
+          await capturarRevision(browser, origin);
+          await capturarCasos(browser, origin, originPublico);
+        }
+      });
     } finally {
       await browser.close();
     }
