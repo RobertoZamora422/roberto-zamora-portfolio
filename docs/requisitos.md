@@ -6,6 +6,7 @@
 
 | Requisito | Aceptación |
 | --- | --- |
+| Identidad y destacados | Inicio muestra el nombre profesional y la propuesta de valor aprobados. RFM CORE tiene prioridad si su contenido está verificado y aprobado. El caso destacado respalda una competencia o aporte con evidencia autorizada. |
 | Navegación y recuperación | Desde Inicio y el índice se accede a los casos publicados. Desde el catálogo se accede a las páginas individuales publicadas y, desde estas, a sus casos disponibles. Funcionan el estado activo, el menú móvil, el acceso directo, la recarga y el retroceso. Una ruta desconocida devuelve HTTP 404 y ofrece un camino de regreso. |
 | Proyectos, casos y evidencias | Cada página de proyecto aprobada presenta la solución, el estado y el alcance personal. Cada caso profundiza en un trabajo concreto y enlaza a su proyecto cuando la página está publicada. Las afirmaciones sustanciales sobre competencias, aportes y resultados se vinculan a evidencias accesibles sin iniciar sesión. |
 | CV y contacto | Desde las páginas principales y desde cada caso se puede acceder directamente al CV y al contacto. El CV se puede leer e imprimir desde la web. El correo aprobado se puede seleccionar y abrir mediante un enlace. Antes del lanzamiento se evalúa un PDF descargable. Si se incorpora, debe abrir y coincidir con el contenido vigente. |
@@ -29,7 +30,7 @@ React, TypeScript, Vite y Cloudflare Pages. El contenido se mantendrá en el rep
 
 1. Compilar una ruta dinámica de proyecto y una de caso. Inspeccionar el HTML generado y comprobar que el contenido y los metadatos estén presentes. Verificar que el contenido se pueda leer con JavaScript desactivado.
 2. Probar acceso por URL directa, recarga, navegación interna entre catálogo, proyecto y caso, y retroceso. Verificar que los archivos estáticos de navegación que usa React Router, incluidos los archivos `.data` que genere, estén en el artefacto y se sirvan al navegar.
-3. En Cloudflare Pages, comprobar que las rutas generadas respondan correctamente y que un slug desconocido devuelva HTTP 404 con la página de recuperación. Usar solo contenido autorizado en la comprobación alojada y datos de prueba en local.
+3. En la prueba local, servir el artefacto con Wrangler y comprobar que un slug desconocido devuelva HTTP 404 con la página de recuperación. Repetir la verificación de rutas y navegación en Cloudflare Pages con contenido autorizado antes de aprobar la versión pública. Los datos de prueba se limitan al entorno local. [Plan técnico de fase 3](plan-tecnico-fase-3.md)
 
 Si cumplir esos criterios exige un servidor en ejecución o una capa de enrutamiento adicional, revisar la alternativa multipágina antes de ampliar la implementación.
 
@@ -45,6 +46,6 @@ Si cumplir esos criterios exige un servidor en ejecución o una capa de enrutami
 
 ## Condiciones de publicación
 
-- Revisar la compilación candidata y sus recursos antes de autorizar la publicación. Confirmar un caso de negocio aprobado con al menos una evidencia autorizada que respalde un aporte personal. Confirmar también perfil, CV, decisión sobre el PDF, correo y URL pública.
+- Revisar la compilación candidata y sus recursos antes de autorizar la publicación. Confirmar un caso de negocio aprobado con al menos una evidencia autorizada que respalde un aporte personal. Confirmar también nombre profesional, propuesta de valor, perfil, CV, decisión sobre el PDF, correo y URL pública.
 - Tras publicar, verificar en producción los recorridos, las rutas y el 404, los enlaces a evidencias sin autenticación, HTTPS, los metadatos y el sitemap.
 - Registrar la versión publicada y, cuando exista, identificar una versión anterior aprobada a la que se pueda volver si hay una regresión. [Reversión de despliegues en Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/rollbacks/)
