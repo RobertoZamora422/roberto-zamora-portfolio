@@ -1,0 +1,18 @@
+# Dependencias, cachés y compilaciones
+/node_modules/
+/build/
+/dist/
+/coverage/
+/.vite/
+/.wrangler/
+
+# Configuración local y material de prueba
+/.local/
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+
+# Metadatos del sistema
+.DS_Store
+Thumbs.db
