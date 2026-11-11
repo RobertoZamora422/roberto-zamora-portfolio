@@ -57,6 +57,13 @@ export interface Caso {
   periodo?: string;
   competencia?: string;
   aprendizajes?: string;
+  resumenVisual?: readonly { etiqueta: string; valor: string; detalle?: string }[];
+  ejemplo?: {
+    titulo: string;
+    situaciones: readonly { titulo: string; descripcion: string }[];
+    referencias: readonly { evidencia: string; texto: string; ancla: string }[];
+  };
+  fichasBreves?: boolean;
 }
 
 export interface Evidencia {

@@ -12,10 +12,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
   const proyecto = proyectos.find(({ slug }) => slug === caso.proyecto);
   const { slug, titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites,
-    competencia, periodo, aprendizajes } = caso;
+    competencia, periodo, aprendizajes, resumenVisual, ejemplo, fichasBreves } = caso;
   return {
     slug, titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites,
-    competencia, periodo, aprendizajes,
+    competencia, periodo, aprendizajes, resumenVisual, ejemplo, fichasBreves,
     proyecto: proyecto && {
       nombre: proyecto.ficha.nombre,
       ruta: proyecto.pagina ? rutaProyecto(proyecto.slug) : undefined,
@@ -37,7 +37,30 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
 
 export default function Caso() {
   const caso = useLoaderData<typeof loader>();
+  const { ejemplo, resumenVisual } = caso;
   const secciones = [
+    ...(ejemplo ? [{
+      id: "ejemplo", titulo: ejemplo.titulo, contenido: (
+        <>
+          <div className="module-grid case-example">
+            {ejemplo.situaciones.map(({ titulo, descripcion }) => (
+              <div className="panel" key={titulo}>
+                <h3>{titulo}</h3>
+                <p>{descripcion}</p>
+              </div>
+            ))}
+          </div>
+          <ul className="project-links case-example__links" role="list">
+            {ejemplo.referencias.map(({ evidencia, texto, ancla }) => {
+              const recurso = caso.evidencias.find(({ id }) => id === evidencia);
+              return recurso && (
+                <li key={ancla}><a className="text-link" href={`${recurso.url}#${ancla}`}>{texto}</a></li>
+              );
+            })}
+          </ul>
+        </>
+      ),
+    }] : []),
     { id: "contexto", titulo: "Problema y contexto", contenido: <p>{caso.contexto}</p> },
     { id: "alcance", titulo: "Alcance y participación", contenido: <p>{caso.alcance}</p> },
     { id: "decisiones", titulo: "Análisis y decisiones", contenido: <p>{caso.decisiones}</p> },
@@ -49,7 +72,10 @@ export default function Caso() {
         <p>{caso.resultadosYLimites}</p>
       </>
     ) },
-    ...(caso.evidencias.length ? [{ id: "evidencias", titulo: "Evidencias", contenido: <ListaEvidencias evidencias={caso.evidencias} /> }] : []),
+    ...(caso.evidencias.length ? [{
+      id: "evidencias", titulo: "Evidencias",
+      contenido: <ListaEvidencias evidencias={caso.evidencias} breve={caso.fichasBreves} />,
+    }] : []),
     ...(caso.aprendizajes ? [{ id: "aprendizajes", titulo: "Aprendizajes", contenido: <p>{caso.aprendizajes}</p> }] : []),
   ];
 
@@ -63,7 +89,17 @@ export default function Caso() {
         <p className="lead">{caso.resumen}</p>
         {process.env.PORTFOLIO_PREVIEW === "1" && <p className="technical-label">Vista local de revisión</p>}
       </PageIntro>
-      <dl className="project-facts case-facts" aria-label="Datos del caso">
+      {!!resumenVisual?.length && (
+        <dl className="project-facts case-facts case-summary" aria-label="Aporte y validación">
+          {resumenVisual.map(({ etiqueta, valor, detalle }) => (
+            <div key={etiqueta}>
+              <dt>{etiqueta}</dt>
+              <dd><strong>{valor}</strong>{detalle && <span>{detalle}</span>}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <dl className={resumenVisual?.length ? "project-facts case-facts case-facts--secondary" : "project-facts case-facts"} aria-label="Datos del caso">
         {caso.proyecto && (
           <div><dt>Proyecto</dt><dd>{caso.proyecto.ruta
             ? <TextLink to={caso.proyecto.ruta}>{caso.proyecto.nombre}</TextLink>

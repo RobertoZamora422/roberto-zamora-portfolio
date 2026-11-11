@@ -436,6 +436,22 @@ test("RFM CORE se puede revisar con sus cuatro evidencias y sus límites", {
         }
 
         await page.goto(origin + rutaCasoRfm);
+        const sintesis = await page.locator('dl[aria-label="Aporte y validación"]').innerText();
+        for (const texto of ["Único desarrollador", "9 reglas de negocio documentadas", "171/171", "SQLite", "datos sintéticos", "ajustes locales de pruebas"]) {
+          assert(sintesis.includes(texto), texto);
+        }
+        const ejemplo = page.getByRole("region", { name: "Cuándo se exige un paquete", exact: true });
+        for (const [enlace, archivo, ancla] of [
+          ["RN-03 · Regla de negocio", "e02-trazabilidad", "rn-03"],
+          ["QA-06 · Prueba local", "e04-verificacion", "qa-06"],
+          ["Ver pantalla de precotización", "e01-proceso", "pantalla-precotizacion"],
+        ]) {
+          const href = await ejemplo.getByRole("link", { name: enlace }).getAttribute("href");
+          assert.equal(href, rutaEvidencia(archivo) + "#" + ancla);
+          const documento = await fetch(origin + href);
+          assert.equal(documento.status, 200, href);
+          assert((await documento.text()).includes(`id="${ancla}"`), href);
+        }
         const indice = page.getByRole("navigation", { name: "Secciones del caso" });
         const resumen = indice.locator("summary");
         if (await resumen.isVisible()) await resumen.press("Space");
@@ -443,6 +459,7 @@ test("RFM CORE se puede revisar con sus cuatro evidencias y sus límites", {
         await page.waitForFunction(() => location.hash === "#evidencias" && document.activeElement.id === "evidencias");
         const fichas = page.getByRole("region", { name: "Evidencias", exact: true }).getByRole("article");
         assert.equal(await fichas.count(), 4);
+        assert.doesNotMatch(await fichas.allTextContents().then((textos) => textos.join(" ")), /Autoría|Fuente o versión/);
         for (const [indice, evidencia] of evidenciasRfm.entries()) {
           const tarjeta = fichas.nth(indice);
           assert.match(await tarjeta.getByRole("heading").textContent(), new RegExp(`^E0${indice + 1} —`));
@@ -454,10 +471,20 @@ test("RFM CORE se puede revisar con sus cuatro evidencias y sus límites", {
         for (const total of ["19 de 19", "149 de 149", "171 de 171"]) assert(resultados.includes(total), total);
         await page.getByRole("link", { name: /Volver al caso/ }).press("Enter");
         await page.waitForURL(origin + rutaCasoRfm + "#evidencias");
+
+        await page.goto(origin + rutaEvidencia("e01-proceso"));
+        await page.getByText("Ampliar el diagrama completo", { exact: true }).press("Enter");
+        const visor = page.getByRole("region", { name: "Visor del diagrama a tamaño original" });
+        await visor.getByRole("img").waitFor();
+        assert(await visor.evaluate((elemento) => elemento.scrollWidth > elemento.clientWidth && document.documentElement.scrollWidth <= innerWidth));
+        await visor.press("ArrowRight");
+        await page.waitForFunction(() => document.querySelector(".diagram-view").scrollLeft > 0);
+        await page.addScriptTag({ path: axe });
+        await comprobarAccesibilidad(page, `E01 ampliado a ${ancho} px`);
       }
       assert.deepEqual(errores, [], "Errores de ejecución e hidratación");
       if (process.env.PORTFOLIO_CAPTURAS_EDITORIAL === "1") {
-        await capturarEditorial(browser, origin, { proyecto: rutaRfm, caso: rutaCasoRfm });
+        await capturarEditorial(browser, origin, { proyecto: rutaRfm, caso: rutaCasoRfm, e01: rutaEvidencia("e01-proceso") });
       }
     } finally {
       await browser.close();

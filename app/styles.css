@@ -402,6 +402,17 @@ a:focus-visible,
 .case-facts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); }
 .case-facts a { color: inherit; }
 .case-facts a:focus-visible { outline-color: var(--color-highlight); }
+.case-summary > div { align-content: start; gap: 0.375rem; }
+.case-summary dd strong { font-size: clamp(1rem, 2.2cqi, 1.1875rem); }
+.case-summary dd span { display: block; margin-block-start: 0.125rem; font-size: 0.875rem; font-weight: 400; }
+.case-facts--secondary {
+  align-items: start;
+  background: transparent;
+  color: var(--color-text);
+  border-block-end: 1px solid var(--color-divider);
+}
+.case-facts--secondary dt { color: var(--color-muted); }
+.case-facts--secondary a:focus-visible { outline-color: var(--color-accent); }
 
 .case-layout {
   display: grid;
@@ -445,6 +456,11 @@ a:focus-visible,
 .case-section h2 { scroll-margin-block-start: 1rem; }
 .case-section > h3 { margin-block-start: 0.25rem; }
 .case-section > p { max-inline-size: 65ch; color: var(--color-muted); white-space: pre-line; }
+.case-example { margin-block-start: 0.375rem; }
+.case-example .panel { background: var(--color-tint); }
+.case-example .panel p { color: var(--color-muted); }
+.case-example__links { display: flex; flex-wrap: wrap; gap: 0 1.25rem; font-size: 0.875rem; }
+.case-example__links a { align-items: center; }
 
 .evidence-list { display: grid; gap: 0.875rem; margin-block-start: 0.375rem; }
 .evidence-card { background: var(--color-tint); }
@@ -453,7 +469,7 @@ a:focus-visible,
 .evidence-card__details { display: grid; gap: 0.625rem; }
 .evidence-card__details div { display: grid; gap: 0.125rem 1rem; }
 .evidence-card dt { font-size: 0.875rem; font-weight: 670; }
-.evidence-card dd { color: var(--color-muted); }
+.evidence-card dd, .evidence-card__summary { color: var(--color-muted); }
 
 @container (min-width: 56rem) {
   .case-layout { grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); align-items: start; }
@@ -466,7 +482,7 @@ a:focus-visible,
   .case-index__mobile { display: none; }
   .case-index__desktop { display: grid; gap: 0.5rem; }
   .case-index__desktop .technical-label { padding-inline: 0.75rem; }
-  .case-facts dd { display: flex; align-items: center; min-block-size: var(--control-height); }
+  .case-facts:not(.case-summary) dd { display: flex; align-items: center; min-block-size: var(--control-height); }
 }
 
 @container (min-width: 44rem) {

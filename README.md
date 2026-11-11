@@ -19,7 +19,8 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 | [Informe del incremento 2](docs/informe-incremento-2.md) | Revisión visual, flujo editorial y resultados de las pruebas. |
 | [Informe de integración de RZ.](docs/informe-integracion-rz.md) | Cambios, pruebas y comparación con la maqueta aprobada. |
 | [Informe del incremento 3A](docs/informe-incremento-3a.md) | Casos de estudio, evidencias y verificación de la publicación estática. |
-| [Revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core.md) | Vista local, fuentes, alcance de E04 y capturas de la revisión. |
+| [Revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core.md) | Integración inicial, fuentes y alcance de E04. |
+| [Segunda revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core-v2.md) | Apertura del caso, ejemplo funcional, evidencias y captura del producto. |
 
 ## Desarrollo local
 
@@ -58,7 +59,7 @@ El retrato es opcional. Para incorporar uno, registra `perfil.retrato` con la ru
 
 Las muestras usan `app/pruebas/datos.ts`. Cuando existe `.local/contenido-editorial/registro.json`, la vista local carga los borradores editoriales y sus recursos en `recursos-contenido/revision-editorial/`. El registro público se reserva para material autorizado. Los borradores editoriales y sus recursos quedan fuera de Git y de la compilación pública.
 
-Con el borrador de RFM CORE disponible, `npm run revision:editorial` verifica la integración y genera la galería `.local/revision-editorial-rfm-core/index.html`. Para recorrer las páginas y los enlaces de las evidencias, ejecuta `npm run preview:prueba` tras compilar la vista local.
+Con el borrador actualizado de RFM CORE disponible, `npm run revision:editorial` verifica la integración y genera la galería `.local/revision-editorial-rfm-core-v2/index.html`. Para recorrer las páginas y los enlaces de las evidencias, ejecuta `npm run preview:prueba` tras compilar la vista local.
 
 El repositorio utiliza la rama `main`. El titular del portafolio gestiona los commits y el push. La configuración del despliegue se definirá al preparar la publicación.
 

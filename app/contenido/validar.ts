@@ -96,12 +96,23 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
 
   for (const caso of registro.casos) {
     const { slug, revision, proyecto, evidencias: ids, titulo, resumen, contexto,
-      alcance, decisiones, trabajo, validacion, resultadosYLimites } = caso;
+      alcance, decisiones, trabajo, validacion, resultadosYLimites, resumenVisual, ejemplo } = caso;
     const origen = `Caso «${slug}»`;
     validarRevision(origen, revision);
     validarReferencia(origen, proyecto, proyectos, revision, (entrada) => entrada.ficha.revision);
     if (revision === "aprobado") {
       exigirTextos(origen, { titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites });
+      for (const { etiqueta, valor } of resumenVisual ?? []) exigirTextos(origen, { etiqueta, valor });
+      if (ejemplo) {
+        exigirTextos(origen, { titulo: ejemplo.titulo });
+        for (const situacion of ejemplo.situaciones) exigirTextos(origen, situacion);
+        for (const { evidencia, texto, ancla } of ejemplo.referencias) {
+          exigirTextos(origen, { texto, ancla });
+          if (!ids.includes(evidencia) || !slugValido.test(ancla)) {
+            throw new Error(`${origen}: referencia de ejemplo inválida «${evidencia}#${ancla}»`);
+          }
+        }
+      }
     }
     validarEvidencias(origen, ids, revision);
   }
