@@ -6,8 +6,8 @@ export interface Perfil {
   presentacion: string;
   propuesta: string;
   oportunidades: string;
-  formacion: readonly { programa: string; institucion: string; periodo: string }[];
-  trayectoria: readonly { descripcion: string; evidencias: readonly string[] }[];
+  formacion: readonly { programa: string; institucion?: string; periodo?: string }[];
+  trayectoria: readonly { titulo?: string; descripcion: string; evidencias: readonly string[] }[];
   retrato?: { revision: Revision; archivo: string; alt: string };
   intereses?: readonly { titulo: string; descripcion: string }[];
   correo?: string;

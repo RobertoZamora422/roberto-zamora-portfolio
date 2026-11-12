@@ -14,7 +14,6 @@ export async function loader() {
     oportunidades: perfil?.oportunidades ?? presentacionBase.oportunidades,
     intereses: perfil?.intereses,
     retrato: retrato && { src: urlRecursoLocal(retrato.archivo), alt: retrato.alt },
-    retratoDeRevision: process.env.PORTFOLIO_PREVIEW === "1" ? "Tu foto" : undefined,
     proyecto: proyectoDestacado && {
       nombre: proyectoDestacado.ficha.nombre,
       resumen: proyectoDestacado.pagina.destacado,
@@ -29,13 +28,12 @@ export async function loader() {
 }
 
 export default function Inicio() {
-  const { nombre, presentacion, propuesta, oportunidades, proyecto, caso, intereses, retrato, retratoDeRevision } =
+  const { nombre, presentacion, propuesta, oportunidades, proyecto, caso, intereses, retrato } =
     useLoaderData<typeof loader>();
-  const mostrarRetrato = retrato || retratoDeRevision;
 
   return (
     <div className="home-page">
-      <div className={mostrarRetrato ? "home-hero home-hero--portrait" : "home-hero"}>
+      <div className={retrato ? "home-hero home-hero--portrait" : "home-hero"}>
         <header className="home-title">
           <h1>{nombre ?? presentacion}</h1>
           <p className="home-role">{nombre ? presentacion : oportunidades}</p>
@@ -47,12 +45,10 @@ export default function Inicio() {
             <ActionLink to={paths.cv}>Ver mi CV</ActionLink>
           </div>
         </div>
-        {mostrarRetrato && (
+        {retrato && (
           <div className="portrait-frame">
             <div className="portrait">
-              {retrato
-                ? <img src={retrato.src} alt={retrato.alt} />
-                : <div className="portrait-placeholder">{retratoDeRevision}</div>}
+              <img src={retrato.src} alt={retrato.alt} />
             </div>
           </div>
         )}

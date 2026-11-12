@@ -1,21 +1,4 @@
-import type { Evidencia, Perfil, Proyecto, Registro } from "../contenido/modelo.ts";
-
-// Textos de revisión local derivados de la definición y del diseño aprobado.
-// Las aprobaciones de este registro se aplican solo a la vista local.
-const perfilRevision: Perfil = {
-  revision: "aprobado",
-  nombre: "Roberto Zamora",
-  presentacion: "Estudiante de Ingeniería en Software",
-  propuesta: "Me interesa entender cómo funciona un negocio y desarrollar software que le ayude en el día a día.",
-  oportunidades: "Busco una pasantía o un puesto junior.",
-  formacion: [],
-  trayectoria: [],
-  intereses: [
-    { titulo: "Análisis funcional", descripcion: "Procesos y requisitos." },
-    { titulo: "Calidad de software", descripcion: "Pruebas y seguimiento de defectos." },
-    { titulo: "Desarrollo web", descripcion: "Diseño e implementación de aplicaciones." },
-  ],
-};
+import type { Evidencia, Proyecto, Registro } from "../contenido/modelo.ts";
 
 const proyectosRevision: readonly Proyecto[] = [
   {
@@ -91,7 +74,6 @@ export function registroParaRevision(publico: Registro): Registro {
 
   return {
     ...publico,
-    perfil: publico.perfil?.revision === "aprobado" ? publico.perfil : perfilRevision,
     proyectos: [
       ...publico.proyectos,
       ...proyectosRevision.filter(({ slug }) => !publico.proyectos.some((proyecto) => proyecto.slug === slug)),

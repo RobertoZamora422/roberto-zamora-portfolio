@@ -130,11 +130,15 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
 
   if (registro.perfil) {
     const { revision, nombre, presentacion, propuesta, oportunidades, formacion, trayectoria,
-      casos: referencias, enlaces, retrato, intereses } = registro.perfil;
+      casos: referencias, correo, enlaces, retrato, intereses } = registro.perfil;
     validarRevision("Perfil", revision);
     if (revision === "aprobado") {
       exigirTextos("Perfil", { nombre, presentacion, propuesta, oportunidades });
-      for (const entrada of formacion) exigirTextos("Formación", entrada);
+      for (const { programa, institucion, periodo } of formacion) exigirTextos("Formación", {
+        programa,
+        ...(institucion !== undefined && { institucion }),
+        ...(periodo !== undefined && { periodo }),
+      });
       for (const entrada of intereses ?? []) exigirTextos("Área de interés", entrada);
     }
     if (retrato) {
@@ -144,11 +148,14 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
       if (!/\.(?:avif|jpe?g|png|webp)$/.test(retrato.archivo)) throw new Error("Retrato: formato de imagen inválido");
       await validarArchivo("Retrato", retrato.archivo, revisionDelArchivo);
     }
-    for (const { descripcion, evidencias: ids } of trayectoria) {
-      if (revision === "aprobado") exigirTextos("Trayectoria", { descripcion });
+    for (const { titulo, descripcion, evidencias: ids } of trayectoria) {
+      if (revision === "aprobado") exigirTextos("Trayectoria", { descripcion, ...(titulo !== undefined && { titulo }) });
       validarEvidencias("Trayectoria", ids, revision);
     }
     for (const id of referencias ?? []) validarReferencia("Perfil", id, casos, revision, (entrada) => entrada.revision);
+    if (correo !== undefined && (typeof correo !== "string" || !/^[a-z\d.!#$%&'*+/=?^_`{|}~-]+@[a-z\d-]+(?:\.[a-z\d-]+)+$/i.test(correo))) {
+      throw new Error("Perfil: correo inválido");
+    }
     for (const { url } of enlaces ?? []) validarUrl("Perfil", url);
   }
 

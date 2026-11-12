@@ -15,6 +15,46 @@ export const vistasCasos = [
   { nombre: "Caso en revisión", clave: "caso", ruta: "/casos-de-estudio/separar-proyecto-y-caso/" },
 ];
 
+export async function capturarPerfil(browser, origin) {
+  const destino = ".local/revision-incremento-3b";
+  const vistas = [
+    { nombre: "Inicio", clave: "inicio", ruta: "/" },
+    { nombre: "Sobre mí", clave: "sobre-mi", ruta: "/sobre-mi/" },
+    { nombre: "CV y contacto", clave: "cv", ruta: "/cv/" },
+  ];
+  await mkdir(destino, { recursive: true });
+  const page = await browser.newPage();
+  try {
+    for (const ancho of anchos) {
+      await page.setViewportSize({ width: ancho, height: 840 });
+      for (const { ruta, clave } of vistas) {
+        const respuesta = await page.goto(origin + ruta);
+        assert.equal(respuesta.status(), 200, ruta);
+        await page.evaluate(async () => { await document.fonts.ready; });
+        await page.screenshot({ path: join(destino, `${clave}-${ancho}.png`), fullPage: true });
+      }
+    }
+    await page.pdf({ path: join(destino, "cv-impresion.pdf"), preferCSSPageSize: true, tagged: true });
+  } finally {
+    await page.close();
+  }
+  const galeria = anchos.map((ancho) => `<section><h2>${ancho} px</h2><div class="capturas">${vistas.map(({ nombre, clave }) => {
+    const archivo = `${clave}-${ancho}.png`;
+    return `<figure><a href="${archivo}"><img loading="lazy" src="${archivo}" alt="${nombre} a ${ancho} px"></a><figcaption>${nombre}</figcaption></figure>`;
+  }).join("")}</div></section>`).join("");
+  await writeFile(join(destino, "index.html"), `<!doctype html><html lang="es"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
+    <title>RZ. · Revisión del incremento 3B</title>
+    <style>body{margin:0 auto;padding:1.25rem;max-width:85rem;background:#f2f1e9;color:#191e19;font:16px/1.5 system-ui}
+    a{color:#30503c}a:focus-visible{outline:2px solid #30503c;outline-offset:3px}section{margin-block:2rem}
+    .capturas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;align-items:start}
+    figure{margin:0}img{display:block;max-width:100%;border:1px solid #c9cec1}figcaption{font-weight:600}
+    @media(max-width:700px){.capturas{grid-template-columns:1fr}}</style></head>
+    <body><main><h1>RZ. · Revisión del incremento 3B</h1>
+    <p>Abre una captura para verla a tamaño completo. <a href="cv-impresion.pdf">Comprobar la impresión del CV en A4</a>.</p>
+    ${galeria}</main></body></html>`);
+}
+
 export async function capturarRevision(browser, origin) {
   await mkdir(carpeta, { recursive: true });
   const app = await browser.newPage();

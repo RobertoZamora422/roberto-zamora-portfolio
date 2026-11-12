@@ -247,38 +247,13 @@ a:focus-visible,
   overflow: hidden;
   background: var(--color-portrait);
 }
-.portrait img, .portrait-placeholder {
+.portrait img {
   position: absolute;
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
-}
-.portrait img { object-fit: cover; object-position: 50% 42%; }
-.portrait-placeholder {
-  display: grid;
-  place-items: center;
-  padding: 0.5rem;
-  color: var(--color-accent);
-  font-size: 0.875rem;
-  font-weight: 630;
-  text-align: center;
-}
-.portrait-placeholder::before, .portrait-placeholder::after {
-  content: "";
-  position: absolute;
-  inline-size: 1rem;
-  block-size: 1rem;
-  border: 0 solid var(--color-accent);
-}
-.portrait-placeholder::before {
-  inset: 1rem auto auto 1rem;
-  border-block-start-width: 1px;
-  border-inline-start-width: 1px;
-}
-.portrait-placeholder::after {
-  inset: auto 1rem 1rem auto;
-  border-block-end-width: 1px;
-  border-inline-end-width: 1px;
+  object-fit: cover;
+  object-position: 50% 42%;
 }
 
 .featured-project {
@@ -328,6 +303,53 @@ a:focus-visible,
   border-block-start: 1px solid var(--color-divider);
 }
 .home-case p { max-inline-size: 57ch; color: var(--color-muted); }
+
+.perfil-page, .cv-page { gap: 0; }
+:is(.perfil-page, .cv-page) .page-intro { padding-block-end: var(--space-section); }
+.perfil-seccion {
+  display: grid;
+  gap: 0.875rem 1.5rem;
+  border-block-start: 1px solid var(--color-divider);
+  padding-block: clamp(1rem, 3.2cqi, 1.875rem);
+  scroll-margin-block-start: 1rem;
+}
+.perfil-seccion p { max-inline-size: 62ch; color: var(--color-muted); }
+.perfil-detalle, .perfil-lista { display: grid; gap: 0.875rem; }
+.perfil-lista, .perfil-enlaces { margin: 0; padding: 0; list-style: none; }
+.perfil-lista > li { display: grid; gap: 0.25rem; }
+.perfil-enlaces { display: flex; flex-wrap: wrap; gap: 0 1rem; }
+.perfil-enlaces a { display: inline-flex; align-items: center; min-block-size: var(--control-height); }
+.perfil-enlaces--evidencias { font-size: 0.875rem; }
+.cv-imprimir { background: transparent; color: var(--color-accent); font-family: inherit; cursor: pointer; }
+.cv-imprimir:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+
+@container (min-width: 46rem) {
+  .perfil-seccion { grid-template-columns: minmax(0, 0.77fr) minmax(0, 1.6fr); }
+}
+
+@page cv { size: A4; margin: 17mm; }
+
+@media print {
+  html:has(.cv-page) { background: #fff; }
+  body:has(.cv-page) :is(.site-header, .site-footer, .skip-link) { display: none; }
+  body:has(.cv-page) .site-frame { container-type: normal; max-inline-size: none; }
+  .main:has(.cv-page) { padding: 0; }
+  .cv-page { page: cv; display: block; color: #191e19; font-size: 11pt; line-height: 1.4; }
+  .cv-page .page-intro { gap: 3pt; padding-block-end: 14pt; }
+  .cv-page h1 { font-size: 27pt; line-height: 1.1; }
+  .cv-page h2 { font-size: 14pt; break-after: avoid; }
+  .cv-page h3, .cv-page .lead { font-size: 11pt; }
+  .cv-page :is(.lead, .perfil-seccion p, a) { color: inherit; }
+  .cv-page .perfil-seccion { display: block; padding-block: 11pt; }
+  .cv-page .perfil-seccion > h2 { margin-block-end: 6pt; }
+  .cv-page :is(.perfil-detalle, .perfil-lista) { display: block; }
+  .cv-page .perfil-lista li { break-inside: avoid; }
+  .cv-page .perfil-lista li + li { margin-block-start: 7pt; }
+  .cv-page .perfil-enlaces { margin-block-end: 5pt; }
+  .cv-page .perfil-enlaces a { display: inline; min-block-size: 0; }
+  .cv-page p { max-inline-size: none; }
+  .cv-page :is(.cv-acciones, .cv-contacto--pendiente, .perfil-enlaces--evidencias, .link-arrow) { display: none; }
+}
 
 .projects-page .page-intro {
   grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.53fr);
@@ -517,8 +539,6 @@ a:focus-visible,
   .home-title { align-self: center; }
   .home-title h1 { font-size: clamp(1.875rem, 8.85cqi, 2.875rem); }
   .portrait-frame { padding: 0 0.25rem 0.25rem 0; }
-  .portrait-placeholder { font-size: 0.75rem; }
-  .portrait-placeholder::before, .portrait-placeholder::after { display: none; }
   .module-grid, .featured-project, .interest-list, .project-row, .project-facts, .project-story section { grid-template-columns: minmax(0, 1fr); }
   .project-row__aside, .project-row__aside .text-link { justify-self: start; }
   .project-row__aside { justify-items: start; text-align: start; }

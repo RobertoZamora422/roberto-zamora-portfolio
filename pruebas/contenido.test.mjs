@@ -83,3 +83,11 @@ test("El retrato requiere aprobación propia y del perfil", async (t) => {
   perfil.revision = "borrador";
   assert.equal((await validarRegistro(registro, carpeta)).size, 0);
 });
+
+test("El correo del perfil admite un buzón simple y rechaza parámetros de mailto", async () => {
+  const { retrato, ...perfil } = perfilAprobado;
+  const registro = { proyectos: [], casos: [], evidencias: [], perfil: { ...perfil, correo: "talento+qa@example.test" } };
+  await validarRegistro(registro, "");
+  registro.perfil.correo += "?bcc=otro@example.test";
+  await assert.rejects(validarRegistro(registro, ""), /correo inválido/);
+});
