@@ -2,6 +2,8 @@
 
 **Estado · Borrador para revisión editorial, 11 de noviembre de 2026.**
 
+Este informe registra la integración inicial. La [actualización de E04](informe-revision-editorial-rfm-core-v3.md) documenta la integración posterior de las regresiones en RFM CORE y su validación en GitHub Actions.
+
 ## Páginas y recorrido
 
 - `/proyectos/rfm-core/` presenta el producto completo. La ficha distingue su estado de despliegue del estado editorial de la documentación y enlaza al caso relacionado.
@@ -25,7 +27,7 @@ El resultado cubre el rechazo de conversiones duplicadas secuenciales y los esce
 
 El registro de RFM CORE se conserva en `.local/contenido-editorial/registro.json` con estado `borrador` en la ficha, la página, el caso y las cuatro evidencias. El cargador habilita una copia en memoria exclusivamente con `PORTFOLIO_PREVIEW=1` para reutilizar la selección, validación y generación de páginas existentes. Los originales extraídos se conservan bajo `.local/contenido-editorial/fuentes/`. Las fichas enlazan versiones de lectura local en `recursos-contenido/revision-editorial/rfm-core/`. Git ignora ambas ubicaciones y el validador reserva el directorio de recursos para la revisión. El catálogo público sigue vacío con el registro actual.
 
-La publicación queda pendiente de la aprobación del texto, el contraste operativo de E01 y la autorización de las versiones de consulta. Las referencias a una ejecución posterior en el repositorio o en CI deberán corresponder a esa ejecución.
+La publicación queda pendiente de la aprobación del texto, el contraste operativo de E01 y la autorización de las versiones de consulta.
 
 ## Verificación y capturas
 

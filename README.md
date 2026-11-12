@@ -21,6 +21,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 | [Informe del incremento 3A](docs/informe-incremento-3a.md) | Casos de estudio, evidencias y verificación de la publicación estática. |
 | [Revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core.md) | Integración inicial, fuentes y alcance de E04. |
 | [Segunda revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core-v2.md) | Apertura del caso, ejemplo funcional, evidencias y captura del producto. |
+| [Actualización editorial de E04](docs/informe-revision-editorial-rfm-core-v3.md) | Auditoría local, regresiones integradas, validación de CI y pendientes de publicación. |
 
 ## Desarrollo local
 

@@ -437,13 +437,13 @@ test("RFM CORE se puede revisar con sus cuatro evidencias y sus límites", {
 
         await page.goto(origin + rutaCasoRfm);
         const sintesis = await page.locator('dl[aria-label="Aporte y validación"]').innerText();
-        for (const texto of ["Único desarrollador", "9 reglas de negocio documentadas", "171/171", "SQLite", "datos sintéticos", "ajustes locales de pruebas"]) {
+        for (const texto of ["Único desarrollador", "9 reglas de negocio documentadas", "171/171", "SQLite", "datos sintéticos", "GitHub Actions", "a95ce07"]) {
           assert(sintesis.includes(texto), texto);
         }
         const ejemplo = page.getByRole("region", { name: "Cuándo se exige un paquete", exact: true });
         for (const [enlace, archivo, ancla] of [
           ["RN-03 · Regla de negocio", "e02-trazabilidad", "rn-03"],
-          ["QA-06 · Prueba local", "e04-verificacion", "qa-06"],
+          ["QA-06 · Prueba de conversión", "e04-verificacion", "qa-06"],
           ["Ver pantalla de precotización", "e01-proceso", "pantalla-precotizacion"],
         ]) {
           const href = await ejemplo.getByRole("link", { name: enlace }).getAttribute("href");
