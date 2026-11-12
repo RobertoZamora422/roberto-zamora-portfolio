@@ -11,7 +11,7 @@ export async function loader() {
     nombre: perfil?.nombre,
     presentacion: perfil?.presentacion ?? presentacionBase.presentacion,
     propuesta: perfil?.propuesta ?? presentacionBase.propuesta,
-    oportunidades: perfil?.oportunidades ?? presentacionBase.oportunidades,
+    oportunidades: perfil ? undefined : presentacionBase.oportunidades,
     intereses: perfil?.intereses,
     retrato: retrato && { src: urlRecursoLocal(retrato.archivo), alt: retrato.alt },
     proyecto: proyectoDestacado && {
@@ -39,7 +39,7 @@ export default function Inicio() {
           <p className="home-role">{nombre ? presentacion : oportunidades}</p>
         </header>
         <div className="home-intro">
-          <p className="lead">{propuesta}{nombre && ` ${oportunidades}`}</p>
+          <p className="lead">{propuesta}</p>
           <div className="actions">
             <ActionLink to={paths.proyectos} primary>Ver proyectos <Arrow /></ActionLink>
             <ActionLink to={paths.cv}>Ver mi CV</ActionLink>

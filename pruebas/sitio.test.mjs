@@ -81,7 +81,7 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
   assert.doesNotMatch(html, /<input[^>]+type="file"/);
   if (registroPublico.perfil?.revision !== "aprobado") {
     assert.doesNotMatch(html, /<h1>Roberto Zamora<\/h1>/);
-    await comprobarArtefacto(publico, /Busco una pasantía o una posición junior en tecnología|Modelé el flujo comercial de RFM CORE y documenté nueve reglas|robertozamora421@gmail\.com|Universidad de Las Américas/iu);
+    await comprobarArtefacto(publico, /Tecnología · Procesos · Análisis funcional|Me interesa la conexión entre las necesidades de un negocio|Enfoque en el análisis de procesos, la definición de requisitos|robertozamora421@gmail\.com|Universidad de Las Américas/iu);
   }
   await assert.rejects(readFile(join(publico, "__spa-fallback.html")), { code: "ENOENT" });
   await conPages(publico, async (origin) => {
@@ -403,9 +403,11 @@ test("El perfil en revisión conecta Inicio, Sobre mí, CV y evidencias y se pue
         assert.equal(respuesta.status, 200, ruta);
         const html = await respuesta.text();
         assert(html.includes(`<h1>${titulo}</h1>`));
-        assert.match(html, /Estudiante de Ingeniería en Software/);
         assert.match(html, /name="robots" content="noindex"/);
-        if (ruta !== "/") assert.match(html, /Universidad de Las Américas \(UDLA\) · En curso/);
+        if (ruta === "/") {
+          assert.match(html, /Tecnología · Procesos · Análisis funcional/);
+          assert.doesNotMatch(html, /Busco una pasantía|Estudiante de Ingeniería en Software/);
+        } else assert.match(html, /Universidad de Las Américas \(UDLA\) · En curso/);
         const datos = await fetch(origin + ruta + "_.data");
         assert.equal(datos.status, 200);
         assert.match(await datos.text(), /Roberto Zamora/);
@@ -438,6 +440,7 @@ test("El perfil en revisión conecta Inicio, Sobre mí, CV y evidencias y se pue
         assert.equal(await correo.getAttribute("href"), `mailto:${perfilRevision.correo}`);
       }
       await page.goto(origin + "/sobre-mi/");
+      assert.deepEqual(await page.locator(".page-intro .perfil-detalle > p").allTextContents(), perfilRevision.sobreMi);
       const competencias = page.getByRole("region", { name: "Competencias en práctica" });
       const enlaces = await competencias.getByRole("link").evaluateAll((links) => links.map(({ href }) => href));
       assert.equal(enlaces.length, 5);
@@ -449,11 +452,14 @@ test("El perfil en revisión conecta Inicio, Sobre mí, CV y evidencias y se pue
       await competencias.getByRole("link", { name: /^E01/ }).press("Enter");
       await page.getByRole("heading", { name: "E01 — Proceso comercial" }).waitFor();
       await page.goto(origin + "/cv/");
+      const resumen = page.getByRole("region", { name: "Perfil profesional" });
+      assert.deepEqual(await resumen.locator("p").allTextContents(), perfilRevision.resumenProfesional);
       await page.evaluate(() => { window.print = () => { document.body.dataset.imprimir = "solicitado"; }; });
       await page.getByRole("button", { name: "Imprimir CV" }).press("Enter");
       assert.equal(await page.locator("body").getAttribute("data-imprimir"), "solicitado");
       await page.emulateMedia({ media: "print" });
       assert(await page.getByRole("heading", { name: "Roberto Zamora" }).isVisible());
+      assert(await resumen.isVisible());
       assert(await page.getByRole("region", { name: "Contacto" })
         .getByRole("link", { name: perfilRevision.correo, exact: true }).isVisible());
       assert.equal(await page.locator(".site-header, .site-footer, .cv-acciones, .cv-contacto--pendiente").filter({ visible: true }).count(), 0);

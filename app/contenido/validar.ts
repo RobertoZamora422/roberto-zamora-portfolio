@@ -129,11 +129,13 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
   }
 
   if (registro.perfil) {
-    const { revision, nombre, presentacion, propuesta, oportunidades, formacion, trayectoria,
+    const { revision, nombre, presentacion, propuesta, oportunidades, sobreMi, resumenProfesional, formacion, trayectoria,
       casos: referencias, correo, enlaces, retrato, intereses } = registro.perfil;
     validarRevision("Perfil", revision);
     if (revision === "aprobado") {
       exigirTextos("Perfil", { nombre, presentacion, propuesta, oportunidades });
+      for (const parrafo of sobreMi ?? []) exigirTextos("Sobre mí", { parrafo });
+      for (const parrafo of resumenProfesional ?? []) exigirTextos("Resumen profesional", { parrafo });
       for (const { programa, institucion, estado, periodo } of formacion) exigirTextos("Formación", {
         programa,
         ...(institucion !== undefined && { institucion }),

@@ -14,21 +14,17 @@ export default function Perfil() {
   return (
     <article className="page-stack perfil-page">
       <PageIntro title="Sobre mí" kicker={<p className="technical-label">{perfil.nombre}</p>}>
-        <p className="lead">{perfil.presentacion}. {perfil.oportunidades}</p>
+        {perfil.sobreMi?.length ? (
+          <div className="perfil-detalle">
+            {perfil.sobreMi.map((parrafo, indice) => <p key={indice}>{parrafo}</p>)}
+          </div>
+        ) : <p className="lead">{perfil.presentacion}</p>}
         <div className="actions"><ActionLink to={paths.cv}>Ver mi CV</ActionLink></div>
       </PageIntro>
       {perfil.formacion.length > 0 && (
         <section className="perfil-seccion" aria-labelledby="formacion-titulo">
           <h2 id="formacion-titulo">Formación</h2>
           <Formacion entradas={perfil.formacion} />
-        </section>
-      )}
-      {!!perfil.intereses?.length && (
-        <section className="perfil-seccion" aria-labelledby="intereses-titulo">
-          <h2 id="intereses-titulo">Intereses profesionales</h2>
-          <ul className="interest-list" role="list">
-            {perfil.intereses.map(({ titulo, descripcion }) => <li key={titulo}><h3>{titulo}</h3><p>{descripcion}</p></li>)}
-          </ul>
         </section>
       )}
       {perfil.trayectoria.length > 0 && (

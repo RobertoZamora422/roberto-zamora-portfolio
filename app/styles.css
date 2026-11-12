@@ -343,6 +343,7 @@ a:focus-visible,
   .cv-page .perfil-seccion { display: block; padding-block: 11pt; }
   .cv-page .perfil-seccion > h2 { margin-block-end: 6pt; }
   .cv-page :is(.perfil-detalle, .perfil-lista) { display: block; }
+  .cv-resumen p + p { margin-block-start: 5pt; }
   .cv-page .perfil-lista li { break-inside: avoid; }
   .cv-page .perfil-lista li + li { margin-block-start: 7pt; }
   .cv-page .perfil-enlaces { margin-block-end: 5pt; }

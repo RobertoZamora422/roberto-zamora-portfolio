@@ -5,10 +5,10 @@ export async function cargarPerfilProfesional() {
   const { perfil, casos, evidencias } = await cargarContenido();
   if (!perfil) return null;
 
-  const { nombre, presentacion, oportunidades, formacion, intereses, correo, enlaces } = perfil;
+  const { nombre, presentacion, sobreMi, resumenProfesional, formacion, correo, enlaces } = perfil;
   const evidenciasPorId = new Map(evidencias.map((evidencia) => [evidencia.id, evidencia]));
   return {
-    nombre, presentacion, oportunidades, formacion, intereses, correo, enlaces,
+    nombre, presentacion, sobreMi, resumenProfesional, formacion, correo, enlaces,
     casos: casos.filter(({ slug }) => perfil.casos?.includes(slug))
       .map(({ slug, titulo }) => ({ titulo, url: rutaCaso(slug) })),
     trayectoria: perfil.trayectoria.map(({ titulo, descripcion, evidencias: ids }) => ({

@@ -16,12 +16,19 @@ export default function Cv() {
       {perfil ? (
         <PageIntro title={perfil.nombre} kicker={<p className="technical-label">Currículum</p>}>
           <p className="lead">{perfil.presentacion}</p>
-          <p>{perfil.oportunidades}</p>
           <div className="actions cv-acciones">
             <button className="action-link cv-imprimir" type="button" onClick={() => window.print()}>Imprimir CV</button>
           </div>
         </PageIntro>
       ) : <PageIntro title="CV y contacto"><p className="lead">El CV aún no está disponible.</p></PageIntro>}
+      {!!perfil?.resumenProfesional?.length && (
+        <section className="perfil-seccion" aria-labelledby="resumen-titulo">
+          <h2 id="resumen-titulo">Perfil profesional</h2>
+          <div className="perfil-detalle cv-resumen">
+            {perfil.resumenProfesional.map((parrafo, indice) => <p key={indice}>{parrafo}</p>)}
+          </div>
+        </section>
+      )}
       {!!perfil?.formacion.length && (
         <section className="perfil-seccion" aria-labelledby="formacion-titulo">
           <h2 id="formacion-titulo">Formación</h2>
