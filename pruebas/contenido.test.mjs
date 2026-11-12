@@ -4,8 +4,20 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { seleccionarContenido } from "../app/contenido/seleccion.ts";
+import { configuracionPublicacion } from "../app/contenido/publicacion.ts";
 import { validarRegistro } from "../app/contenido/validar.ts";
 import { perfilAprobado, registroFixture } from "./registro-fixture.mjs";
+
+test("La indexación exige un origen HTTPS público y la revisión ignora el origen", () => {
+  assert.deepEqual(configuracionPublicacion({}), { origen: undefined, indexar: false });
+  assert.throws(() => configuracionPublicacion({ PORTFOLIO_INDEXAR: "1" }), /requiere PORTFOLIO_ORIGEN/);
+  for (const origen of ["http://example.org", "https://localhost", "https://ejemplo.pages.dev", "https://example.org/ruta", "https://u@example.org", "https://example.org:443"]) {
+    assert.throws(() => configuracionPublicacion({ PORTFOLIO_ORIGEN: origen }), /origen HTTPS/, origen);
+  }
+  const publicacion = { PORTFOLIO_ORIGEN: "https://example.org/", PORTFOLIO_INDEXAR: "1" };
+  assert.deepEqual(configuracionPublicacion(publicacion), { origen: "https://example.org", indexar: true });
+  assert.deepEqual(configuracionPublicacion({ ...publicacion, PORTFOLIO_PREVIEW: "1" }), { origen: undefined, indexar: false });
+});
 
 test("La ficha y la página se aprueban de forma independiente y RFM CORE tiene prioridad", () => {
   const registro = registroFixture();

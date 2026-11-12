@@ -1,11 +1,16 @@
-import { copyFile, mkdir, rename, rm } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { Config } from "@react-router/dev/config";
 import { cargarContenido, cargarRegistro } from "./app/contenido/registro.server";
 import { validarRegistro } from "./app/contenido/validar";
-import { rutaCaso, rutaProyecto } from "./app/rutas";
+import { configuracionPublicacion, tarjetaSocial } from "./app/contenido/publicacion";
+import { metadatosPagina } from "./app/contenido/metadatos";
+import { paths, rutaCaso, rutaProyecto } from "./app/rutas";
 
 const preview = process.env.PORTFOLIO_PREVIEW === "1";
+const { origen, indexar } = configuracionPublicacion(process.env);
+const escapar = (texto: string) => texto.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+const rutaEvidencia = (archivo: string) => `/recursos/${archivo.replace(/\.html$/, "")}`;
 
 export default {
   ssr: false,
@@ -26,13 +31,53 @@ export default {
     // Pages reads this file for unmatched URLs and sends the HTTP status.
     await rename(resolve(client, "404/index.html"), resolve(client, "404.html"));
     await rm(resolve(client, "__spa-fallback.html"), { force: true });
-    const recursos = await validarRegistro(await cargarRegistro(), resolve(viteConfig.root, "recursos-contenido"), {
+    const registro = await cargarRegistro();
+    const recursos = await validarRegistro(registro, resolve(viteConfig.root, "recursos-contenido"), {
       revisionLocal: preview,
     });
-    for (const [archivo, origen] of recursos) {
+    const documentos = new Map(registro.evidencias.flatMap(({ revision, titulo, afirmacion, recurso }) => (
+      revision === "aprobado" && "archivo" in recurso && recurso.archivo.endsWith(".html")
+        ? [[recurso.archivo, { titulo, descripcion: afirmacion, ruta: rutaEvidencia(recurso.archivo) }] as const]
+        : []
+    )));
+    for (const [archivo, fuente] of recursos) {
       const destino = resolve(client, "recursos", archivo);
       await mkdir(dirname(destino), { recursive: true });
-      await copyFile(origen, destino);
+      const documento = !preview && documentos.get(archivo);
+      if (!documento) {
+        await copyFile(fuente, destino);
+        continue;
+      }
+      const html = await readFile(fuente, "utf8");
+      if (!html.includes("</head>")) throw new Error(`Falta </head> en la evidencia ${archivo}`);
+      const etiquetas = metadatosPagina({ ...documento, tipo: "article" }, origen ?? "")
+        .flatMap((meta) => {
+          if ("href" in meta && meta.href) return [`<link rel="canonical" href="${escapar(meta.href)}">`];
+          if ("property" in meta && meta.property) return [`<meta property="${meta.property}" content="${escapar(meta.content)}">`];
+          if ("name" in meta && meta.name) return [`<meta name="${meta.name}" content="${escapar(meta.content)}">`];
+          return [];
+        });
+      await writeFile(destino, html.replace("</head>", `${etiquetas.join("\n")}\n</head>`));
+    }
+
+    const robots = "User-agent: *\nDisallow:\n";
+    if (origen && !preview) {
+      const destino = resolve(client, `.${tarjetaSocial}`);
+      await mkdir(dirname(destino), { recursive: true });
+      await copyFile(resolve(viteConfig.root, `recursos-contenido/${tarjetaSocial.slice("/recursos/".length)}`), destino);
+    }
+    if (indexar && origen) {
+      const { paginas, casos, perfil } = await cargarContenido();
+      const rutas = [paths.inicio, paths.proyectos, paths.casos, ...(perfil ? [paths.perfil, paths.cv] : []),
+        ...paginas.map(({ slug }) => rutaProyecto(slug)), ...casos.map(({ slug }) => rutaCaso(slug)),
+        ...Array.from(documentos.values(), ({ ruta }) => ruta)];
+      const urls = rutas.map((ruta) => `  <url><loc>${escapar(new URL(ruta, origen).href)}</loc></url>`).join("\n");
+      await writeFile(resolve(client, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
+      await writeFile(resolve(client, "robots.txt"), `${robots}Sitemap: ${origen}/sitemap.xml\n`);
+      await writeFile(resolve(client, "_headers"), "https://:project.pages.dev/*\n  X-Robots-Tag: noindex\nhttps://:version.:project.pages.dev/*\n  X-Robots-Tag: noindex\n");
+    } else {
+      await writeFile(resolve(client, "robots.txt"), robots);
+      await writeFile(resolve(client, "_headers"), "/*\n  X-Robots-Tag: noindex\n");
     }
   },
 } satisfies Config;

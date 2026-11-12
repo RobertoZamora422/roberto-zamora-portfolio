@@ -1,8 +1,15 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, type MetaFunction } from "react-router";
+import { metadatosPagina } from "../contenido/metadatos";
 import { presentacionBase } from "../contenido/publico";
 import { cargarContenido, urlRecursoLocal } from "../contenido/registro.server";
 import { paths, rutaCaso, rutaProyecto } from "../rutas";
 import { ActionLink, Arrow, TextLink } from "../ui/elementos";
+
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => metadatosPagina({
+  titulo: `${loaderData?.nombre ?? "Portafolio profesional"} · RZ.`,
+  descripcion: "Tecnología, procesos y análisis funcional. Proyectos y evidencias sobre cómo se abordan los problemas y se fundamentan las decisiones.",
+  ruta: paths.inicio,
+});
 
 export async function loader() {
   const { perfil, proyectoDestacado, casoDestacado } = await cargarContenido();

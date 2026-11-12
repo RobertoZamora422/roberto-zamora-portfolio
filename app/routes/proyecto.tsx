@@ -1,6 +1,7 @@
 import { useLoaderData, type LoaderFunctionArgs, type MetaFunction } from "react-router";
+import { metadatosPagina } from "../contenido/metadatos";
 import { cargarContenido, urlRecursoLocal } from "../contenido/registro.server";
-import { paths, rutaCaso } from "../rutas";
+import { paths, rutaCaso, rutaProyecto } from "../rutas";
 import { PageIntro, TextLink } from "../ui/elementos";
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -31,9 +32,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
   };
 }
 
-export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [{
-  title: loaderData ? `${loaderData.nombre} · Proyectos` : "Página no encontrada · Portafolio profesional",
-}];
+export const meta: MetaFunction<typeof loader> = ({ loaderData, params }) => loaderData && params.slug
+  ? metadatosPagina({ titulo: `${loaderData.nombre} · Proyectos`, descripcion: loaderData.entradilla, ruta: rutaProyecto(params.slug) })
+  : [{ title: "Página no encontrada · Portafolio profesional" }, { name: "robots", content: "noindex" }];
 
 export default function Proyecto() {
   const proyecto = useLoaderData<typeof loader>();

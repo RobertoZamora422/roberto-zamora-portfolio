@@ -15,7 +15,9 @@
     "test:sitio": "npm run build && npm run build:prueba && node --test pruebas/sitio.test.mjs",
     "revision:visual": "cross-env PORTFOLIO_CAPTURAS=1 npm run test:sitio",
     "revision:editorial": "cross-env PORTFOLIO_CAPTURAS_EDITORIAL=1 npm run test:sitio",
-    "revision:perfil": "cross-env PORTFOLIO_CAPTURAS_PERFIL=1 npm run test:sitio"
+    "revision:perfil": "cross-env PORTFOLIO_CAPTURAS_PERFIL=1 npm run test:sitio",
+    "revision:candidata": "cross-env PORTFOLIO_CAPTURAS_CANDIDATA=1 npm run test:sitio",
+    "preview:candidata": "wrangler pages dev build/client --ip 127.0.0.1 --port 8789"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",

@@ -24,6 +24,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 | [Actualización editorial de E04](docs/informe-revision-editorial-rfm-core-v3.md) | Auditoría local, regresiones integradas, validación de CI y pendientes de publicación. |
 | [Versión candidata de RFM CORE](docs/informe-candidata-rfm-core.md) | Recorrido local, recursos, verificaciones y autorización pendiente. |
 | [Incremento 3B](docs/informe-incremento-3b.md) | Identidad, Sobre mí, CV, contacto y revisión local. |
+| [Incremento 4](docs/informe-incremento-4.md) | Candidata completa, metadatos, comprobaciones y propuesta de Cloudflare Pages. |
 
 ## Desarrollo local
 
@@ -65,6 +66,8 @@ Las muestras usan `app/pruebas/datos.ts`. Cuando existe `.local/contenido-editor
 `npm run revision:editorial` verifica la versión candidata de RFM CORE y genera `.local/candidata-rfm-core/index.html` a partir de `build/client`. Para recorrer esa compilación localmente, ejecuta `npx wrangler pages dev build/client --ip 127.0.0.1 --port 8789` y abre `http://127.0.0.1:8789/`.
 
 `npm run revision:perfil` verifica el incremento 3B y genera `.local/revision-incremento-3b/index.html` con las capturas y la impresión de control. Para recorrer el perfil en revisión usa `npm run preview:prueba` y abre Inicio, `/sobre-mi/` o `/cv/` en `http://127.0.0.1:8788/`.
+
+`npm run revision:candidata` verifica el incremento 4 y genera `.local/revision-incremento-4/index.html`. `npm run preview:candidata` sirve `build/client` en `http://127.0.0.1:8789/`. La configuración de origen e indexación se detalla en la [propuesta de Cloudflare Pages](docs/propuesta-cloudflare-pages.md).
 
 El repositorio utiliza la rama `main`. El titular del portafolio gestiona los commits y el push. La configuración del despliegue se definirá al preparar la publicación.
 

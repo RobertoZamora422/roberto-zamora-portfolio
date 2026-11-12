@@ -1,9 +1,14 @@
 import { useLoaderData } from "react-router";
+import { metadatosPagina } from "../contenido/metadatos";
 import { cargarContenido } from "../contenido/registro.server";
-import { rutaCaso } from "../rutas";
+import { paths, rutaCaso } from "../rutas";
 import { PageIntro, TextLink } from "../ui/elementos";
 
-export const meta = () => [{ title: "Casos de estudio · Portafolio profesional" }];
+export const meta = () => metadatosPagina({
+  titulo: "Casos de estudio · Portafolio profesional",
+  descripcion: "Decisiones de diseño, análisis de procesos y pruebas documentadas en los casos de estudio del portafolio RZ.",
+  ruta: paths.casos,
+});
 
 export async function loader() {
   const { casos, proyectos } = await cargarContenido();

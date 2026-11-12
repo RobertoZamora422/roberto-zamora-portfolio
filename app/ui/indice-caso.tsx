@@ -16,15 +16,17 @@ export function IndiceCaso({ secciones }: { secciones: readonly Seccion[] }) {
     function actualizar() {
       frame = 0;
       const posicion = window.scrollY;
-      if (saltoPendiente) {
-        saltoPendiente = false;
-        const destino = destinos.find(({ id }) => `#${id}` === window.location.hash);
-        posicionSalto = destino ? posicion : undefined;
-        if (destino) {
-          fijarActiva(destino.id);
-          return;
-        }
+      const salto = saltoPendiente;
+      saltoPendiente = false;
+      const destino = destinos.find(({ id }) => `#${id}` === window.location.hash);
+      // El navegador puede completar el salto después de hidratar o de cargar las fuentes.
+      if (destino && (salto || Math.abs(destino.getBoundingClientRect().top
+        - (parseFloat(getComputedStyle(destino).scrollMarginTop) || 0)) < 2)) {
+        posicionSalto = posicion;
+        fijarActiva(destino.id);
+        return;
       }
+      if (salto) posicionSalto = undefined;
       // El final de la página puede impedir que un destino llegue al inicio de la ventana.
       if (posicionSalto !== undefined && Math.abs(posicion - posicionSalto) < 2) return;
       posicionSalto = undefined;

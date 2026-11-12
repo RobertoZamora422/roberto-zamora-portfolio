@@ -1,9 +1,14 @@
 import { useLoaderData } from "react-router";
+import { metadatosPagina } from "../contenido/metadatos";
 import { cargarContenido } from "../contenido/registro.server";
-import { rutaProyecto } from "../rutas";
+import { paths, rutaProyecto } from "../rutas";
 import { PageIntro, TextLink } from "../ui/elementos";
 
-export const meta = () => [{ title: "Proyectos · Portafolio profesional" }];
+export const meta = () => metadatosPagina({
+  titulo: "Proyectos · Portafolio profesional",
+  descripcion: "Explora los proyectos del portafolio, el problema que aborda cada solución y el alcance de la participación personal.",
+  ruta: paths.proyectos,
+});
 
 export async function loader() {
   const { proyectos, proyectoDestacado } = await cargarContenido();

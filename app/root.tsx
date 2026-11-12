@@ -47,7 +47,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {process.env.PORTFOLIO_PREVIEW === "1" && !staticError && <meta name="robots" content="noindex" />}
+        {process.env.PORTFOLIO_INDEXAR !== "1" && !staticError && <meta name="robots" content="noindex" />}
         <Meta />
         <Links />
       </head>

@@ -8,7 +8,7 @@ import { test } from "node:test";
 import { promisify } from "node:util";
 import { chromium } from "playwright-core";
 import { registroPublico } from "../app/contenido/publico.ts";
-import { perfilRevision } from "../app/contenido/perfil-revision.ts";
+import { perfilPublico } from "../app/contenido/perfil-publico.ts";
 import { anchos, capturarCasos, capturarEditorial, capturarPerfil, capturarRevision, vistas, vistasCasos } from "./capturas.mjs";
 import { perfilAprobado, registroFixture } from "./registro-fixture.mjs";
 import { conPages } from "./servidor.mjs";
@@ -77,7 +77,8 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
     await comprobarArtefacto(publico, /del-interes-comercial-al-contrato|Del interés comercial al contrato|rfm-e0[1-4]/iu);
   }
   const html = await readFile(join(publico, "index.html"), "utf8");
-  assert.doesNotMatch(html, /noindex/);
+  assert.match(html, /name="robots" content="noindex"/);
+  assert.doesNotMatch(html, /rel="canonical"|property="og:url"/);
   assert.doesNotMatch(html, /<input[^>]+type="file"/);
   if (registroPublico.perfil?.revision !== "aprobado") {
     assert.doesNotMatch(html, /<h1>Roberto Zamora<\/h1>/);
@@ -85,6 +86,21 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
   }
   await assert.rejects(readFile(join(publico, "__spa-fallback.html")), { code: "ENOENT" });
   await conPages(publico, async (origin) => {
+    const inicio = await fetch(origin);
+    assert.equal(inicio.headers.get("x-robots-tag"), "noindex");
+    const robots = await fetch(origin + "/robots.txt");
+    assert.equal(robots.status, 200);
+    assert.equal(await robots.text(), "User-agent: *\nDisallow:\n");
+    await comprobar404(origin, ["/sitemap.xml"]);
+    for (const ruta of ["/", "/proyectos/", "/casos-de-estudio/", "/sobre-mi/", "/cv/", rutaRfm, rutaCasoRfm]) {
+      const respuesta = await fetch(origin + ruta);
+      assert.equal(respuesta.status, 200, ruta);
+      const pagina = await respuesta.text();
+      for (const etiqueta of [/name="description"/, /property="og:title"/, /property="og:description"/]) {
+        assert.match(pagina, etiqueta, ruta);
+      }
+      assert.doesNotMatch(pagina, /rel="canonical"|property="og:url"/, ruta);
+    }
     const catalogo = await fetch(origin + catalogoCasos);
     assert.equal(catalogo.status, 200);
     const htmlCasos = await catalogo.text();
@@ -107,6 +123,7 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
   };
   const [base] = registro.proyectos;
   const [casoBase] = registro.casos;
+  registro.evidencias.push({ ...registro.evidencias[0], id: "documento-qa", recurso: { archivo: "documento-qa.html" } });
   Object.assign(casoBase, {
     competencia: "Análisis funcional QA",
     periodo: "Periodo QA",
@@ -147,12 +164,15 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
   const aprobado = join(carpeta, "recursos-contenido/archivo-aprobado-qa.txt");
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aMxoAAAAASUVORK5CYII=", "base64");
   await writeFile(aprobado, "Recurso aprobado QA");
+  await writeFile(join(carpeta, "recursos-contenido/documento-qa.html"), "<html><head><title>Documento QA</title></head><body>Documento QA</body></html>");
+  await mkdir(join(carpeta, "recursos-contenido/sitio"));
+  await cp("recursos-contenido/sitio/rz-social.png", join(carpeta, "recursos-contenido/sitio/rz-social.png"));
   await writeFile(join(carpeta, "recursos-contenido", perfilAprobado.retrato.archivo), png);
   await writeFile(join(carpeta, "recursos-contenido/retrato-no-autorizado-qa.png"), png);
   await writeFile(join(carpeta, "recursos-contenido/archivo-borrador-qa.txt"), "Borrador aislado QA");
   await writeFile(join(carpeta, "public/recurso-sin-revision-qa.txt"), "Copia directa QA");
   const compilar = () => ejecutar(process.execPath, ["node_modules/@react-router/dev/bin.cjs", "build"], {
-    cwd: carpeta, env: { ...process.env, PORTFOLIO_PREVIEW: "0" }, timeout: 35_000,
+    cwd: carpeta, env: { ...process.env, PORTFOLIO_PREVIEW: "0", PORTFOLIO_ORIGEN: "https://example.org", PORTFOLIO_INDEXAR: "1" }, timeout: 35_000,
   });
   await compilar();
 
@@ -167,6 +187,18 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
   assert.match(inicio, /<h1>Perfil QA<\/h1>/);
   assert.match(inicio, /<img[^>]+src="\/recursos\/retrato-qa.png"[^>]+alt="Retrato QA"/);
   const cv = await readFile(join(salida, "cv/index.html"), "utf8");
+  assert.match(cv, /rel="canonical" href="https:\/\/example\.org\/cv\/"/);
+  assert.match(cv, /property="og:url" content="https:\/\/example\.org\/cv\/"/);
+  assert.match(cv, /property="og:image" content="https:\/\/example\.org\/recursos\/sitio\/rz-social\.png"/);
+  assert.doesNotMatch(cv, /name="robots" content="noindex"/);
+  const documentoSeo = await readFile(join(salida, "recursos/documento-qa.html"), "utf8");
+  assert.match(documentoSeo, /rel="canonical" href="https:\/\/example\.org\/recursos\/documento-qa"/);
+  const sitemap = await readFile(join(salida, "sitemap.xml"), "utf8");
+  assert.deepEqual([...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(([, url]) => url).sort(), [
+    "/", "/proyectos/", "/casos-de-estudio/", "/sobre-mi/", "/cv/", "/proyectos/solucion-qa/",
+    "/casos-de-estudio/caso-qa/", "/casos-de-estudio/caso-con-ficha-qa/", "/recursos/documento-qa",
+  ].map((ruta) => `https://example.org${ruta}`).sort());
+  assert.match(await readFile(join(salida, "robots.txt"), "utf8"), /Sitemap: https:\/\/example\.org\/sitemap\.xml/);
   assert.match(cv, /href="mailto:talento%2Bqa@example\.test">talento\+qa@example\.test/);
   assert.match(cv, /href="https:\/\/example\.org\/perfil-qa">Perfil externo QA/);
   assert.doesNotMatch(inicio, /Resumen de catálogo QA|Presentación de ficha QA/);
@@ -390,8 +422,8 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
   });
 });
 
-test("El perfil en revisión conecta Inicio, Sobre mí, CV y evidencias y se puede imprimir", { timeout: 90000 }, async () => {
-  await conPages(preview, async (origin) => {
+test("El perfil candidato conecta Inicio, Sobre mí, CV y evidencias y se puede imprimir", { timeout: 120000 }, async () => {
+  await conPages(publico, async (origin) => {
     const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
     try {
       const page = await browser.newPage();
@@ -436,11 +468,11 @@ test("El perfil en revisión conecta Inicio, Sobre mí, CV y evidencias y se pue
         await page.getByRole("link", { name: "Contacto", exact: true }).press("Enter");
         await page.waitForFunction(() => location.hash === "#contacto" && document.activeElement.id === "contacto");
         const correo = page.getByRole("region", { name: "Contacto" })
-          .getByRole("link", { name: perfilRevision.correo, exact: true });
-        assert.equal(await correo.getAttribute("href"), `mailto:${perfilRevision.correo}`);
+          .getByRole("link", { name: perfilPublico.correo, exact: true });
+        assert.equal(await correo.getAttribute("href"), `mailto:${perfilPublico.correo}`);
       }
       await page.goto(origin + "/sobre-mi/");
-      assert.deepEqual(await page.locator(".page-intro .perfil-detalle > p").allTextContents(), perfilRevision.sobreMi);
+      assert.deepEqual(await page.locator(".page-intro .perfil-detalle > p").allTextContents(), perfilPublico.sobreMi);
       const competencias = page.getByRole("region", { name: "Competencias en práctica" });
       const enlaces = await competencias.getByRole("link").evaluateAll((links) => links.map(({ href }) => href));
       assert.equal(enlaces.length, 5);
@@ -453,7 +485,7 @@ test("El perfil en revisión conecta Inicio, Sobre mí, CV y evidencias y se pue
       await page.getByRole("heading", { name: "E01 — Proceso comercial" }).waitFor();
       await page.goto(origin + "/cv/");
       const resumen = page.getByRole("region", { name: "Perfil profesional" });
-      assert.deepEqual(await resumen.locator("p").allTextContents(), perfilRevision.resumenProfesional);
+      assert.deepEqual(await resumen.locator("p").allTextContents(), perfilPublico.resumenProfesional);
       await page.evaluate(() => { window.print = () => { document.body.dataset.imprimir = "solicitado"; }; });
       await page.getByRole("button", { name: "Imprimir CV" }).press("Enter");
       assert.equal(await page.locator("body").getAttribute("data-imprimir"), "solicitado");
@@ -461,10 +493,11 @@ test("El perfil en revisión conecta Inicio, Sobre mí, CV y evidencias y se pue
       assert(await page.getByRole("heading", { name: "Roberto Zamora" }).isVisible());
       assert(await resumen.isVisible());
       assert(await page.getByRole("region", { name: "Contacto" })
-        .getByRole("link", { name: perfilRevision.correo, exact: true }).isVisible());
+        .getByRole("link", { name: perfilPublico.correo, exact: true }).isVisible());
       assert.equal(await page.locator(".site-header, .site-footer, .cv-acciones, .cv-contacto--pendiente").filter({ visible: true }).count(), 0);
       assert.deepEqual(errores, []);
-      if (process.env.PORTFOLIO_CAPTURAS_PERFIL === "1") await capturarPerfil(browser, origin);
+      if (process.env.PORTFOLIO_CAPTURAS_CANDIDATA === "1") await capturarPerfil(browser, origin, true);
+      else if (process.env.PORTFOLIO_CAPTURAS_PERFIL === "1") await capturarPerfil(browser, origin);
     } finally {
       await browser.close();
     }
@@ -492,8 +525,7 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
       assert.equal(documento.status, 200, ruta);
       const html = await documento.text();
       assert(html.includes(`<h1>${titulo}</h1>`), ruta);
-      if (casoRfmPublico) assert.doesNotMatch(html, /name="robots" content="noindex"/);
-      else assert.match(html, /name="robots" content="noindex"/);
+      assert.match(html, /name="robots" content="noindex"/);
       const datos = await fetch(origin + ruta + "_.data");
       assert.equal(datos.status, 200, datos.url);
       assert((await datos.text()).includes(titulo), datos.url);
@@ -504,9 +536,11 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
         const archivo = `rfm-core/${evidencia}.html`;
         const documento = await fetch(origin + ruta);
         assert.equal(documento.status, 200, ruta);
-        const recurso = await readFile(join("recursos-contenido", archivo));
-        assert.deepEqual(Buffer.from(await documento.arrayBuffer()), recurso, ruta);
-        assert.doesNotMatch(recurso.toString(), /name="robots" content="noindex/);
+        const recurso = await readFile(join("recursos-contenido", archivo), "utf8");
+        const html = await documento.text();
+        assert.equal(html.split("</head>")[1], recurso.split("</head>")[1], ruta);
+        assert.match(html, /property="og:title"/);
+        assert.equal(documento.headers.get("x-robots-tag"), "noindex");
       }
     }
 

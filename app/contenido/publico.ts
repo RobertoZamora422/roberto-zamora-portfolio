@@ -1,4 +1,5 @@
 import type { Registro } from "./modelo.ts";
+import { perfilPublico } from "./perfil-publico.ts";
 
 // Contexto y posicionamiento acordados en docs/definicion.md.
 export const presentacionBase = {
@@ -8,6 +9,7 @@ export const presentacionBase = {
 };
 
 export const registroPublico: Registro = {
+  perfil: perfilPublico,
   proyectos: [
     {
       slug: "rfm-core",

@@ -7,8 +7,8 @@ const formacion = {
 };
 const estudios = `${formacion.programa} en la ${formacion.institucion}`;
 
-export const perfilRevision: Perfil = {
-  revision: "borrador",
+export const perfilPublico: Perfil = {
+  revision: "aprobado",
   nombre: "Roberto Zamora",
   presentacion: "Tecnología · Procesos · Análisis funcional",
   propuesta: "Comprender problemas. Diseñar soluciones. Generar valor.",

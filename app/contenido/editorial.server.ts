@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
 import type { Registro, Revision } from "./modelo.ts";
-import { perfilRevision } from "./perfil-revision.ts";
 
 type BorradorEditorial = Pick<Registro, "proyectos" | "casos" | "evidencias" | "casoDestacado">;
 
@@ -10,14 +9,11 @@ function habilitarVistaLocal<T extends { revision: Revision }>(entrada: T) {
 }
 
 export async function incorporarBorradorEditorial(publico: Registro): Promise<Registro> {
-  const base = publico.perfil?.revision === "aprobado" ? publico : {
-    ...publico, perfil: habilitarVistaLocal(perfilRevision),
-  };
   const texto = await readFile(".local/contenido-editorial/registro.json", "utf8").catch((error: NodeJS.ErrnoException) => {
     if (error.code === "ENOENT") return undefined;
     throw error;
   });
-  if (texto === undefined) return base;
+  if (texto === undefined) return publico;
 
   // La selección y el prerenderizado ven una copia habilitada solo para la revisión local.
   const borrador: BorradorEditorial = JSON.parse(texto);
@@ -27,7 +23,7 @@ export async function incorporarBorradorEditorial(publico: Registro): Promise<Re
     pagina: pagina && habilitarVistaLocal(pagina),
   }));
   return {
-    ...base,
+    ...publico,
     proyectos: [...publico.proyectos, ...proyectos.filter(({ slug }) => !publico.proyectos.some((p) => p.slug === slug))],
     casos: [...publico.casos, ...borrador.casos.map(habilitarVistaLocal).filter(({ slug }) => !publico.casos.some((c) => c.slug === slug))],
     evidencias: [...publico.evidencias, ...borrador.evidencias.map(habilitarVistaLocal).filter(({ id }) => !publico.evidencias.some((e) => e.id === id))],

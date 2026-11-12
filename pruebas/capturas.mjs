@@ -15,10 +15,17 @@ export const vistasCasos = [
   { nombre: "Caso en revisión", clave: "caso", ruta: "/casos-de-estudio/separar-proyecto-y-caso/" },
 ];
 
-export async function capturarPerfil(browser, origin) {
-  const destino = ".local/revision-incremento-3b";
+export async function capturarPerfil(browser, origin, candidata = false) {
+  const destino = candidata ? ".local/revision-incremento-4" : ".local/revision-incremento-3b";
+  const titulo = candidata ? "RZ. · Candidata del portafolio" : "RZ. · Revisión del incremento 3B";
   const vistas = [
     { nombre: "Inicio", clave: "inicio", ruta: "/" },
+    ...(candidata ? [
+      { nombre: "Proyectos", clave: "proyectos", ruta: "/proyectos/" },
+      { nombre: "RFM CORE", clave: "rfm-core", ruta: "/proyectos/rfm-core/" },
+      { nombre: "Casos de estudio", clave: "casos", ruta: "/casos-de-estudio/" },
+      { nombre: "Del interés comercial al contrato", clave: "caso-rfm", ruta: "/casos-de-estudio/del-interes-comercial-al-contrato/" },
+    ] : []),
     { nombre: "Sobre mí", clave: "sobre-mi", ruta: "/sobre-mi/" },
     { nombre: "CV y contacto", clave: "cv", ruta: "/cv/" },
   ];
@@ -44,13 +51,13 @@ export async function capturarPerfil(browser, origin) {
   }).join("")}</div></section>`).join("");
   await writeFile(join(destino, "index.html"), `<!doctype html><html lang="es"><head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
-    <title>RZ. · Revisión del incremento 3B</title>
+    <title>${titulo}</title>
     <style>body{margin:0 auto;padding:1.25rem;max-width:85rem;background:#f2f1e9;color:#191e19;font:16px/1.5 system-ui}
     a{color:#30503c}a:focus-visible{outline:2px solid #30503c;outline-offset:3px}section{margin-block:2rem}
     .capturas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;align-items:start}
     figure{margin:0}img{display:block;max-width:100%;border:1px solid #c9cec1}figcaption{font-weight:600}
     @media(max-width:700px){.capturas{grid-template-columns:1fr}}</style></head>
-    <body><main><h1>RZ. · Revisión del incremento 3B</h1>
+    <body><main><h1>${titulo}</h1>
     <p>Abre una captura para verla a tamaño completo. <a href="cv-impresion.pdf">Comprobar la impresión del CV en A4</a>.</p>
     ${galeria}</main></body></html>`);
 }

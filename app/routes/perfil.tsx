@@ -1,10 +1,15 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, type MetaFunction } from "react-router";
+import { metadatosPagina } from "../contenido/metadatos";
 import { cargarPerfilProfesional } from "../contenido/perfil.server";
 import { paths } from "../rutas";
 import { ActionLink, PageIntro } from "../ui/elementos";
 import { CasosPerfil, Formacion, Trayectoria } from "../ui/perfil";
 
-export const meta = () => [{ title: "Sobre mí · Portafolio profesional" }];
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => metadatosPagina({
+  titulo: `Sobre mí · ${loaderData?.nombre ?? "Portafolio profesional"}`,
+  descripcion: "Enfoque profesional en tecnología, procesos y análisis funcional, formación y evidencias de trabajo.",
+  ruta: paths.perfil,
+});
 export const loader = cargarPerfilProfesional;
 
 export default function Perfil() {

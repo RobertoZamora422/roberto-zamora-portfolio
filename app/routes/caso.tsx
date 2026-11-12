@@ -1,6 +1,7 @@
 import { useLoaderData, type LoaderFunctionArgs, type MetaFunction } from "react-router";
+import { metadatosPagina } from "../contenido/metadatos";
 import { cargarContenido, urlRecursoLocal } from "../contenido/registro.server";
-import { paths, rutaProyecto } from "../rutas";
+import { paths, rutaCaso, rutaProyecto } from "../rutas";
 import { PageIntro, TextLink } from "../ui/elementos";
 import { ListaEvidencias } from "../ui/evidencias";
 import { IndiceCaso } from "../ui/indice-caso";
@@ -30,10 +31,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
   };
 }
 
-export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
-  { title: loaderData ? `${loaderData.titulo} · Casos de estudio` : "Página no encontrada · Portafolio profesional" },
-  ...(loaderData ? [{ name: "description", content: loaderData.resumen }] : []),
-];
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => loaderData
+  ? metadatosPagina({ titulo: `${loaderData.titulo} · Casos de estudio`, descripcion: loaderData.resumen, ruta: rutaCaso(loaderData.slug), tipo: "article" })
+  : [{ title: "Página no encontrada · Portafolio profesional" }, { name: "robots", content: "noindex" }];
 
 export default function Caso() {
   const caso = useLoaderData<typeof loader>();

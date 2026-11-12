@@ -1,9 +1,15 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, type MetaFunction } from "react-router";
+import { metadatosPagina } from "../contenido/metadatos";
 import { cargarPerfilProfesional } from "../contenido/perfil.server";
+import { paths } from "../rutas";
 import { PageIntro } from "../ui/elementos";
 import { CasosPerfil, Formacion, Trayectoria } from "../ui/perfil";
 
-export const meta = () => [{ title: "CV y contacto · Portafolio profesional" }];
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => metadatosPagina({
+  titulo: `CV y contacto · ${loaderData?.nombre ?? "Portafolio profesional"}`,
+  descripcion: "Consulta el CV imprimible con el perfil profesional, la formación, la experiencia en proyectos y el correo de contacto.",
+  ruta: paths.cv,
+});
 export const loader = cargarPerfilProfesional;
 
 export default function Cv() {
