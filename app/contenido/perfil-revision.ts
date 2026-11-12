@@ -6,7 +6,12 @@ export const perfilRevision: Perfil = {
   presentacion: "Estudiante de Ingeniería en Software",
   propuesta: "Comprender problemas. Diseñar soluciones. Generar valor.",
   oportunidades: "Busco una pasantía o una posición junior en tecnología.",
-  formacion: [{ programa: "Ingeniería en Software" }],
+  formacion: [{
+    programa: "Ingeniería en Software",
+    institucion: "Universidad de Las Américas (UDLA)",
+    estado: "En curso",
+  }],
+  correo: "robertozamora421@gmail.com",
   intereses: [
     { titulo: "Tecnología y procesos", descripcion: "Entender cómo trabaja un equipo y cómo puede ayudarle una herramienta digital." },
     { titulo: "Requisitos y documentación", descripcion: "Explicar reglas y decisiones de forma que otras personas puedan revisarlas." },

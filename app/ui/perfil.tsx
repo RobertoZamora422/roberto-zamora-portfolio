@@ -3,12 +3,10 @@ import { TextLink } from "./elementos";
 
 export function Formacion({ entradas }: { entradas: PerfilProfesional["formacion"] }) {
   return <ul className="perfil-lista" role="list">
-    {entradas.map(({ programa, institucion, periodo }, indice) => (
-      <li key={indice}>
-        <h3>{programa}</h3>
-        {(institucion || periodo) && <p>{[institucion, periodo].filter(Boolean).join(" · ")}</p>}
-      </li>
-    ))}
+    {entradas.map(({ programa, institucion, estado, periodo }, indice) => {
+      const detalle = [institucion, estado, periodo].filter(Boolean).join(" · ");
+      return <li key={indice}><h3>{programa}</h3>{detalle && <p>{detalle}</p>}</li>;
+    })}
   </ul>;
 }
 
