@@ -6,7 +6,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 
 ## Estado del proyecto
 
-**Fase 3 · Incremento 3A.** El catálogo y las páginas de casos de estudio extienden la dirección visual RZ. y se generan a partir del registro tipado. El catálogo público queda vacío hasta la aprobación editorial de los casos reales.
+**Fase 3 · Incremento 3A.** El catálogo y las páginas de casos de estudio extienden la dirección visual RZ. y se generan a partir del registro tipado. RFM CORE está preparado como candidato local de publicación.
 
 | Documento | Qué encontrarás |
 | --- | --- |
@@ -22,6 +22,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 | [Revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core.md) | Integración inicial, fuentes y alcance de E04. |
 | [Segunda revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core-v2.md) | Apertura del caso, ejemplo funcional, evidencias y captura del producto. |
 | [Actualización editorial de E04](docs/informe-revision-editorial-rfm-core-v3.md) | Auditoría local, regresiones integradas, validación de CI y pendientes de publicación. |
+| [Versión candidata de RFM CORE](docs/informe-candidata-rfm-core.md) | Recorrido local, recursos, verificaciones y autorización pendiente. |
 
 ## Desarrollo local
 
@@ -60,7 +61,7 @@ El retrato es opcional. Para incorporar uno, registra `perfil.retrato` con la ru
 
 Las muestras usan `app/pruebas/datos.ts`. Cuando existe `.local/contenido-editorial/registro.json`, la vista local carga los borradores editoriales y sus recursos en `recursos-contenido/revision-editorial/`. El registro público se reserva para material autorizado. Los borradores editoriales y sus recursos quedan fuera de Git y de la compilación pública.
 
-Con el borrador actualizado de RFM CORE disponible, `npm run revision:editorial` verifica la integración y genera la galería `.local/revision-editorial-rfm-core-v2/index.html`. Para recorrer las páginas y los enlaces de las evidencias, ejecuta `npm run preview:prueba` tras compilar la vista local.
+`npm run revision:editorial` verifica la versión candidata de RFM CORE y genera `.local/candidata-rfm-core/index.html` a partir de `build/client`. Para recorrer esa compilación localmente, ejecuta `npx wrangler pages dev build/client --ip 127.0.0.1 --port 8789` y abre `http://127.0.0.1:8789/`.
 
 El repositorio utiliza la rama `main`. El titular del portafolio gestiona los commits y el push. La configuración del despliegue se definirá al preparar la publicación.
 

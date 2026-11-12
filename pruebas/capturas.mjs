@@ -107,8 +107,13 @@ export async function capturarCasos(browser, revision, publico) {
     <p>El caso del portafolio usa material de revisión local. Abre una imagen para verla a tamaño completo.</p>${galeria}</main></html>`);
 }
 
-export async function capturarEditorial(browser, origin, rutas) {
-  const destino = ".local/revision-editorial-rfm-core-v2";
+export async function capturarEditorial(browser, origin, rutas, evidenciasCandidatas) {
+  const destino = evidenciasCandidatas ? ".local/candidata-rfm-core" : ".local/revision-editorial-rfm-core-v2";
+  const titulo = evidenciasCandidatas ? "RFM CORE · Versión candidata RZ." : "RFM CORE · Segunda revisión editorial RZ.";
+  const comando = evidenciasCandidatas
+    ? "npx wrangler pages dev build/client --ip 127.0.0.1 --port 8789"
+    : "npm run preview:prueba";
+  const urlLocal = `http://127.0.0.1:${evidenciasCandidatas ? 8789 : 8788}`;
   await mkdir(destino, { recursive: true });
   const page = await browser.newPage();
   const capturas = [];
@@ -143,6 +148,19 @@ export async function capturarEditorial(browser, origin, rutas) {
         await page.locator("#diagrama").screenshot({ path: join(destino, archivo) });
         imagenes.push({ nombre: "E01 · Visor ampliado y desplazado", archivo });
       }
+      if (evidenciasCandidatas) {
+        for (const [clave, ruta] of [
+          ["inicio", "/"], ["proyectos", "/proyectos/"], ["proyecto", rutas.proyecto], ["casos", "/casos-de-estudio/"],
+          ...evidenciasCandidatas.map((ruta, indice) => [`e0${indice + 2}`, ruta]),
+        ]) {
+          const respuesta = await page.goto(origin + ruta);
+          assert.equal(respuesta.status(), 200, ruta);
+          const nombre = clave === "inicio" ? "Inicio" : await page.getByRole("heading", { level: 1 }).innerText();
+          const archivo = `${clave}-${ancho}.png`;
+          await page.screenshot({ path: join(destino, archivo), fullPage: true });
+          imagenes.push({ nombre, archivo });
+        }
+      }
       capturas.push({ ancho, imagenes });
     }
   } finally {
@@ -154,16 +172,16 @@ export async function capturarEditorial(browser, origin, rutas) {
     </div></section>`).join("");
   await writeFile(join(destino, "index.html"), `<!doctype html><html lang="es"><head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
-    <title>RFM CORE · Segunda revisión editorial RZ.</title>
+    <title>${titulo}</title>
     <style>body{margin:0 auto;padding:1.5rem;max-width:85rem;background:#f2f1e9;color:#191e19;font:16px/1.5 system-ui}
     a{color:#30503c;text-underline-offset:.25em}a:focus-visible{outline:2px solid #30503c;outline-offset:3px}
     h2{border-top:1px solid #c9cec1;padding-top:1rem}figure{margin:0}img{display:block;max-width:100%;border:1px solid #c9cec1}
     figcaption{margin-bottom:.5rem;font-weight:600}.capturas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
     @media(max-width:720px){.capturas{grid-template-columns:1fr}}</style></head>
-    <body><main><h1>RFM CORE · Segunda revisión editorial RZ.</h1>
-    <p>Borrador para revisión local. Abre una captura para verla a tamaño completo.</p>
-    <p>Con <code>npm run preview:prueba</code> en ejecución, abre <a href="http://127.0.0.1:8788${rutas.proyecto}">la página de RFM CORE</a>
-    o <a href="http://127.0.0.1:8788${rutas.caso}">Del interés comercial al contrato</a>.</p>
+    <body><main><h1>${titulo}</h1>
+    <p>Abre una captura para verla a tamaño completo.</p>
+    <p>Con <code>${comando}</code> en ejecución, abre <a href="${urlLocal}${rutas.proyecto}">la página de RFM CORE</a>
+    o <a href="${urlLocal}${rutas.caso}">Del interés comercial al contrato</a>.</p>
     ${secciones}
     <section><h2>Pantalla de RFM CORE</h2>
     <p>Resultado de la precotización pública en una copia local de RFM CORE, con datos sintéticos y sin paquete seleccionado.</p>
