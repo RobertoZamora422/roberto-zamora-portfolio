@@ -9,6 +9,7 @@
 
 # Configuración local y material de prueba
 /.local/
+/Recursos/
 /recursos-contenido/revision-editorial/
 .env
 .env.*

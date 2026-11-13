@@ -13,7 +13,7 @@ export const perfilPublico: Perfil = {
   cvPdf: { revision: "aprobado", archivo: "perfil/roberto-zamora-cv.pdf" },
   retrato: {
     revision: "aprobado",
-    archivo: "perfil/roberto-zamora.png",
+    archivo: "perfil/roberto-zamora.webp",
     alt: "Retrato profesional de Roberto Zamora",
   },
   presentacion: "Tecnología · Procesos · Análisis funcional",
