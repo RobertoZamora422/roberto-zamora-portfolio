@@ -45,7 +45,7 @@ export default function Caso() {
           <div className="module-grid case-example">
             {ejemplo.situaciones.map(({ titulo, descripcion }) => (
               <div className="panel" key={titulo}>
-                <h3>{titulo}</h3>
+                {resumenVisual?.length ? <h4>{titulo}</h4> : <h3>{titulo}</h3>}
                 <p>{descripcion}</p>
               </div>
             ))}
@@ -68,13 +68,14 @@ export default function Caso() {
     { id: "validacion", titulo: "Validación y resultados", contenido: (
       <>
         <p>{caso.validacion}</p>
-        <h3>Resultados y límites</h3>
+        {resumenVisual?.length ? <h4>Resultados y límites</h4> : <h3>Resultados y límites</h3>}
         <p>{caso.resultadosYLimites}</p>
       </>
     ) },
     ...(caso.evidencias.length ? [{
       id: "evidencias", titulo: "Evidencias",
-      contenido: <ListaEvidencias evidencias={caso.evidencias} breve={caso.fichasBreves} />,
+      contenido: <ListaEvidencias evidencias={caso.evidencias} breve={caso.fichasBreves}
+        encabezado={resumenVisual?.length ? "h4" : "h3"} />,
     }] : []),
     ...(caso.aprendizajes ? [{ id: "aprendizajes", titulo: "Aprendizajes", contenido: <p>{caso.aprendizajes}</p> }] : []),
   ];
@@ -90,14 +91,21 @@ export default function Caso() {
         {process.env.PORTFOLIO_PREVIEW === "1" && <p className="technical-label">Vista local de revisión</p>}
       </PageIntro>
       {!!resumenVisual?.length && (
-        <dl className="project-facts case-facts case-summary" aria-label="Aporte y validación">
-          {resumenVisual.map(({ etiqueta, valor, detalle }) => (
-            <div key={etiqueta}>
-              <dt>{etiqueta}</dt>
-              <dd><strong>{valor}</strong>{detalle && <span>{detalle}</span>}</dd>
-            </div>
-          ))}
-        </dl>
+        <section className="case-overview" aria-labelledby="resumen-caso">
+          <h2 id="resumen-caso">El caso en breve</h2>
+          <div className="case-overview__links">
+            {!!caso.evidencias.length && <TextLink to="#evidencias">Consultar evidencias</TextLink>}
+            <TextLink to="#detalle-tecnico">Ver el detalle técnico</TextLink>
+          </div>
+          <dl className="project-facts case-facts case-summary">
+            {resumenVisual.map(({ etiqueta, valor, detalle }) => (
+              <div key={etiqueta}>
+                <dt>{etiqueta}</dt>
+                <dd><strong>{valor}</strong>{detalle && <span>{detalle}</span>}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
       )}
       <dl className={resumenVisual?.length ? "project-facts case-facts case-facts--secondary" : "project-facts case-facts"} aria-label="Datos del caso">
         {caso.proyecto && (
@@ -108,12 +116,15 @@ export default function Caso() {
         {caso.competencia && <div><dt>Competencia principal</dt><dd>{caso.competencia}</dd></div>}
         {caso.periodo && <div><dt>Periodo</dt><dd>{caso.periodo}</dd></div>}
       </dl>
+      {!!resumenVisual?.length && <h2 className="case-technical-title" id="detalle-tecnico" tabIndex={-1}>Detalle técnico</h2>}
       <div className="case-layout">
         <IndiceCaso key={caso.slug} secciones={secciones} />
         <div className="case-story">
           {secciones.map(({ id, titulo, contenido }) => (
             <section key={id} aria-labelledby={id} className="case-section">
-              <h2 id={id} tabIndex={-1}>{titulo}</h2>
+              {resumenVisual?.length
+                ? <h3 id={id} tabIndex={-1}>{titulo}</h3>
+                : <h2 id={id} tabIndex={-1}>{titulo}</h2>}
               {contenido}
             </section>
           ))}

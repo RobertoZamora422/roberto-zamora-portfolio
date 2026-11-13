@@ -1,16 +1,22 @@
 export type Revision = "borrador" | "aprobado";
 
+interface ArchivoRevisado {
+  revision: Revision;
+  archivo: string;
+}
+
 export interface Perfil {
   revision: Revision;
   nombre: string;
   presentacion: string;
   propuesta: string;
   oportunidades: string;
+  descripcionInicio?: string;
   sobreMi?: readonly string[];
-  resumenProfesional?: readonly string[];
   formacion: readonly { programa: string; institucion?: string; estado?: string; periodo?: string }[];
   trayectoria: readonly { titulo?: string; descripcion: string; evidencias: readonly string[] }[];
-  retrato?: { revision: Revision; archivo: string; alt: string };
+  cvPdf?: ArchivoRevisado;
+  retrato?: ArchivoRevisado & { alt: string };
   intereses?: readonly { titulo: string; descripcion: string }[];
   correo?: string;
   enlaces?: readonly { titulo: string; url: string }[];
@@ -35,6 +41,13 @@ export interface PaginaProyecto {
   participacion: string;
   tecnologias?: readonly string[];
   evidencias: readonly string[];
+  capturas?: readonly (ArchivoRevisado & {
+    titulo: string;
+    alt: string;
+    descripcion: string;
+    ancho: number;
+    alto: number;
+  })[];
 }
 
 export interface Proyecto {

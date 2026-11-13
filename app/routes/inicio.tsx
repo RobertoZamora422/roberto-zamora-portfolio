@@ -1,25 +1,31 @@
 import { useLoaderData, type MetaFunction } from "react-router";
 import { metadatosPagina } from "../contenido/metadatos";
+import { prepararPerfilProfesional } from "../contenido/perfil.server";
 import { presentacionBase } from "../contenido/publico";
 import { cargarContenido, urlRecursoLocal } from "../contenido/registro.server";
 import { paths, rutaCaso, rutaProyecto } from "../rutas";
 import { ActionLink, Arrow, TextLink } from "../ui/elementos";
+import { EnlaceCv, Trayectoria } from "../ui/perfil";
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) => metadatosPagina({
   titulo: `${loaderData?.nombre ?? "Portafolio profesional"} · RZ.`,
-  descripcion: "Tecnología, procesos y análisis funcional. Proyectos y evidencias sobre cómo se abordan los problemas y se fundamentan las decisiones.",
+  descripcion: loaderData?.descripcion ?? "Portafolio de tecnología, procesos y análisis funcional.",
   ruta: paths.inicio,
 });
 
 export async function loader() {
-  const { perfil, proyectoDestacado, casoDestacado } = await cargarContenido();
+  const contenido = await cargarContenido();
+  const { perfil, proyectoDestacado, casoDestacado } = contenido;
+  const profesional = prepararPerfilProfesional(contenido);
   const retrato = perfil?.retrato?.revision === "aprobado" ? perfil.retrato : undefined;
   return {
     nombre: perfil?.nombre,
     presentacion: perfil?.presentacion ?? presentacionBase.presentacion,
     propuesta: perfil?.propuesta ?? presentacionBase.propuesta,
     oportunidades: perfil ? undefined : presentacionBase.oportunidades,
-    intereses: perfil?.intereses,
+    descripcion: profesional?.descripcionInicio,
+    competencias: profesional?.trayectoria,
+    cvPdf: profesional?.cvPdf,
     retrato: retrato && { src: urlRecursoLocal(retrato.archivo), alt: retrato.alt },
     proyecto: proyectoDestacado && {
       nombre: proyectoDestacado.ficha.nombre,
@@ -27,15 +33,14 @@ export async function loader() {
       ruta: rutaProyecto(proyectoDestacado.slug),
     },
     caso: casoDestacado && {
-      titulo: casoDestacado.titulo,
-      resumen: casoDestacado.resumen,
       ruta: rutaCaso(casoDestacado.slug),
+      evidencias: casoDestacado.evidencias.length,
     },
   };
 }
 
 export default function Inicio() {
-  const { nombre, presentacion, propuesta, oportunidades, proyecto, caso, intereses, retrato } =
+  const { nombre, presentacion, propuesta, oportunidades, descripcion, competencias, cvPdf, proyecto, caso, retrato } =
     useLoaderData<typeof loader>();
 
   return (
@@ -46,10 +51,12 @@ export default function Inicio() {
           <p className="home-role">{nombre ? presentacion : oportunidades}</p>
         </header>
         <div className="home-intro">
-          <p className="lead">{propuesta}</p>
+          <p className="home-motto">{propuesta}</p>
+          {descripcion && <p className="lead">{descripcion}</p>}
           <div className="actions">
-            <ActionLink to={paths.proyectos} primary>Ver proyectos <Arrow /></ActionLink>
-            <ActionLink to={paths.cv}>Ver mi CV</ActionLink>
+            {caso ? <ActionLink to={caso.ruta} primary>Leer el caso de estudio <Arrow /></ActionLink>
+              : <ActionLink to={proyecto?.ruta ?? paths.proyectos} primary>Ver {proyecto?.nombre ?? "proyectos"} <Arrow /></ActionLink>}
+            <EnlaceCv pdf={cvPdf} className="action-link" />
           </div>
         </div>
         {retrato && (
@@ -68,26 +75,17 @@ export default function Inicio() {
           </div>
           <div className="featured-project__detail">
             <p>{proyecto.resumen}</p>
-            <TextLink to={proyecto.ruta} label={`Ver ficha de ${proyecto.nombre}`}>Ver ficha</TextLink>
+            <div className="featured-project__links">
+              <TextLink to={proyecto.ruta}>Ver el proyecto</TextLink>
+              {!!caso?.evidencias && <TextLink to={`${caso.ruta}#evidencias`}>Consultar evidencias</TextLink>}
+            </div>
           </div>
         </section>
       )}
-      {!!intereses?.length && (
-        <section className="home-interests" aria-labelledby="areas-de-interes">
-          <h2 id="areas-de-interes">Áreas de interés</h2>
-          <ul className="interest-list" role="list">
-            {intereses.map(({ titulo, descripcion }) => (
-              <li key={titulo}><h3>{titulo}</h3><p>{descripcion}</p></li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {caso && (
-        <section className="home-case" aria-labelledby="caso-destacado">
-          <h2 id="caso-destacado">Caso destacado</h2>
-          <h3>{caso.titulo}</h3>
-          <p>{caso.resumen}</p>
-          <TextLink to={caso.ruta}>Leer caso destacado</TextLink>
+      {!!competencias?.length && (
+        <section className="home-competencias" aria-labelledby="competencias-aplicadas">
+          <h2 id="competencias-aplicadas">Competencias aplicadas</h2>
+          <Trayectoria entradas={competencias} />
         </section>
       )}
     </div>

@@ -1,24 +1,24 @@
 # Arquitectura de información
 
-**Estado · Fase 1 cerrada a nivel documental**
+**Estado · Rutas y navegación actualizadas en 5A**
 
 ## Mapa del sitio
 
 | Ruta | Función |
 | --- | --- |
-| `/` | Presentación en español, perfil y oportunidades buscadas, caso destacado y accesos directos al CV y al contacto. |
+| `/` | Presentación, competencias aplicadas y accesos directos al proyecto, caso y evidencias destacados. |
 | `/proyectos/` | Catálogo breve de fichas autorizadas. Resume el propósito y el estado confirmado de cada proyecto y enlaza a su página individual cuando está publicada. |
 | `/proyectos/<slug>/` | Página individual con identidad propia. Presenta problema, contexto, propósito, solución, participación personal, tecnologías cuando aporten contexto, estado verificable y enlaces a los casos publicados. |
 | `/casos-de-estudio/` | Índice de trabajos concretos. Cada entrada adelanta el aporte y la decisión, validación o evidencia que se puede examinar. |
 | `/casos-de-estudio/<slug>/` | Caso compartible sobre competencias, decisiones o procesos concretos, con la evidencia pertinente y enlace a su proyecto cuando la página esté publicada. |
 | `/sobre-mi/` | Formación e intereses, con enlaces a ejemplos de competencias demostradas cuando estén disponibles. |
-| `/cv/` | CV en HTML imprimible, perfiles autorizados y PDF descargable si se aprueba una versión pública. |
-| `/cv/#contacto` | Correo profesional visible y seleccionable, con enlace directo mediante `mailto:`. |
+| `/cv/` | Página breve de compatibilidad con acceso al PDF oficial cuando esté aprobado, contacto y síntesis del trabajo. |
+| `/cv/#contacto` | Correo profesional visible y seleccionable mediante `mailto:`, y perfiles públicos. |
 | `404.html` | Página de recuperación con enlaces a Inicio y Casos de estudio. El alojamiento la sirve con estado HTTP 404 para rutas desconocidas. |
 
 Las rutas de proyecto previstas son `/proyectos/rfm-core/`, `/proyectos/claridez/` y `/proyectos/portafolio-web/`. Cada ruta se generará cuando su contenido esté disponible y aprobado.
 
-La navegación principal mostrará **Inicio**, **Proyectos**, **Casos de estudio**, **Sobre mí** y **CV y contacto**. Desde las páginas principales y desde los casos compartidos habrá accesos directos a `/cv/` y `/cv/#contacto`.
+La marca **RZ.** abre Inicio. Con un proyecto y hasta un caso publicados, la navegación principal enlaza **Proyecto** directamente a su ficha y ofrece **Sobre mí**. Con más entradas, muestra **Proyectos** y **Casos de estudio**. **Contacto** lleva a `/cv/#contacto` y el pie conserva el enlace **CV** a `/cv/`. Las acciones **Ver CV** aparecen cuando se aprueba el PDF y lo abren directamente.
 
 La ficha del catálogo orienta la exploración. La página individual explica qué resuelve el proyecto en su conjunto y cuál fue tu participación. Cada caso desarrolla cómo realizaste o validaste un trabajo concreto. El enlace entre ambos permite ampliar el contexto o examinar el aporte sin repetir la narración completa.
 
@@ -27,7 +27,7 @@ La ficha del catálogo orienta la exploración. La página individual explica qu
 - **Evaluación rápida.** Inicio → perfil y aporte destacado → caso → evidencia del aporte.
 - **Exploración de un proyecto.** Proyectos → página individual → casos publicados, cuando existan → decisión, validación y evidencia.
 - **Enlace compartido.** Abrir el caso directamente y encontrar contexto, alcance personal y evidencia. Desde allí se puede acceder al CV, al contacto y a la página del proyecto si está publicada.
-- **CV y contacto.** Desde Inicio, las demás páginas principales o un caso, abrir directamente el CV o ir al correo visible para copiarlo o abrirlo en un cliente de correo.
+- **CV y contacto.** Abrir el PDF oficial cuando esté disponible o ir directamente al correo para copiarlo o abrirlo en un cliente de correo.
 
 ## Modelo de contenido
 

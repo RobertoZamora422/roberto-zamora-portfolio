@@ -5,12 +5,13 @@ type EvidenciaConsultable = Pick<Evidencia, "id" | "titulo" | "tipo" | "afirmaci
   url: string;
 };
 
-function FichaEvidencia({ titulo, tipo, afirmacion, fuente, autoria, url, breve }: EvidenciaConsultable & { breve?: boolean }) {
+function FichaEvidencia({ titulo, tipo, afirmacion, fuente, autoria, url, breve, encabezado: Encabezado }:
+  EvidenciaConsultable & { breve?: boolean; encabezado: "h3" | "h4" }) {
   return (
     <article className="panel evidence-card">
       <div className="evidence-card__title">
         {!breve && <p className="technical-label">{tipo}</p>}
-        <h3>{titulo}</h3>
+        <Encabezado>{titulo}</Encabezado>
       </div>
       {breve ? <p className="evidence-card__summary">{afirmacion}</p> : (
         <dl className="evidence-card__details">
@@ -26,10 +27,16 @@ function FichaEvidencia({ titulo, tipo, afirmacion, fuente, autoria, url, breve 
   );
 }
 
-export function ListaEvidencias({ evidencias, breve }: { evidencias: readonly EvidenciaConsultable[]; breve?: boolean }) {
+export function ListaEvidencias({ evidencias, breve, encabezado = "h3" }: {
+  evidencias: readonly EvidenciaConsultable[];
+  breve?: boolean;
+  encabezado?: "h3" | "h4";
+}) {
   return (
     <ul className="evidence-list" role="list">
-      {evidencias.map((evidencia) => <li key={evidencia.id}><FichaEvidencia {...evidencia} breve={breve} /></li>)}
+      {evidencias.map((evidencia) => <li key={evidencia.id}>
+        <FichaEvidencia {...evidencia} breve={breve} encabezado={encabezado} />
+      </li>)}
     </ul>
   );
 }

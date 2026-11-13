@@ -41,7 +41,6 @@ export async function capturarPerfil(browser, origin, candidata = false) {
         await page.screenshot({ path: join(destino, `${clave}-${ancho}.png`), fullPage: true });
       }
     }
-    await page.pdf({ path: join(destino, "cv-impresion.pdf"), preferCSSPageSize: true, tagged: true });
   } finally {
     await page.close();
   }
@@ -58,8 +57,62 @@ export async function capturarPerfil(browser, origin, candidata = false) {
     figure{margin:0}img{display:block;max-width:100%;border:1px solid #c9cec1}figcaption{font-weight:600}
     @media(max-width:700px){.capturas{grid-template-columns:1fr}}</style></head>
     <body><main><h1>${titulo}</h1>
-    <p>Abre una captura para verla a tamaño completo. <a href="cv-impresion.pdf">Comprobar la impresión del CV en A4</a>.</p>
+    <p>Abre una captura para verla a tamaño completo.</p>
     ${galeria}</main></body></html>`);
+}
+
+export async function capturarIncremento5a(browser, anterior, actual) {
+  const destino = ".local/revision-incremento-5a";
+  const vistas = [
+    ["inicio", "/", "Inicio"],
+    ["proyecto", "/proyectos/rfm-core/", "RFM CORE"],
+    ["caso", "/casos-de-estudio/del-interes-comercial-al-contrato/", "Caso de estudio"],
+    ["perfil", "/sobre-mi/", "Sobre mí"],
+    ["cv", "/cv/#contacto", "CV y contacto"],
+    ["e04", "/recursos/rfm-core/e04-verificacion.html", "Tabla de E04"],
+  ];
+  const versiones = [["antes", anterior, "Antes"], ["despues", actual, "5A"]];
+  await mkdir(destino, { recursive: true });
+  const page = await browser.newPage();
+  try {
+    for (const ancho of anchos) {
+      await page.setViewportSize({ width: ancho, height: 840 });
+      for (const [clave, ruta] of vistas) {
+        for (const [version, origen] of versiones) {
+          assert.equal((await page.goto(origen + ruta)).status(), 200, ruta);
+          await page.evaluate(async () => {
+            await document.fonts.ready;
+            await Promise.all([...document.images].map(async (img) => {
+              img.loading = "eager";
+              await img.decode();
+            }));
+          });
+          const path = join(destino, `${clave}-${ancho}-${version}.png`);
+          if (clave === "e04") await page.locator("table").screenshot({ path });
+          else {
+            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.screenshot({ path, fullPage: true, animations: "disabled" });
+          }
+        }
+      }
+    }
+  } finally {
+    await page.close();
+  }
+  const comparaciones = anchos.map((ancho) => `<section><h2>${ancho} px</h2>${vistas.map(([clave, , nombre]) => `
+    <h3>${nombre}</h3><div class="par">${versiones.map(([version, , etiqueta]) => {
+      const archivo = `${clave}-${ancho}-${version}.png`;
+      return `<figure><figcaption>${etiqueta}</figcaption><a href="${archivo}"><img loading="lazy" src="${archivo}" alt="${nombre} · ${etiqueta} · ${ancho} px"></a></figure>`;
+    }).join("")}</div>`).join("")}</section>`).join("");
+  await writeFile(join(destino, "index.html"), `<!doctype html><html lang="es"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+    <title>RZ. · Revisión del incremento 5A</title>
+    <style>body{margin:auto;padding:1.25rem;max-width:86rem;background:#f2f1e9;color:#191e19;font:16px/1.5 system-ui}
+    h2{border-top:1px solid #c9cec1;padding-top:1rem}figure{margin:0}img{display:block;max-width:100%;border:1px solid #c9cec1}
+    figcaption{font-weight:650}.par{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;align-items:start}
+    @media(max-width:650px){.par{grid-template-columns:1fr}}</style></head>
+    <body><main><h1>RZ. · Incremento 5A</h1>
+    <p>Abre una captura para verla a tamaño completo.</p>${comparaciones}</main></body></html>`);
 }
 
 export async function capturarRevision(browser, origin) {

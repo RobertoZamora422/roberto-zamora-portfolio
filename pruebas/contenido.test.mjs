@@ -96,6 +96,24 @@ test("El retrato requiere aprobación propia y del perfil", async (t) => {
   assert.equal((await validarRegistro(registro, carpeta)).size, 0);
 });
 
+test("El CV requiere un archivo PDF y la aprobación del archivo y del perfil", async (t) => {
+  const carpeta = await mkdtemp(join(tmpdir(), "portafolio-cv-"));
+  t.after(() => rm(carpeta, { recursive: true, force: true }));
+  const registro = { proyectos: [], casos: [], evidencias: [], perfil: undefined };
+  await writeFile(join(carpeta, "firma-qa.pdf"), "%PDF-");
+  await writeFile(join(carpeta, "firma-invalida.pdf"), "archivo QA");
+  registro.perfil = { ...perfilAprobado, retrato: undefined, cvPdf: { revision: "borrador", archivo: "firma-qa.pdf" } };
+  assert(!(await validarRegistro(registro, carpeta)).has("firma-qa.pdf"));
+  registro.perfil.cvPdf.revision = "aprobado";
+  assert((await validarRegistro(registro, carpeta)).has("firma-qa.pdf"));
+  registro.perfil.revision = "borrador";
+  assert(!(await validarRegistro(registro, carpeta)).has("firma-qa.pdf"));
+  registro.perfil.cvPdf.archivo = "firma-invalida.pdf";
+  await assert.rejects(validarRegistro(registro, carpeta), /firma PDF inválida/);
+  registro.perfil.cvPdf.archivo = "inexistente.pdf";
+  await assert.rejects(validarRegistro(registro, carpeta), /Falta el archivo/);
+});
+
 test("El correo del perfil admite un buzón simple y rechaza parámetros de mailto", async () => {
   const { retrato, ...perfil } = perfilAprobado;
   const registro = { proyectos: [], casos: [], evidencias: [], perfil: { ...perfil, correo: "talento+qa@example.test" } };

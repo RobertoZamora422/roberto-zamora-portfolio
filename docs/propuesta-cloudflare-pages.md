@@ -20,3 +20,17 @@ Referencias de configuración. [Compilación en Pages](https://developers.cloudf
 Con el origen aprobado, la compilación genera canónicas absolutas y completa Open Graph con la tarjeta RZ. La activación de indexación añade `sitemap.xml` y lo anuncia en `robots.txt`. Las evidencias HTML usan las rutas sin extensión que sirve Pages. El archivo `404.html` permite responder HTTP 404 en las rutas desconocidas. La configuración de lanzamiento también aplica `noindex` a las URLs de `pages.dev`. [Rutas de Pages](https://developers.cloudflare.com/pages/configuration/serving-pages/) · [Sitemaps](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap) · [Open Graph](https://ogp.me/)
 
 Tras el primer despliegue autorizado, comprobar HTTPS y el host canónico, las respuestas 200 y 404, el correo, las evidencias, la entrega de la tarjeta social y las directivas de indexación en el dominio real. Conservar el identificador de la versión para poder revertirla. [Dominios personalizados](https://developers.cloudflare.com/pages/configuration/custom-domains/) · [Reversión](https://developers.cloudflare.com/pages/configuration/rollbacks/)
+
+## Correo sin JavaScript
+
+En el despliegue consultado el 12 de noviembre de 2026, `/cv/#contacto` en `robertozamora.claridez.com` contenía `__cf_email__`, un enlace a `/cdn-cgi/l/email-protection` y el script `email-decode.min.js`. La misma ruta en `roberto-zamora-portfolio.pages.dev` entregaba el `mailto:` original. Cloudflare documenta que Email Address Obfuscation modifica el HTML y necesita el decodificador para recuperar el enlace. [Email Address Obfuscation](https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/)
+
+El incremento 5A añade `no-transform` al encabezado `Cache-Control` de `/cv/` y `/cv` en el archivo `_headers` generado. Cloudflare documenta que respeta esa directiva para la ofuscación. Después de desplegar, comprobar en el host público que `/cv/#contacto` entrega el encabezado, muestra el correo y conserva el `mailto:` con JavaScript desactivado. Revisar el HTML de respuesta para confirmar la ausencia del decodificador. [Encabezados de Pages](https://developers.cloudflare.com/pages/configuration/headers/) · [Condiciones de la ofuscación](https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/#troubleshoot-email-obfuscation)
+
+Si el borde aún reescribe el correo tras esa comprobación, crear una **Configuration Rule** de la zona con **Email Obfuscation → Off** y este filtro exacto. El fragmento `#contacto` se resuelve en el navegador.
+
+```text
+(http.host eq "robertozamora.claridez.com" and http.request.uri.path in {"/cv" "/cv/"})
+```
+
+Verificar la prioridad si otras Configuration Rules coinciden con esas rutas y repetir la prueba sin JavaScript tras actualizar la versión servida. [Configuration Rules](https://developers.cloudflare.com/rules/configuration-rules/) · [Ajuste Email Obfuscation](https://developers.cloudflare.com/rules/configuration-rules/settings/#email-obfuscation)

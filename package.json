@@ -17,6 +17,7 @@
     "revision:editorial": "cross-env PORTFOLIO_CAPTURAS_EDITORIAL=1 npm run test:sitio",
     "revision:perfil": "cross-env PORTFOLIO_CAPTURAS_PERFIL=1 npm run test:sitio",
     "revision:candidata": "cross-env PORTFOLIO_CAPTURAS_CANDIDATA=1 npm run test:sitio",
+    "revision:5a": "cross-env PORTFOLIO_CAPTURAS_5A=1 npm run test:sitio",
     "preview:candidata": "wrangler pages dev build/client --ip 127.0.0.1 --port 8789"
   },
   "dependencies": {

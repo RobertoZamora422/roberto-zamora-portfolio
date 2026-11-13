@@ -14,7 +14,7 @@ import {
 import "@fontsource/archivo-black/latin-400.css";
 import "@fontsource-variable/geist";
 import { SiteHeader } from "./ui/cabecera";
-import { cargarContenido } from "./contenido/registro.server";
+import { cargarContenido, urlRecursoLocal } from "./contenido/registro.server";
 import { paths } from "./rutas";
 import { NoEncontrada } from "./routes/no-encontrada";
 import { PageIntro } from "./ui/elementos";
@@ -23,8 +23,13 @@ import "./styles.css";
 export const meta = () => [{ title: "Portafolio profesional" }];
 
 export async function loader() {
-  const { perfil } = await cargarContenido();
-  return { nombre: perfil?.nombre };
+  const { perfil, proyectos, paginas, casos } = await cargarContenido();
+  return {
+    nombre: perfil?.nombre,
+    cvPdf: perfil?.cvPdf?.revision === "aprobado" ? urlRecursoLocal(perfil.cvPdf.archivo) : undefined,
+    proyectoUnico: proyectos.length === 1 && paginas.length === 1 && casos.length <= 1
+      ? paginas[0].slug : undefined,
+  };
 }
 
 export function Layout({ children }: { children: ReactNode }) {
@@ -38,7 +43,7 @@ export function Layout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (key === lastKey.current) return;
     lastKey.current = key;
-    const anchor = hash === "#contacto" ? document.getElementById("contacto") : null;
+    const anchor = hash ? document.getElementById(hash.slice(1)) : null;
     (anchor ?? main.current)?.focus({ preventScroll: true });
   }, [key, hash]);
 
@@ -47,6 +52,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href={import.meta.env.DEV ? "/recursos-contenido/sitio/favicon.ico" : "/favicon.ico"} sizes="16x16 32x32 48x48" />
         {process.env.PORTFOLIO_INDEXAR !== "1" && !staticError && <meta name="robots" content="noindex" />}
         <Meta />
         <Links />
@@ -54,11 +60,12 @@ export function Layout({ children }: { children: ReactNode }) {
       <body>
         <a className="skip-link" href="#contenido">Saltar al contenido</a>
         <div className="site-frame">
-          <SiteHeader nombre={datos?.nombre} />
+          <SiteHeader {...datos} />
           <main className="main" id="contenido" ref={main} tabIndex={-1}>
             {children}
           </main>
           <footer className="site-footer">
+            <Link to={paths.cv}>CV</Link>
             <Link to={paths.contacto} aria-current={contactoActivo ? "location" : undefined}>Contacto</Link>
           </footer>
         </div>

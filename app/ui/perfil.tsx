@@ -1,6 +1,20 @@
 import type { PerfilProfesional } from "../contenido/perfil.server";
 import { TextLink } from "./elementos";
 
+export function EnlaceCv({ pdf, className }: { pdf?: string; className?: string }) {
+  if (!pdf) return null;
+  return (
+    <a href={pdf} className={className} target="_blank" rel="noopener"
+      aria-label="Ver CV (PDF, abre en una pestaña nueva)">Ver CV</a>
+  );
+}
+
+export function PerfilesPublicos({ enlaces }: { enlaces: NonNullable<PerfilProfesional["enlaces"]> }) {
+  return <ul className="perfil-enlaces" aria-label="Perfiles públicos" role="list">
+    {enlaces.map(({ titulo, url }) => <li key={url}><a href={url}>{titulo}</a></li>)}
+  </ul>;
+}
+
 export function Formacion({ entradas }: { entradas: PerfilProfesional["formacion"] }) {
   return <ul className="perfil-lista" role="list">
     {entradas.map(({ programa, institucion, estado, periodo }, indice) => {

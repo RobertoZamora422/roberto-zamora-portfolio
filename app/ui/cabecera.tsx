@@ -1,26 +1,32 @@
-import { NavLink } from "react-router";
-import { paths } from "../rutas";
+import { Link, NavLink } from "react-router";
+import { paths, rutaProyecto } from "../rutas";
+import { EnlaceCv } from "./perfil";
 
-function CvLink({ variant }: { variant: "wide" | "narrow" }) {
+export function SiteHeader({ nombre, cvPdf, proyectoUnico }: {
+  nombre?: string;
+  cvPdf?: string;
+  proyectoUnico?: string;
+}) {
   return (
-    <NavLink to={paths.cv} className={`header-contact header-contact--${variant}`}>CV y contacto</NavLink>
-  );
-}
-
-export function SiteHeader({ nombre }: { nombre?: string }) {
-  return (
-    <header className="site-header">
+    <header className={cvPdf ? "site-header site-header--cv" : "site-header"}>
       <NavLink to={paths.inicio} className="site-brand" end aria-label={nombre ? `RZ. ${nombre}. Volver a Inicio` : "RZ. Volver a Inicio"}>
         RZ<span>.</span>
       </NavLink>
-      <CvLink variant="narrow" />
       <nav className="site-nav" aria-label="Principal">
-        <NavLink to={paths.inicio} end>Inicio</NavLink>
-        <NavLink to={paths.proyectos}>Proyectos</NavLink>
-        <NavLink to={paths.casos}>Casos de estudio</NavLink>
+        {proyectoUnico ? (
+          <NavLink to={rutaProyecto(proyectoUnico)}>Proyecto</NavLink>
+        ) : (
+          <>
+            <NavLink to={paths.proyectos}>Proyectos</NavLink>
+            <NavLink to={paths.casos}>Casos de estudio</NavLink>
+          </>
+        )}
         <NavLink to={paths.perfil}>Sobre mí</NavLink>
       </nav>
-      <CvLink variant="wide" />
+      <div className="header-actions">
+        <EnlaceCv pdf={cvPdf} />
+        <Link to={paths.contacto} className="header-contact">Contacto</Link>
+      </div>
     </header>
   );
 }

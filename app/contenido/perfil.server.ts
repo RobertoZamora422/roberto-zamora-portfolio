@@ -2,13 +2,17 @@ import { rutaCaso } from "../rutas";
 import { cargarContenido, urlRecursoLocal } from "./registro.server";
 
 export async function cargarPerfilProfesional() {
-  const { perfil, casos, evidencias } = await cargarContenido();
+  return prepararPerfilProfesional(await cargarContenido());
+}
+
+export function prepararPerfilProfesional({ perfil, casos, evidencias }: Awaited<ReturnType<typeof cargarContenido>>) {
   if (!perfil) return null;
 
-  const { nombre, presentacion, sobreMi, resumenProfesional, formacion, correo, enlaces } = perfil;
+  const { nombre, presentacion, descripcionInicio, sobreMi, formacion, correo, enlaces, cvPdf, intereses } = perfil;
   const evidenciasPorId = new Map(evidencias.map((evidencia) => [evidencia.id, evidencia]));
   return {
-    nombre, presentacion, sobreMi, resumenProfesional, formacion, correo, enlaces,
+    nombre, presentacion, descripcionInicio, sobreMi, formacion, correo, enlaces, intereses,
+    cvPdf: cvPdf?.revision === "aprobado" ? urlRecursoLocal(cvPdf.archivo) : undefined,
     casos: casos.filter(({ slug }) => perfil.casos?.includes(slug))
       .map(({ slug, titulo }) => ({ titulo, url: rutaCaso(slug) })),
     trayectoria: perfil.trayectoria.map(({ titulo, descripcion, evidencias: ids }) => ({

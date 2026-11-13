@@ -1,9 +1,10 @@
-import { realpath, stat } from "node:fs/promises";
+import { open, realpath, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import type { Registro, Revision } from "./modelo.ts";
 
 const slugValido = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const archivoValido = /^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.[a-z0-9]+$/;
+const formatoImagen = /\.(?:avif|jpe?g|png|webp)$/;
 
 function exigirTextos(origen: string, campos: Record<string, string>) {
   for (const [campo, valor] of Object.entries(campos)) {
@@ -70,6 +71,7 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
     }
     const ruta = await resolverArchivo(carpetaRecursos, archivo);
     if (revision === "aprobado") archivosAprobados.set(archivo, ruta);
+    return ruta;
   }
 
   function validarEvidencias(origen: string, ids: readonly string[], revision: Revision) {
@@ -92,6 +94,16 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
       exigirTextos(origen, { entradilla, destacado, problema, contexto, proposito, solucion, participacion });
     }
     validarEvidencias(origen, ids, revisionPagina);
+    for (const { revision: revisionCaptura, archivo, titulo, alt, descripcion, ancho, alto } of pagina.capturas ?? []) {
+      const captura = `${origen}, captura «${archivo}»`;
+      validarRevision(captura, revisionCaptura);
+      exigirTextos(captura, { titulo, alt, descripcion });
+      if (!formatoImagen.test(archivo)) throw new Error(`${captura}: formato de imagen inválido`);
+      if (![ancho, alto].every((dimension) => Number.isSafeInteger(dimension) && dimension > 0)) {
+        throw new Error(`${captura}: dimensiones de imagen inválidas`);
+      }
+      await validarArchivo(captura, archivo, revisionPagina === "aprobado" ? revisionCaptura : "borrador");
+    }
   }
 
   for (const caso of registro.casos) {
@@ -129,13 +141,13 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
   }
 
   if (registro.perfil) {
-    const { revision, nombre, presentacion, propuesta, oportunidades, sobreMi, resumenProfesional, formacion, trayectoria,
-      casos: referencias, correo, enlaces, retrato, intereses } = registro.perfil;
+    const { revision, nombre, presentacion, propuesta, oportunidades, descripcionInicio, sobreMi, formacion, trayectoria,
+      casos: referencias, correo, enlaces, cvPdf, retrato, intereses } = registro.perfil;
     validarRevision("Perfil", revision);
     if (revision === "aprobado") {
       exigirTextos("Perfil", { nombre, presentacion, propuesta, oportunidades });
+      if (descripcionInicio !== undefined) exigirTextos("Perfil", { descripcionInicio });
       for (const parrafo of sobreMi ?? []) exigirTextos("Sobre mí", { parrafo });
-      for (const parrafo of resumenProfesional ?? []) exigirTextos("Resumen profesional", { parrafo });
       for (const { programa, institucion, estado, periodo } of formacion) exigirTextos("Formación", {
         programa,
         ...(institucion !== undefined && { institucion }),
@@ -144,11 +156,25 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
       });
       for (const entrada of intereses ?? []) exigirTextos("Área de interés", entrada);
     }
+    if (cvPdf) {
+      validarRevision("CV", cvPdf.revision);
+      if (!cvPdf.archivo.endsWith(".pdf")) throw new Error("CV: se requiere un PDF");
+      const revisionDelArchivo = revision === "aprobado" ? cvPdf.revision : "borrador";
+      const ruta = await validarArchivo("CV", cvPdf.archivo, revisionDelArchivo);
+      const archivo = await open(ruta);
+      try {
+        const encabezado = Buffer.alloc(5);
+        await archivo.read(encabezado, 0, encabezado.length, 0);
+        if (encabezado.toString() !== "%PDF-") throw new Error("CV: firma PDF inválida");
+      } finally {
+        await archivo.close();
+      }
+    }
     if (retrato) {
       validarRevision("Retrato", retrato.revision);
       const revisionDelArchivo = revision === "aprobado" ? retrato.revision : "borrador";
       if (revisionDelArchivo === "aprobado") exigirTextos("Retrato", { alt: retrato.alt });
-      if (!/\.(?:avif|jpe?g|png|webp)$/.test(retrato.archivo)) throw new Error("Retrato: formato de imagen inválido");
+      if (!formatoImagen.test(retrato.archivo)) throw new Error("Retrato: formato de imagen inválido");
       await validarArchivo("Retrato", retrato.archivo, revisionDelArchivo);
     }
     for (const { titulo, descripcion, evidencias: ids } of trayectoria) {

@@ -28,6 +28,7 @@ export default {
   },
   async buildEnd({ reactRouterConfig, viteConfig }) {
     const client = resolve(viteConfig.root, reactRouterConfig.buildDirectory, "client");
+    await copyFile(resolve(viteConfig.root, "recursos-contenido/sitio/favicon.ico"), resolve(client, "favicon.ico"));
     // Pages reads this file for unmatched URLs and sends the HTTP status.
     await rename(resolve(client, "404/index.html"), resolve(client, "404.html"));
     await rm(resolve(client, "__spa-fallback.html"), { force: true });
@@ -57,10 +58,19 @@ export default {
           if ("name" in meta && meta.name) return [`<meta name="${meta.name}" content="${escapar(meta.content)}">`];
           return [];
         });
-      await writeFile(destino, html.replace("</head>", `${etiquetas.join("\n")}\n</head>`));
+      await writeFile(destino, html.replace("</head>", `<link rel="icon" href="/favicon.ico">\n${etiquetas.join("\n")}\n</head>`));
     }
 
     const robots = "User-agent: *\nDisallow:\n";
+    // Cloudflare's email obfuscation respects no-transform on the compatibility page.
+    const headers = [
+      "/cv/\n  Cache-Control: public, max-age=0, must-revalidate, no-transform",
+      "/cv\n  Cache-Control: public, max-age=0, must-revalidate, no-transform",
+    ];
+    const pdf = registro.perfil?.revision === "aprobado" && registro.perfil.cvPdf;
+    if (pdf && pdf.revision === "aprobado") {
+      headers.push(`/recursos/${pdf.archivo}\n  Content-Type: application/pdf\n  Content-Disposition: inline\n  X-Robots-Tag: noindex`);
+    }
     if (origen && !preview) {
       const destino = resolve(client, `.${tarjetaSocial}`);
       await mkdir(dirname(destino), { recursive: true });
@@ -74,10 +84,11 @@ export default {
       const urls = rutas.map((ruta) => `  <url><loc>${escapar(new URL(ruta, origen).href)}</loc></url>`).join("\n");
       await writeFile(resolve(client, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
       await writeFile(resolve(client, "robots.txt"), `${robots}Sitemap: ${origen}/sitemap.xml\n`);
-      await writeFile(resolve(client, "_headers"), "https://:project.pages.dev/*\n  X-Robots-Tag: noindex\nhttps://:version.:project.pages.dev/*\n  X-Robots-Tag: noindex\n");
+      headers.push("https://:project.pages.dev/*\n  X-Robots-Tag: noindex", "https://:version.:project.pages.dev/*\n  X-Robots-Tag: noindex");
     } else {
       await writeFile(resolve(client, "robots.txt"), robots);
-      await writeFile(resolve(client, "_headers"), "/*\n  X-Robots-Tag: noindex\n");
+      headers.push("/*\n  X-Robots-Tag: noindex");
     }
+    await writeFile(resolve(client, "_headers"), `${headers.join("\n")}\n`);
   },
 } satisfies Config;

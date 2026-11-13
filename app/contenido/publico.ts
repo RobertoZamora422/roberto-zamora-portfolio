@@ -22,14 +22,34 @@ export const registroPublico: Registro = {
       pagina: {
         revision: "aprobado",
         entradilla: "Solución web que integra el recorrido comercial de un negocio de eventos, desde la primera consulta hasta el contrato y los indicadores de rentabilidad.",
-        destacado: "Un producto construido individualmente para transformar necesidades comerciales reales en procesos digitales trazables.",
+        destacado: "Desarrollé un sistema web que conecta las consultas, cotizaciones y contratos de un negocio de eventos con su gestión financiera.",
         problema: "Las consultas, cotizaciones, acuerdos, costos y gastos pertenecen a etapas diferentes y requieren reglas coherentes para distinguir las oportunidades de las ventas.",
         contexto: "Rancho Flor María es un negocio de eventos y catering de Esmeraldas. Desarrollé el proyecto para apoyar sus actividades comerciales y administrativas.",
         proposito: "Organizar y conectar el seguimiento comercial con la gestión contractual y los datos financieros del negocio.",
         solucion: "RFM CORE integra precotización pública, gestión de personas y cotizaciones, formalización de contratos, costos, gastos y reportes. El backend aplica las validaciones y los cálculos críticos.",
         participacion: "Desarrollé el proyecto de manera individual. Asumí el análisis, el diseño, la implementación, la validación, la documentación y el despliegue.",
         tecnologias: ["React", "Vite", "Django", "Django REST Framework", "PostgreSQL"],
-        evidencias: ["rfm-e03-decisiones"]
+        evidencias: ["rfm-e03-decisiones"],
+        capturas: [
+          {
+            revision: "aprobado",
+            archivo: "rfm-core/panel-operativo.webp",
+            titulo: "Panel operativo",
+            alt: "Panel de RFM CORE con indicadores de cotizaciones y eventos, y accesos a contratos y finanzas.",
+            descripcion: "El panel reúne el seguimiento comercial, la agenda y los accesos a la gestión financiera. Los indicadores corresponden a registros de demostración.",
+            ancho: 1440,
+            alto: 910,
+          },
+          {
+            revision: "aprobado",
+            archivo: "rfm-core/precotizacion.png",
+            titulo: "Precotización pública",
+            alt: "Resultado de una precotización de servicio completo con la opción de elegir un paquete después.",
+            descripcion: "La solicitud de servicio completo admite un paquete pendiente. La captura de E01 muestra ese punto de entrada con un evento e importes sintéticos.",
+            ancho: 1088,
+            alto: 725,
+          },
+        ],
       }
     }
   ],
@@ -42,19 +62,24 @@ export const registroPublico: Registro = {
       resumen: "Diseñé el flujo comercial de Rancho Flor María para que una consulta pueda avanzar a cotización y llegar a contrato cuando se cumplan las reglas de formalización.",
       resumenVisual: [
         {
-          etiqueta: "Responsabilidad",
+          etiqueta: "Problema",
+          valor: "Consultas con datos tentativos",
+          detalle: "El sistema debía conservarlos y distinguirlos de las condiciones del contrato."
+        },
+        {
+          etiqueta: "Mi responsabilidad",
           valor: "Único desarrollador",
           detalle: "Análisis, diseño e implementación del flujo."
         },
         {
-          etiqueta: "Trazabilidad",
-          valor: "9 reglas de negocio documentadas",
-          detalle: "Vinculadas con el código y las pruebas."
+          etiqueta: "Decisiones principales",
+          valor: "Cotización y contrato por separado",
+          detalle: "Conversión tras la confirmación y reutilización de la oferta histórica cuando es compatible."
         },
         {
-          etiqueta: "Validación del backend",
+          etiqueta: "Resultados verificables",
           valor: "171/171 pruebas aprobadas",
-          detalle: "Resultado de E04 en SQLite en memoria con datos sintéticos, confirmado después en GitHub Actions sobre a95ce07."
+          detalle: "Backend en SQLite en memoria con datos sintéticos. E02 vincula nueve reglas de negocio con código y pruebas."
         }
       ],
       ejemplo: {
@@ -82,7 +107,6 @@ export const registroPublico: Registro = {
       validacion: "La auditoría local E04 del 11 de noviembre de 2026 partió de d9fe5ae con ajustes de pruebas. QA-06 comprueba el rechazo de la conversión sin paquete y QA-14 distingue cuándo se reutiliza o reconstruye la oferta histórica. Las regresiones se integraron mediante el PR #2. Después, GitHub Actions validó por separado el commit a95ce07 de main: 171/171 pruebas de backend y 25/25 de frontend. La ficha E04 enlaza las pruebas y la ejecución de CI.",
       resultadosYLimites: "Las pruebas del backend usaron SQLite en memoria y datos sintéticos. El rechazo de una segunda conversión se comprobó de forma secuencial; queda sin validar la concurrencia con PostgreSQL. E04 no cubrió recorridos de interfaz en navegador ni el envío efectivo de mensajes. La captura de E01 ilustra el alta pública y los resultados de CI no acreditan recorridos de extremo a extremo. El impacto en tiempos de atención, conversión y rentabilidad sigue sin medir.",
       aprendizajes: "Aprendí a definir qué significa cada estado y a comprobar las condiciones de cada transición. Los escenarios de oferta histórica me ayudaron a distinguir qué datos deben conservarse y cuándo la aplicación los reconstruye.",
-      fichasBreves: true,
       competencia: "Análisis funcional e ingeniería de requisitos",
       periodo: "2026",
       evidencias: ["rfm-e01-proceso", "rfm-e02-trazabilidad", "rfm-e03-decisiones", "rfm-e04-verificacion"]

@@ -6,7 +6,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 
 ## Estado del proyecto
 
-**Fase 3 · Incremento 3A.** El catálogo y las páginas de casos de estudio extienden la dirección visual RZ. y se generan a partir del registro tipado. RFM CORE está preparado como candidato local de publicación.
+**Fase 3 · Incremento 5A.** La revisión local prioriza RFM CORE y sus evidencias. El currículum oficial será el PDF proporcionado por Roberto Zamora.
 
 | Documento | Qué encontrarás |
 | --- | --- |
@@ -25,6 +25,7 @@ Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne
 | [Versión candidata de RFM CORE](docs/informe-candidata-rfm-core.md) | Recorrido local, recursos, verificaciones y autorización pendiente. |
 | [Incremento 3B](docs/informe-incremento-3b.md) | Identidad, Sobre mí, CV, contacto y revisión local. |
 | [Incremento 4](docs/informe-incremento-4.md) | Candidata completa, metadatos, comprobaciones y propuesta de Cloudflare Pages. |
+| [Incremento 5A](docs/informe-incremento-5a.md) | Portada, navegación, evidencias visuales, compatibilidad del CV y plan de integración 5B. |
 
 ## Desarrollo local
 
@@ -65,9 +66,11 @@ Las muestras usan `app/pruebas/datos.ts`. Cuando existe `.local/contenido-editor
 
 `npm run revision:editorial` verifica la versión candidata de RFM CORE y genera `.local/candidata-rfm-core/index.html` a partir de `build/client`. Para recorrer esa compilación localmente, ejecuta `npx wrangler pages dev build/client --ip 127.0.0.1 --port 8789` y abre `http://127.0.0.1:8789/`.
 
-`npm run revision:perfil` verifica el incremento 3B y genera `.local/revision-incremento-3b/index.html` con las capturas y la impresión de control. Para recorrer el perfil en revisión usa `npm run preview:prueba` y abre Inicio, `/sobre-mi/` o `/cv/` en `http://127.0.0.1:8788/`.
+`npm run revision:perfil` genera `.local/revision-incremento-3b/index.html` con capturas del perfil vigente. Para recorrer el perfil en revisión usa `npm run preview:prueba` y abre Inicio, `/sobre-mi/` o `/cv/` en `http://127.0.0.1:8788/`.
 
 `npm run revision:candidata` verifica el incremento 4 y genera `.local/revision-incremento-4/index.html`. `npm run preview:candidata` sirve `build/client` en `http://127.0.0.1:8789/`. La configuración de origen e indexación se detalla en la [propuesta de Cloudflare Pages](docs/propuesta-cloudflare-pages.md).
+
+`npm run revision:5a` genera la comparación antes y después a 1280, 390 y 320 px en `.local/revision-incremento-5a/index.html`. Usa `.local/incremento-5a-base/client` como compilación de referencia. El [informe 5A](docs/informe-incremento-5a.md) documenta cómo reproducirla.
 
 El repositorio utiliza la rama `main`. El titular del portafolio gestiona los commits y el push. La configuración del despliegue se definirá al preparar la publicación.
 

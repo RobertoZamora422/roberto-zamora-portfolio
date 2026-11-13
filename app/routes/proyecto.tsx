@@ -20,6 +20,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
     solucion: pagina.solucion,
     participacion: pagina.participacion,
     tecnologias: pagina.tecnologias,
+    capturas: pagina.capturas?.filter(({ revision }) => revision === "aprobado")
+      .map(({ archivo, ...captura }) => ({ ...captura, url: urlRecursoLocal(archivo) })),
     evidencias: evidencias.filter(({ id }) => pagina.evidencias.includes(id)).map(({ id, titulo, recurso }) => ({
       id,
       titulo,
@@ -38,6 +40,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData, params }) => loa
 
 export default function Proyecto() {
   const proyecto = useLoaderData<typeof loader>();
+  const casoUnico = proyecto.casos.length === 1 ? proyecto.casos[0] : undefined;
 
   return (
     <article className="project-detail">
@@ -47,6 +50,7 @@ export default function Proyecto() {
         </nav>
       )}>
         <p className="lead">{proyecto.entradilla}</p>
+        {casoUnico && <TextLink to={casoUnico.ruta}>{casoUnico.titulo}</TextLink>}
       </PageIntro>
       <dl className="project-facts" aria-label="Datos del proyecto">
         <div><dt>Estado</dt><dd>{proyecto.estado}</dd></div>
@@ -55,6 +59,21 @@ export default function Proyecto() {
         )}
       </dl>
       <div className="project-story">
+        {!!proyecto.capturas?.length && (
+          <section className="project-product" aria-labelledby="producto">
+            <h2 id="producto">El producto</h2>
+            <div className="project-captures">
+              {proyecto.capturas.map(({ url, titulo, alt, descripcion, ancho, alto }) => (
+                <figure key={url}>
+                  <a href={url} aria-label={`Ampliar captura de ${titulo}`}>
+                    <img src={url} alt={alt} width={ancho} height={alto} loading="lazy" />
+                  </a>
+                  <figcaption><strong>{titulo}</strong><p>{descripcion}</p></figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
         <section aria-labelledby="problema">
           <h2 id="problema">El problema</h2>
           <div className="project-story__body">
@@ -80,7 +99,7 @@ export default function Proyecto() {
             </ul>
           </div>
         </section>
-        {!!proyecto.casos.length && (
+        {proyecto.casos.length > 1 && (
           <section aria-labelledby="casos-relacionados">
             <h2 id="casos-relacionados">Casos relacionados</h2>
             <ul className="project-links" role="list">
