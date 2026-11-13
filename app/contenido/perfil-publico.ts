@@ -10,6 +10,12 @@ const estudios = `${formacion.programa} en la ${formacion.institucion}`;
 export const perfilPublico: Perfil = {
   revision: "aprobado",
   nombre: "Roberto Zamora",
+  cvPdf: { revision: "aprobado", archivo: "perfil/roberto-zamora-cv.pdf" },
+  retrato: {
+    revision: "aprobado",
+    archivo: "perfil/roberto-zamora.png",
+    alt: "Retrato profesional de Roberto Zamora",
+  },
   presentacion: "Tecnología · Procesos · Análisis funcional",
   propuesta: "Comprender problemas. Diseñar soluciones. Generar valor.",
   oportunidades: "Busco una pasantía o una posición junior en tecnología.",

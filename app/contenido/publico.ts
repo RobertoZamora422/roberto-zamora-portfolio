@@ -45,7 +45,7 @@ export const registroPublico: Registro = {
             archivo: "rfm-core/precotizacion.png",
             titulo: "Precotización pública",
             alt: "Resultado de una precotización de servicio completo con la opción de elegir un paquete después.",
-            descripcion: "La solicitud de servicio completo admite un paquete pendiente. La captura de E01 muestra ese punto de entrada con un evento e importes sintéticos.",
+            descripcion: "La solicitud de servicio completo admite un paquete pendiente. La captura de E01 muestra ese punto de entrada con un evento e importes sintéticos. El canal de WhatsApp quedó sin configurar en la demostración.",
             ancho: 1088,
             alto: 725,
           },

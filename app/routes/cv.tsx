@@ -7,7 +7,9 @@ import { CasosPerfil, EnlaceCv, PerfilesPublicos } from "../ui/perfil";
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) => metadatosPagina({
   titulo: `CV y contacto · ${loaderData?.nombre ?? "Portafolio profesional"}`,
-  descripcion: "Contacto profesional, perfiles públicos y acceso al currículum cuando esté disponible.",
+  descripcion: loaderData?.cvPdf
+    ? "Contacto profesional, perfiles públicos y acceso al currículum oficial en PDF."
+    : "Contacto profesional y perfiles públicos.",
   ruta: paths.cv,
 });
 

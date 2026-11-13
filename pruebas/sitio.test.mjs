@@ -27,6 +27,7 @@ const rutaRfm = "/proyectos/rfm-core/";
 const slugCasoRfm = "del-interes-comercial-al-contrato";
 const rutaCasoRfm = `/casos-de-estudio/${slugCasoRfm}/`;
 const tituloCasoRfm = "Del interés comercial al contrato";
+const rutaCvPdf = perfilPublico.cvPdf?.revision === "aprobado" ? `/recursos/${perfilPublico.cvPdf.archivo}` : null;
 const evidenciasRfm = ["e01-proceso", "e02-trazabilidad", "e03-decisiones", "e04-verificacion"];
 const casoRfmPublico = registroPublico.casos.find(({ slug, revision }) => slug === slugCasoRfm && revision === "aprobado");
 const rutaEvidenciaPrivada = (nombre) => `/recursos/revision-editorial/rfm-core/${nombre}.html`;
@@ -337,7 +338,8 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
       for (const width of anchos) {
         await page.setViewportSize({ width, height: 840 });
         await page.goto(origin);
-        const secuencia = ["/", "/proyectos/", "/casos-de-estudio/", "/sobre-mi/", "/cv/#contacto"];
+        const secuencia = ["/", "/proyectos/", "/casos-de-estudio/", "/sobre-mi/",
+          ...(rutaCvPdf ? [rutaCvPdf] : []), "/cv/#contacto"];
         await page.keyboard.press("Tab");
         assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#contenido");
         assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), "solid");
@@ -463,6 +465,7 @@ test("Inicio y perfil conectan el caso, el CV y el contacto con y sin JavaScript
         else {
           assert.match(respuesta.headers.get("cache-control"), /(?:^|, )no-transform(?:$|,)/);
           assert.doesNotMatch(html, /Imprimir CV|Experiencia en proyectos|Perfil profesional<\/h2>/);
+          if (rutaCvPdf) assert.doesNotMatch(html, /El CV en PDF aún no está disponible/);
         }
         const datos = await fetch(origin + ruta + "_.data");
         assert.equal(datos.status, 200);
@@ -488,13 +491,11 @@ test("Inicio y perfil conectan el caso, el CV y el contacto con y sin JavaScript
         const nav = page.getByRole("navigation", { name: "Principal" });
         assert.deepEqual(await nav.getByRole("link").evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
           [rutaRfm, "/sobre-mi/"]);
-        if (perfilPublico.cvPdf?.revision !== "aprobado") {
+        await page.keyboard.press("Tab");
+        assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#contenido");
+        for (const href of ["/", rutaRfm, "/sobre-mi/", ...(rutaCvPdf ? [rutaCvPdf] : []), "/cv/#contacto"]) {
           await page.keyboard.press("Tab");
-          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#contenido");
-          for (const href of ["/", rutaRfm, "/sobre-mi/", "/cv/#contacto"]) {
-            await page.keyboard.press("Tab");
-            assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), href);
-          }
+          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), href);
         }
         await page.getByRole("link", { name: "Leer el caso de estudio", exact: true }).press("Enter");
         await page.waitForURL(origin + rutaCasoRfm);
@@ -522,24 +523,26 @@ test("Inicio y perfil conectan el caso, el CV y el contacto con y sin JavaScript
       }
       await competencias.getByRole("link", { name: /^E01/ }).press("Enter");
       await page.getByRole("heading", { name: "E01 — Proceso comercial" }).waitFor();
+      if (rutaCvPdf) {
+        const respuesta = await fetch(origin + rutaCvPdf, { redirect: "error" });
+        assert.equal(respuesta.status, 200);
+        assert.match(respuesta.headers.get("content-type"), /^application\/pdf(?:$|;)/);
+        assert.equal(respuesta.headers.get("content-disposition"), "inline");
+        assert.deepEqual(Buffer.from(await respuesta.arrayBuffer()),
+          await readFile(join("recursos-contenido", perfilPublico.cvPdf.archivo)));
+      }
       const simple = await browser.newPage({ javaScriptEnabled: false });
       try {
         for (const [ruta] of [...rutas, [rutaRfm], [rutaCasoRfm], ["/proyectos/"], ["/casos-de-estudio/"]]) {
           await simple.goto(origin + (ruta === "/cv/" ? "/cv/#contacto" : ruta));
           const botones = simple.getByRole("link", { name: /^Ver CV/ });
-          const pdf = perfilPublico.cvPdf?.revision === "aprobado" ? `/recursos/${perfilPublico.cvPdf.archivo}` : null;
-          if (pdf) {
+          if (rutaCvPdf) {
+            assert.equal(await botones.count(), rutas.some(([principal]) => ruta === principal) ? 2 : 1, ruta);
             for (const boton of await botones.all()) {
-              assert.equal(await boton.getAttribute("href"), pdf);
+              assert.equal(await boton.getAttribute("href"), rutaCvPdf);
               assert.equal(await boton.getAttribute("target"), "_blank");
               assert.equal(await boton.getAttribute("download"), null);
             }
-            assert(await botones.count() > 0);
-            const respuesta = await fetch(origin + pdf);
-            assert.equal(respuesta.status, 200);
-            assert.match(respuesta.headers.get("content-type"), /^application\/pdf/);
-            assert.equal(respuesta.headers.get("content-disposition"), "inline");
-            assert.equal(Buffer.from(await respuesta.arrayBuffer()).subarray(0, 5).toString(), "%PDF-");
           } else assert.equal(await botones.count(), 0);
           if (ruta !== "/sobre-mi/" && ruta !== "/cv/") continue;
           const enlaces = simple.getByRole("list", { name: "Perfiles públicos" });
