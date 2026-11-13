@@ -15,6 +15,7 @@ import "@fontsource/archivo-black/latin-400.css";
 import "@fontsource-variable/geist";
 import { SiteHeader } from "./ui/cabecera";
 import { cargarContenido, urlRecursoLocal } from "./contenido/registro.server";
+import { favicon } from "./contenido/publicacion";
 import { paths } from "./rutas";
 import { NoEncontrada } from "./routes/no-encontrada";
 import { PageIntro } from "./ui/elementos";
@@ -52,7 +53,8 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href={import.meta.env.DEV ? "/recursos-contenido/sitio/favicon.ico" : "/favicon.ico"} sizes="16x16 32x32 48x48" />
+        <link rel="icon" href={import.meta.env.DEV ? "/recursos-contenido/sitio/favicon.ico" : favicon.ruta}
+          sizes={favicon.tamanos} type="image/vnd.microsoft.icon" />
         {process.env.PORTFOLIO_INDEXAR !== "1" && !staticError && <meta name="robots" content="noindex" />}
         <Meta />
         <Links />

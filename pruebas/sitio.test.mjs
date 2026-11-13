@@ -8,6 +8,7 @@ import { test } from "node:test";
 import { promisify } from "node:util";
 import { chromium } from "playwright-core";
 import { registroPublico } from "../app/contenido/publico.ts";
+import { favicon } from "../app/contenido/publicacion.ts";
 import { perfilPublico } from "../app/contenido/perfil-publico.ts";
 import { anchos, capturarCasos, capturarEditorial, capturarIncremento5a, capturarPerfil, capturarRevision, vistas, vistasCasos } from "./capturas.mjs";
 import { perfilAprobado, registroFixture } from "./registro-fixture.mjs";
@@ -97,15 +98,28 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
     const robots = await fetch(origin + "/robots.txt");
     assert.equal(robots.status, 200);
     assert.equal(await robots.text(), "User-agent: *\nDisallow:\n");
-    const icono = await fetch(origin + "/favicon.ico");
-    assert.equal(icono.status, 200);
-    assert.match(icono.headers.get("content-type"), /^image\/(?:x-icon|vnd\.microsoft\.icon)/);
-    assert.deepEqual(Buffer.from(await icono.arrayBuffer()), await readFile("recursos-contenido/sitio/favicon.ico"));
+    const ico = await readFile("recursos-contenido/sitio/favicon.ico");
+    assert.equal(ico.readUInt16LE(2), 1);
+    assert.equal(ico.readUInt16LE(4), 3);
+    for (const [indice, lado] of [16, 32, 48].entries()) {
+      const entrada = 6 + indice * 16;
+      assert.deepEqual([ico[entrada], ico[entrada + 1]], [lado, lado]);
+    }
+    for (const ruta of [favicon.ruta, "/favicon.ico"]) {
+      const icono = await fetch(origin + ruta);
+      assert.equal(icono.status, 200);
+      assert.match(icono.headers.get("content-type"), /^image\/(?:x-icon|vnd\.microsoft\.icon)/);
+      assert.deepEqual(Buffer.from(await icono.arrayBuffer()), ico);
+    }
     await comprobar404(origin, ["/sitemap.xml"]);
     for (const ruta of ["/", "/proyectos/", "/casos-de-estudio/", "/sobre-mi/", "/cv/", rutaRfm, rutaCasoRfm]) {
       const respuesta = await fetch(origin + ruta);
       assert.equal(respuesta.status, 200, ruta);
       const pagina = await respuesta.text();
+      const iconos = pagina.match(/<link rel="icon"[^>]*>/g) ?? [];
+      assert.equal(iconos.length, 1, ruta);
+      assert(iconos[0].includes(`href="${favicon.ruta}"`), ruta);
+      assert(iconos[0].includes(`sizes="${favicon.tamanos}"`), ruta);
       for (const etiqueta of [/name="description"/, /property="og:title"/, /property="og:description"/]) {
         assert.match(pagina, etiqueta, ruta);
       }
@@ -604,6 +618,9 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
         const recurso = await readFile(join("recursos-contenido", archivo), "utf8");
         const html = await documento.text();
         assert.equal(html.split("</head>")[1], recurso.split("</head>")[1], ruta);
+        const iconos = html.match(/<link rel="icon"[^>]*>/g) ?? [];
+        assert.equal(iconos.length, 1, ruta);
+        assert(iconos[0].includes(`href="${favicon.ruta}"`), ruta);
         assert.match(html, /property="og:title"/);
         assert.equal(documento.headers.get("x-robots-tag"), "noindex");
       }

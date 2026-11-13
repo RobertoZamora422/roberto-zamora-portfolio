@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import type { Config } from "@react-router/dev/config";
 import { cargarContenido, cargarRegistro } from "./app/contenido/registro.server";
 import { validarRegistro } from "./app/contenido/validar";
-import { configuracionPublicacion, tarjetaSocial } from "./app/contenido/publicacion";
+import { configuracionPublicacion, favicon, tarjetaSocial } from "./app/contenido/publicacion";
 import { metadatosPagina } from "./app/contenido/metadatos";
 import { paths, rutaCaso, rutaProyecto } from "./app/rutas";
 
@@ -28,7 +28,9 @@ export default {
   },
   async buildEnd({ reactRouterConfig, viteConfig }) {
     const client = resolve(viteConfig.root, reactRouterConfig.buildDirectory, "client");
-    await copyFile(resolve(viteConfig.root, "recursos-contenido/sitio/favicon.ico"), resolve(client, "favicon.ico"));
+    const archivoIcono = resolve(viteConfig.root, "recursos-contenido/sitio/favicon.ico");
+    await copyFile(archivoIcono, resolve(client, `.${favicon.ruta}`));
+    await copyFile(archivoIcono, resolve(client, "favicon.ico"));
     // Pages reads this file for unmatched URLs and sends the HTTP status.
     await rename(resolve(client, "404/index.html"), resolve(client, "404.html"));
     await rm(resolve(client, "__spa-fallback.html"), { force: true });
@@ -44,21 +46,21 @@ export default {
     for (const [archivo, fuente] of recursos) {
       const destino = resolve(client, "recursos", archivo);
       await mkdir(dirname(destino), { recursive: true });
-      const documento = !preview && documentos.get(archivo);
+      const documento = documentos.get(archivo);
       if (!documento) {
         await copyFile(fuente, destino);
         continue;
       }
       const html = await readFile(fuente, "utf8");
       if (!html.includes("</head>")) throw new Error(`Falta </head> en la evidencia ${archivo}`);
-      const etiquetas = metadatosPagina({ ...documento, tipo: "article" }, origen ?? "")
+      const etiquetas = (preview ? [] : metadatosPagina({ ...documento, tipo: "article" }, origen ?? ""))
         .flatMap((meta) => {
           if ("href" in meta && meta.href) return [`<link rel="canonical" href="${escapar(meta.href)}">`];
           if ("property" in meta && meta.property) return [`<meta property="${meta.property}" content="${escapar(meta.content)}">`];
           if ("name" in meta && meta.name) return [`<meta name="${meta.name}" content="${escapar(meta.content)}">`];
           return [];
         });
-      await writeFile(destino, html.replace("</head>", `<link rel="icon" href="/favicon.ico">\n${etiquetas.join("\n")}\n</head>`));
+      await writeFile(destino, html.replace("</head>", `<link rel="icon" href="${favicon.ruta}" sizes="${favicon.tamanos}" type="image/vnd.microsoft.icon">\n${etiquetas.join("\n")}\n</head>`));
     }
 
     const robots = "User-agent: *\nDisallow:\n";

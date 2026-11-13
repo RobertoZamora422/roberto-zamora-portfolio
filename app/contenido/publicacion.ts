@@ -1,4 +1,5 @@
 export const tarjetaSocial = "/recursos/sitio/rz-social.png";
+export const favicon = { ruta: "/favicon-rz-v2.ico", tamanos: "16x16 32x32 48x48" } as const;
 
 export function configuracionPublicacion(env: NodeJS.ProcessEnv) {
   const origen = env.PORTFOLIO_ORIGEN?.trim();
