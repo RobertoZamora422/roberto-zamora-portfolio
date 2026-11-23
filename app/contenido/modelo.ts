@@ -5,6 +5,24 @@ interface ArchivoRevisado {
   archivo: string;
 }
 
+interface TextoConTitulo {
+  titulo: string;
+  descripcion: string;
+}
+
+export interface PortadaProfesional {
+  area: string;
+  titular: readonly [primera: string, segunda: string, enfasis: string];
+  estudios: string;
+  introduccion: string;
+  enfoque: string;
+  ubicacion: string;
+  ejes: readonly string[];
+  capacidades: readonly TextoConTitulo[];
+  trayectoria: readonly string[];
+  datos: readonly TextoConTitulo[];
+}
+
 export interface Perfil {
   revision: Revision;
   nombre: string;
@@ -19,8 +37,10 @@ export interface Perfil {
   retrato?: ArchivoRevisado & { alt: string };
   intereses?: readonly { titulo: string; descripcion: string }[];
   correo?: string;
+  whatsapp?: { revision: Revision; numero: string };
   enlaces?: readonly { titulo: string; url: string }[];
   casos?: readonly string[];
+  portada?: PortadaProfesional;
 }
 
 interface FichaProyecto {
@@ -54,6 +74,12 @@ export interface Proyecto {
   slug: string;
   ficha: FichaProyecto;
   pagina?: PaginaProyecto;
+  portada?: {
+    categoria: string;
+    descripcion: string;
+    repositorio: string;
+    visual: "conceptual" | { captura: string };
+  };
 }
 
 export interface Caso {
@@ -79,6 +105,10 @@ export interface Caso {
     referencias: readonly { evidencia: string; texto: string; ancla: string }[];
   };
   fichasBreves?: boolean;
+  portada?: {
+    indicadores: readonly { valor: string; descripcion: string }[];
+    alcance: string;
+  };
 }
 
 export interface Evidencia {

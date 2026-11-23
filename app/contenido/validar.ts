@@ -79,11 +79,20 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
     for (const id of ids) validarReferencia(origen, id, evidencias, revision, (entrada) => entrada.revision);
   }
 
-  for (const { slug, ficha, pagina } of registro.proyectos) {
+  for (const { slug, ficha, pagina, portada } of registro.proyectos) {
     const origen = `Proyecto «${slug}»`;
     const { revision, nombre, resumen, estado } = ficha;
     validarRevision(origen, revision);
     if (revision === "aprobado") exigirTextos(origen, { nombre, resumen, estado });
+    if (portada) {
+      const { categoria, descripcion, repositorio, visual } = portada;
+      exigirTextos(origen, { categoria, descripcion });
+      validarUrl(origen, repositorio);
+      if (revision === "aprobado" && visual !== "conceptual" && (
+        pagina?.revision !== "aprobado"
+        || !pagina.capturas?.some(({ archivo, revision }) => archivo === visual.captura && revision === "aprobado")
+      )) throw new Error(`${origen}: la portada requiere una captura aprobada`);
+    }
     if (!pagina) continue;
 
     const { revision: revisionPagina, evidencias: ids, entradilla, destacado,
@@ -108,13 +117,17 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
 
   for (const caso of registro.casos) {
     const { slug, revision, proyecto, evidencias: ids, titulo, resumen, contexto,
-      alcance, decisiones, trabajo, validacion, resultadosYLimites, resumenVisual, ejemplo } = caso;
+      alcance, decisiones, trabajo, validacion, resultadosYLimites, resumenVisual, ejemplo, portada } = caso;
     const origen = `Caso «${slug}»`;
     validarRevision(origen, revision);
     validarReferencia(origen, proyecto, proyectos, revision, (entrada) => entrada.ficha.revision);
     if (revision === "aprobado") {
       exigirTextos(origen, { titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites });
       for (const { etiqueta, valor } of resumenVisual ?? []) exigirTextos(origen, { etiqueta, valor });
+      if (portada) {
+        exigirTextos(origen, { alcancePortada: portada.alcance });
+        for (const indicador of portada.indicadores) exigirTextos(origen, indicador);
+      }
       if (ejemplo) {
         exigirTextos(origen, { titulo: ejemplo.titulo });
         for (const situacion of ejemplo.situaciones) exigirTextos(origen, situacion);
@@ -142,7 +155,7 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
 
   if (registro.perfil) {
     const { revision, nombre, presentacion, propuesta, oportunidades, descripcionInicio, sobreMi, formacion, trayectoria,
-      casos: referencias, correo, enlaces, cvPdf, retrato, intereses } = registro.perfil;
+      casos: referencias, correo, enlaces, cvPdf, retrato, intereses, portada, whatsapp } = registro.perfil;
     validarRevision("Perfil", revision);
     if (revision === "aprobado") {
       exigirTextos("Perfil", { nombre, presentacion, propuesta, oportunidades });
@@ -155,6 +168,13 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
         ...(periodo !== undefined && { periodo }),
       });
       for (const entrada of intereses ?? []) exigirTextos("Área de interés", entrada);
+      if (portada) {
+        const { area, titular: [primera, segunda, enfasis], estudios, introduccion, enfoque, ubicacion,
+          ejes, capacidades, trayectoria, datos } = portada;
+        exigirTextos("Portada", { area, primera, segunda, enfasis, estudios, introduccion, enfoque, ubicacion });
+        for (const texto of [...ejes, ...trayectoria]) exigirTextos("Portada", { texto });
+        for (const entrada of [...capacidades, ...datos]) exigirTextos("Portada", { ...entrada });
+      }
     }
     if (cvPdf) {
       validarRevision("CV", cvPdf.revision);
@@ -184,6 +204,10 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
     for (const id of referencias ?? []) validarReferencia("Perfil", id, casos, revision, (entrada) => entrada.revision);
     if (correo !== undefined && (typeof correo !== "string" || !/^[a-z\d.!#$%&'*+/=?^_`{|}~-]+@[a-z\d-]+(?:\.[a-z\d-]+)+$/i.test(correo))) {
       throw new Error("Perfil: correo inválido");
+    }
+    if (whatsapp) {
+      validarRevision("WhatsApp", whatsapp.revision);
+      if (!/^\+[1-9]\d{7,14}$/.test(whatsapp.numero)) throw new Error("Perfil: número internacional de WhatsApp inválido");
     }
     for (const { url } of enlaces ?? []) validarUrl("Perfil", url);
   }

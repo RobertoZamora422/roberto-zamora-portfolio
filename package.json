@@ -13,6 +13,7 @@
     "preview:prueba": "wrangler pages dev .local/prerender/client --ip 127.0.0.1",
     "test": "node --test pruebas/contenido.test.mjs",
     "test:sitio": "npm run build && npm run build:prueba && node --test pruebas/sitio.test.mjs",
+    "revision:v1": "cross-env PORTFOLIO_CAPTURAS_V1=1 npm run test:sitio",
     "revision:visual": "cross-env PORTFOLIO_CAPTURAS=1 npm run test:sitio",
     "revision:editorial": "cross-env PORTFOLIO_CAPTURAS_EDITORIAL=1 npm run test:sitio",
     "revision:perfil": "cross-env PORTFOLIO_CAPTURAS_PERFIL=1 npm run test:sitio",
@@ -21,7 +22,9 @@
     "preview:candidata": "wrangler pages dev build/client --ip 127.0.0.1 --port 8789"
   },
   "dependencies": {
+    "@fontsource-variable/dm-sans": "5.3.0",
     "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/newsreader": "5.3.0",
     "@fontsource/archivo-black": "5.3.0",
     "isbot": "5.2.3",
     "react": "19.3.1",

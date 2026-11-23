@@ -5,6 +5,14 @@ import { join } from "node:path";
 const carpeta = ".local/revision-rz";
 const prototipo = "docs/referencias/incremento-2/portafolio-rz.html";
 export const anchos = [1280, 390, 320];
+export const anchosV1 = [1440, 1280, 768, 390, 320];
+export const seccionesV1 = [
+  ["inicio", "Presentación"],
+  ["trabajo", "Mi trabajo"],
+  ["aportacion", "Cómo aporto valor"],
+  ["sobre-mi", "Sobre mí"],
+  ["contacto", "Contacto"],
+];
 export const vistas = [
   { nombre: "Inicio", clave: "inicio", ruta: "/", referencia: "inicio" },
   { nombre: "Proyectos", clave: "proyectos", ruta: "/proyectos/", referencia: "proyectos" },
@@ -14,6 +22,67 @@ export const vistasCasos = [
   { nombre: "Catálogo en revisión", clave: "catalogo", ruta: "/casos-de-estudio/" },
   { nombre: "Caso en revisión", clave: "caso", ruta: "/casos-de-estudio/separar-proyecto-y-caso/" },
 ];
+
+export async function capturarV1(browser, origin) {
+  const destino = ".local/revision-v1";
+  const altos = [900, 900, 1024, 844, 640];
+  await mkdir(destino, { recursive: true });
+  const page = await browser.newPage({ reducedMotion: "reduce" });
+  const grupos = [];
+  try {
+    for (const [indice, ancho] of anchosV1.entries()) {
+      await page.setViewportSize({ width: ancho, height: altos[indice] });
+      assert.equal((await page.goto(origin)).status(), 200);
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        await Promise.all([...document.images].map((imagen) => {
+          imagen.loading = "eager";
+          return imagen.decode();
+        }));
+      });
+      const capturas = [["Página completa", `pagina-${ancho}.png`]];
+      await page.screenshot({ path: join(destino, capturas[0][1]), fullPage: true });
+      if ([1440, 768, 390].includes(ancho)) {
+        for (const [id, nombre] of seccionesV1) {
+          const archivo = `${id}-${ancho}.png`;
+          const recorte = await page.locator(`#${id}`).evaluate((seccion) => {
+            const { top, bottom } = seccion.getBoundingClientRect();
+            const entreSecciones = seccion.classList.contains("editorial-section");
+            const y = Math.floor(top + window.scrollY - (entreSecciones ? 24 : 0));
+            const fin = Math.floor(bottom + window.scrollY - (entreSecciones ? 12 : 0));
+            return { x: 0, y, width: document.documentElement.clientWidth, height: fin - y };
+          });
+          await page.screenshot({ path: join(destino, archivo), fullPage: true, clip: recorte });
+          capturas.push([nombre, archivo]);
+        }
+      }
+      if (ancho === 390) {
+        const archivo = "menu-390.png";
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.locator(".editorial-menu summary").click();
+        await page.screenshot({ path: join(destino, archivo) });
+        capturas.push(["Menú móvil abierto", archivo]);
+      }
+      grupos.push({ ancho, capturas });
+    }
+  } finally {
+    await page.close();
+  }
+  const galeria = grupos.map(({ ancho, capturas }) => `
+    <section><h2>${ancho} px</h2><div class="capturas">${capturas.map(([nombre, archivo]) => `
+      <figure><figcaption>${nombre}</figcaption><a href="${archivo}"><img loading="lazy" src="${archivo}" alt="${nombre} a ${ancho} px"></a></figure>`).join("")}
+    </div></section>`).join("");
+  await writeFile(join(destino, "index.html"), `<!doctype html><html lang="es"><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
+    <title>Roberto Zamora · Revisión visual V1</title>
+    <style>body{margin:auto;padding:1.5rem;max-width:80rem;background:#f7f6f1;color:#202722;font:1rem/1.5 system-ui}
+    h2{border-top:1px solid #d7ded5;padding-top:1rem}figure{margin:0}img{display:block;max-width:100%;border:1px solid #d7ded5}
+    a:focus-visible{outline:3px solid #294c3b;outline-offset:4px}figcaption{margin-bottom:.5rem;font-weight:600}
+    .capturas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(16rem,100%),1fr));gap:1rem;align-items:start}
+    </style><main><h1>Roberto Zamora · Revisión visual V1</h1>
+    <p>Capturas de la compilación pública servida con Wrangler local. Abre una imagen para verla a tamaño completo.</p>
+    ${galeria}</main></html>`);
+}
 
 export async function capturarPerfil(browser, origin, candidata = false) {
   const destino = candidata ? ".local/revision-incremento-4" : ".local/revision-incremento-3b";

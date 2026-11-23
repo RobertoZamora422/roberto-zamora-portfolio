@@ -56,6 +56,12 @@ const erroresDeRegistro = [
   ["recurso de revisión local en el registro público", (r) => { r.evidencias[0].recurso.archivo = "pruebas/ejemplo.txt"; }, /reservado para revisión local/],
   ["recurso editorial en el registro público", (r) => { r.evidencias[0].recurso.archivo = "revision-editorial/ejemplo.html"; }, /reservado para revisión local/],
   ["URL de evidencia inválida", (r) => { r.evidencias[0].recurso = { url: "javascript:alert(1)" }; }, /se requiere una URL HTTPS/],
+  ["portada con captura sin aprobar", (r) => {
+    r.proyectos[0].portada = {
+      categoria: "Sistema web", descripcion: "Portada QA", repositorio: "https://example.org/qa",
+      visual: { captura: "captura-qa.png" },
+    };
+  }, /la portada requiere una captura aprobada/],
   ["destacado en borrador", (r) => {
     r.casos[0].revision = "borrador";
     r.evidencias[0].recurso = { url: "https://example.org/evidencia" };
@@ -120,4 +126,13 @@ test("El correo del perfil admite un buzón simple y rechaza parámetros de mail
   await validarRegistro(registro, "");
   registro.perfil.correo += "?bcc=otro@example.test";
   await assert.rejects(validarRegistro(registro, ""), /correo inválido/);
+});
+
+test("WhatsApp exige un número internacional en formato E.164", async () => {
+  const { retrato, ...perfil } = perfilAprobado;
+  const whatsapp = { revision: "aprobado", numero: "+12025550147" };
+  const registro = { proyectos: [], casos: [], evidencias: [], perfil: { ...perfil, whatsapp } };
+  await validarRegistro(registro, "");
+  whatsapp.numero = "+12025550147?text=QA";
+  await assert.rejects(validarRegistro(registro, ""), /número internacional de WhatsApp inválido/);
 });

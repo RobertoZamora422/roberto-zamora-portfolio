@@ -10,7 +10,7 @@ import { chromium } from "playwright-core";
 import { registroPublico } from "../app/contenido/publico.ts";
 import { favicon } from "../app/contenido/publicacion.ts";
 import { perfilPublico } from "../app/contenido/perfil-publico.ts";
-import { anchos, capturarCasos, capturarEditorial, capturarIncremento5a, capturarPerfil, capturarRevision, vistas, vistasCasos } from "./capturas.mjs";
+import { anchos, anchosV1, capturarCasos, capturarEditorial, capturarIncremento5a, capturarPerfil, capturarRevision, capturarV1, seccionesV1, vistas, vistasCasos } from "./capturas.mjs";
 import { perfilAprobado, registroFixture } from "./registro-fixture.mjs";
 import { conPages } from "./servidor.mjs";
 
@@ -94,7 +94,7 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
   await conPages(publico, async (origin) => {
     const inicio = await fetch(origin);
     assert.equal(inicio.headers.get("x-robots-tag"), "noindex");
-    assert.doesNotMatch(inicio.headers.get("cache-control") ?? "", /no-transform/);
+    assert.match(inicio.headers.get("cache-control") ?? "", /(?:^|, )no-transform(?:$|,)/);
     const robots = await fetch(origin + "/robots.txt");
     assert.equal(robots.status, 200);
     assert.equal(await robots.text(), "User-agent: *\nDisallow:\n");
@@ -144,6 +144,7 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
     ...perfilAprobado,
     correo: "talento+qa@example.test",
     enlaces: [{ titulo: "Perfil externo QA", url: "https://example.org/perfil-qa" }],
+    whatsapp: { revision: "borrador", numero: "+12025550147" },
   };
   const [base] = registro.proyectos;
   const [casoBase] = registro.casos;
@@ -209,7 +210,11 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
     "casos-de-estudio/caso-qa/index.html", "casos-de-estudio/caso-con-ficha-qa/index.html",
   ].map((archivo) => readFile(join(salida, archivo), "utf8")));
   assert.match(inicio, /Presentación de portada QA/);
-  assert.match(inicio, /<h1>Perfil QA<\/h1>/);
+  assert.match(inicio, /<h1 id="titulo-inicio">Perfil QA<\/h1>/);
+  assert.match(inicio, /rel="canonical" href="https:\/\/example\.org\/"/);
+  assert.match(inicio, /property="og:url" content="https:\/\/example\.org\/"/);
+  assert.match(inicio, /href="mailto:talento%2Bqa@example\.test\?subject=/);
+  assert.doesNotMatch(inicio, /12025550147|wa\.me/);
   assert.match(inicio, /<img[^>]+src="\/recursos\/retrato-qa.png"[^>]+alt="Retrato QA"/);
   const cv = await readFile(join(salida, "cv/index.html"), "utf8");
   assert.match(cv, /rel="canonical" href="https:\/\/example\.org\/cv\/"/);
@@ -319,8 +324,8 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
       const page = await browser.newPage();
       const errores = [];
       page.on("pageerror", (error) => errores.push(error.message));
-      await page.goto(origin);
-      await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Proyectos" }).click();
+      await page.goto(origin + catalogoCasos);
+      await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Proyectos", exact: true }).click();
       await page.getByRole("heading", { name: "Proyectos", exact: true }).waitFor();
       assert.equal(await page.getByRole("link", { name: "Ver ficha de Portafolio web" }).count(), 1);
       const columnas = await page.locator(".project-row > p").evaluateAll((resumenes) => (
@@ -351,7 +356,7 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
 
       for (const width of anchos) {
         await page.setViewportSize({ width, height: 840 });
-        await page.goto(origin);
+        await page.goto(origin + catalogoCasos);
         const secuencia = ["/", "/proyectos/", "/casos-de-estudio/", "/sobre-mi/",
           ...(rutaCvPdf ? [rutaCvPdf] : []), "/cv/#contacto"];
         await page.keyboard.press("Tab");
@@ -361,7 +366,7 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
           await page.keyboard.press("Tab");
           assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), href);
         }
-        await page.goto(origin);
+        await page.goto(origin + catalogoCasos);
         await page.keyboard.press("Tab");
         await page.keyboard.press("Enter");
         assert.equal(await page.evaluate(() => document.activeElement.id), "contenido");
@@ -369,7 +374,7 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
         await page.waitForFunction(() => location.hash === "#contacto" && document.activeElement.id === "contacto");
         assert.equal(await page.getByRole("contentinfo").getByRole("link", { name: "Contacto", exact: true }).getAttribute("aria-current"), "location");
 
-        for (const { ruta } of [...vistas, ...vistasCasos]) {
+        for (const { ruta } of [...vistas.slice(1), ...vistasCasos]) {
           await page.goto(origin + ruta);
           const resultado = await page.evaluate(async () => {
             const caracteres = "Ingeniería · ñ á é í ó ú ü";
@@ -431,7 +436,7 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
         await page.waitForURL(origin + "/cv/");
       }
       await page.goto(origin);
-      await page.locator(".main h1").evaluate((elemento) => {
+      await page.locator("#contenido h1").evaluate((elemento) => {
         elemento.textContent = "Nombre profesional con apellidos extensos e ingeniería";
       });
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -455,27 +460,173 @@ test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { 
   });
 });
 
-test("Inicio y perfil conectan el caso, el CV y el contacto con y sin JavaScript", { timeout: 180000 }, async () => {
+test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escritorio y móvil", { timeout: 150_000 }, async () => {
+  await conPages(publico, async (origin) => {
+    const respuesta = await fetch(origin);
+    const html = await respuesta.text();
+    assert.equal(respuesta.status, 200);
+    assert.match(html, /<title>Roberto Zamora · Del análisis a la solución\.<\/title>/);
+    assert.match(html, /name="description" content="Estudiante de 8vo semestre de Ingeniería de Software/);
+    assert.match(html, /property="og:title" content="Roberto Zamora · Del análisis a la solución\."/);
+    for (const [id] of seccionesV1) assert.match(html, new RegExp(`id="${id}"`));
+    assert.doesNotMatch(html, /raw\.githubusercontent\.com|fonts\.googleapis\.com|MAQUETA CONCEPTUAL|wa\.me\//);
+
+    const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
+    try {
+      const page = await browser.newPage({ reducedMotion: "reduce" });
+      const errores = [];
+      page.on("pageerror", (error) => errores.push(error.message));
+      page.on("response", (respuesta) => {
+        if (respuesta.url().startsWith(origin) && respuesta.status() >= 400) errores.push(respuesta.url());
+      });
+      const hero = page.locator("#inicio");
+      const trabajo = page.locator("#trabajo");
+      const contacto = page.locator("#contacto");
+      const menu = page.locator(".editorial-menu summary");
+      const nav = page.getByRole("navigation", { name: "Principal" });
+      for (const width of anchosV1) {
+        await page.setViewportSize({ width, height: 840 });
+        await page.goto(origin);
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+          await Promise.all([...document.images].map((imagen) => {
+            imagen.loading = "eager";
+            return imagen.decode();
+          }));
+        });
+        assert.match(await hero.getByRole("heading", { level: 1 }).innerText(), /Del análisis\s+a la solución\./);
+        assert.doesNotMatch(await hero.innerText(), /RFM CORE|Claridez/);
+        assert.deepEqual(await trabajo.getByRole("heading", { level: 3 }).allTextContents(), ["RFM CORE", "Claridez"]);
+        for (const { ficha, portada } of registroPublico.proyectos.filter(({ portada }) => portada)) {
+          const repositorio = trabajo.getByRole("link", { name: new RegExp(`repositorio de ${ficha.nombre}`, "i") });
+          assert.equal(await repositorio.getAttribute("href"), portada.repositorio);
+        }
+        assert.equal(await page.locator("#aportacion h3").count(), 4);
+        assert.match(await page.locator("#sobre-mi").innerText(), /Universidad de Las Américas \(UDLA\)[\s\S]*Rancho Flor María/);
+        assert.equal(await contacto.getByRole("link", { name: "WhatsApp" }).count(), 0);
+        const medidas = await page.evaluate(async () => {
+          const fuentes = await Promise.all([
+            '500 68px "Newsreader Variable"', 'italic 400 68px "Newsreader Variable"', '600 16px "DM Sans Variable"',
+          ].map((fuente) => document.fonts.load(fuente, "Ingeniería · solución")));
+          const titulos = [...document.querySelectorAll("main h1, main h2, main h3")].flatMap((titulo) => {
+            const rango = document.createRange();
+            rango.selectNodeContents(titulo);
+            return [...rango.getClientRects()].filter(({ width }) => width > 0).map(({ left, right }) => [left, right]);
+          });
+          return {
+            ancho: document.documentElement.scrollWidth,
+            titulos,
+            fuentes: fuentes.every((caras) => caras.some((cara) => cara.status === "loaded")),
+            movimiento: getComputedStyle(document.documentElement).scrollBehavior,
+            controles: [...document.querySelectorAll("header a, header summary, .editorial-actions a, .editorial-project__links a, footer a")]
+              .map((control) => control.getBoundingClientRect().height).filter(Boolean),
+          };
+        });
+        assert(medidas.ancho <= width && medidas.titulos.every(([left, right]) => left >= 0 && right <= width), `${width} px`);
+        assert(medidas.fuentes, "Tipografías locales y cursiva en la portada");
+        assert.equal(medidas.movimiento, "auto");
+        assert(medidas.controles.every((altura) => altura >= 44), `Acciones a ${width} px`);
+        await page.addScriptTag({ path: axe });
+        await comprobarAccesibilidad(page, `Inicio V1 a ${width} px`);
+
+        await page.keyboard.press("Tab");
+        assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#contenido");
+        assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), "solid");
+        await page.keyboard.press("Enter");
+        assert.equal(await page.evaluate(() => document.activeElement.id), "contenido");
+        const esMovil = width <= 730;
+        assert.equal(await menu.isVisible(), esMovil);
+        if (esMovil) {
+          await menu.press("Enter");
+          await nav.waitFor();
+          await comprobarAccesibilidad(page, `Menú móvil abierto a ${width} px`);
+          await page.keyboard.press("Tab");
+          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#trabajo");
+          await page.keyboard.press("Escape");
+          assert(await menu.evaluate((control) => control === document.activeElement && !control.parentElement.open));
+        }
+        for (const [ancla, enlace] of [["trabajo", "Mi trabajo"], ["aportacion", "Cómo aporto"], ["sobre-mi", "Sobre mí"], ["contacto", "Hablemos"]]) {
+          if (esMovil) await menu.press("Enter");
+          await nav.getByRole("link", { name: enlace, exact: true }).press("Enter");
+          await page.waitForFunction((id) => {
+            const seccion = document.getElementById(id);
+            return location.hash === `#${id}` && document.activeElement === seccion
+              && seccion.getBoundingClientRect().top >= document.querySelector(".editorial-header").getBoundingClientRect().bottom;
+          }, ancla);
+          if (esMovil) assert.equal(await nav.isVisible(), false);
+        }
+        const primario = contacto.getByRole("link", { name: "Escribirme por correo" });
+        const destino = new URL(await primario.getAttribute("href"));
+        assert.equal(destino.protocol, "mailto:");
+        assert.equal(destino.pathname, perfilPublico.correo);
+        assert.equal(destino.searchParams.get("subject"), "Oportunidad profesional - Roberto Zamora");
+        for (const { titulo, url } of perfilPublico.enlaces) {
+          assert.equal(await contacto.getByRole("link", { name: titulo, exact: true }).getAttribute("href"), url);
+        }
+        await contacto.getByRole("link", { name: /Volver al inicio/ }).press("Enter");
+        await page.waitForFunction(() => location.hash === "#inicio" && document.activeElement.id === "inicio");
+      }
+
+      await page.goto(origin);
+      await page.evaluate(() => { window.pruebaV1 = true; });
+      await trabajo.getByRole("link", { name: "Explorar el proyecto" }).press("Enter");
+      await page.waitForURL(origin + rutaRfm);
+      assert(await page.evaluate(() => window.pruebaV1));
+      await page.getByRole("heading", { name: "RFM CORE", level: 1 }).waitFor();
+      await page.goBack();
+      await trabajo.getByRole("link", { name: "Consultar evidencias" }).press("Enter");
+      await page.waitForURL(origin + rutaCasoRfm + "#evidencias");
+      await page.waitForFunction(() => document.activeElement.id === "evidencias");
+      const fichas = page.getByRole("region", { name: "Evidencias", exact: true });
+      for (const nombre of evidenciasRfm) {
+        const href = rutaEvidencia(nombre);
+        assert(await fichas.locator(`a[href="${href}"]`).count(), href);
+        assert.equal((await fetch(origin + href)).status, 200, href);
+      }
+      assert.deepEqual(errores, []);
+
+      const simple = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 390, height: 840 } });
+      try {
+        await simple.goto(origin);
+        await simple.locator(".editorial-menu summary").press("Space");
+        await simple.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Hablemos" }).press("Enter");
+        assert.equal(await simple.locator(":target").getAttribute("id"), "contacto");
+        const accesos = simple.getByRole("link", { name: /^Ver CV/ });
+        assert.equal(await accesos.count(), 3);
+        for (const acceso of await accesos.all()) {
+          assert.equal(await acceso.getAttribute("href"), rutaCvPdf);
+          assert.equal(await acceso.getAttribute("target"), "_blank");
+          assert.equal(await acceso.getAttribute("download"), null);
+        }
+        assert.equal(await simple.getByRole("link", { name: "Correo", exact: true }).getAttribute("href"), `mailto:${perfilPublico.correo}`);
+        await simple.goto(origin);
+        await simple.getByRole("link", { name: "Consultar evidencias" }).press("Enter");
+        await simple.waitForURL(origin + rutaCasoRfm + "#evidencias");
+      } finally {
+        await simple.close();
+      }
+      if (process.env.PORTFOLIO_CAPTURAS_V1 === "1") await capturarV1(browser, origin);
+    } finally {
+      await browser.close();
+    }
+  });
+});
+
+test("Perfil y CV conservan el contacto, las evidencias y los accesos sin JavaScript", { timeout: 180000 }, async () => {
   await conPages(publico, async (origin) => {
     const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
     try {
       const page = await browser.newPage();
       const errores = [];
       page.on("pageerror", (error) => errores.push(error.message));
-      const rutas = [["/", "Roberto Zamora"], ["/sobre-mi/", "Sobre mí"], ["/cv/", "Roberto Zamora"]];
+      const rutas = [["/sobre-mi/", "Sobre mí"], ["/cv/", "Roberto Zamora"]];
       for (const [ruta, titulo] of rutas) {
         const respuesta = await fetch(origin + ruta);
         assert.equal(respuesta.status, 200, ruta);
         const html = await respuesta.text();
         assert(html.includes(`<h1>${titulo}</h1>`));
         assert.match(html, /name="robots" content="noindex"/);
-        if (ruta === "/") {
-          assert.match(html, /Tecnología · Procesos · Análisis funcional/);
-          assert.doesNotMatch(html, /Busco una pasantía|Estudiante de Ingeniería en Software/);
-          assert.match(html, /Competencias aplicadas/);
-          assert.match(html, /Comprender problemas\. Diseñar soluciones\. Generar valor\./);
-          assert.doesNotMatch(html, /Áreas de interés/);
-        } else if (ruta === "/sobre-mi/") assert.match(html, /Universidad de Las Américas \(UDLA\) · En curso/);
+        if (ruta === "/sobre-mi/") assert.match(html, /Universidad de Las Américas \(UDLA\) · En curso/);
         else {
           assert.match(respuesta.headers.get("cache-control"), /(?:^|, )no-transform(?:$|,)/);
           assert.doesNotMatch(html, /Imprimir CV|Experiencia en proyectos|Perfil profesional<\/h2>/);
@@ -501,23 +652,7 @@ test("Inicio y perfil conectan el caso, el CV y el contacto con y sin JavaScript
           await page.addScriptTag({ path: axe });
           await comprobarAccesibilidad(page, `${ruta} a ${ancho} px`);
         }
-        await page.goto(origin);
-        const nav = page.getByRole("navigation", { name: "Principal" });
-        assert.deepEqual(await nav.getByRole("link").evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
-          [rutaRfm, "/sobre-mi/"]);
-        await page.keyboard.press("Tab");
-        assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#contenido");
-        for (const href of ["/", rutaRfm, "/sobre-mi/", ...(rutaCvPdf ? [rutaCvPdf] : []), "/cv/#contacto"]) {
-          await page.keyboard.press("Tab");
-          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), href);
-        }
-        await page.getByRole("link", { name: "Leer el caso de estudio", exact: true }).press("Enter");
-        await page.waitForURL(origin + rutaCasoRfm);
-        await page.goto(origin);
-        await page.getByRole("link", { name: "Consultar evidencias", exact: true }).press("Enter");
-        await page.waitForFunction(() => location.hash === "#evidencias" && document.activeElement.id === "evidencias");
-        await page.goto(origin);
-        await page.getByRole("link", { name: "Sobre mí", exact: true }).press("Enter");
+        await page.goto(origin + "/sobre-mi/");
         await page.getByRole("heading", { name: "Competencias en práctica" }).waitFor();
         await page.getByRole("link", { name: "Ir a contacto", exact: true }).press("Enter");
         await page.waitForFunction(() => location.hash === "#contacto" && document.activeElement.id === "contacto");
@@ -632,9 +767,9 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
       const errores = [];
       page.on("pageerror", (error) => errores.push(error.message));
       await page.goto(origin);
-      await page.getByRole("region", { name: "Proyecto destacado" }).getByRole("link", { name: "Consultar evidencias" }).waitFor();
+      await page.locator("#trabajo").getByRole("link", { name: casoRfmPublico ? "Consultar evidencias" : "Leer el caso de estudio" }).waitFor();
       for (const [ruta, enlace, titulo] of [
-        [rutaRfm, "Ver el proyecto", "RFM CORE"], [rutaCasoRfm, tituloCasoRfm, tituloCasoRfm],
+        [rutaRfm, "Explorar el proyecto", "RFM CORE"], [rutaCasoRfm, tituloCasoRfm, tituloCasoRfm],
       ]) {
         const datos = page.waitForResponse((respuesta) => new URL(respuesta.url()).pathname === ruta + "_.data");
         await page.getByRole("link", { name: enlace, exact: true }).press("Enter");
@@ -646,7 +781,7 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
 
       for (const ancho of anchos) {
         await page.setViewportSize({ width: ancho, height: 840 });
-        for (const ruta of ["/", "/proyectos/", "/casos-de-estudio/", rutaRfm, rutaCasoRfm, ...evidenciasRfm.map(rutaEvidencia)]) {
+        for (const ruta of ["/proyectos/", "/casos-de-estudio/", rutaRfm, rutaCasoRfm, ...evidenciasRfm.map(rutaEvidencia)]) {
           const respuesta = await page.goto(origin + ruta);
           assert.equal(respuesta.status(), 200, ruta);
           const medida = await page.evaluate(async () => {
