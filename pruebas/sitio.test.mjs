@@ -485,6 +485,7 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
       const menu = page.locator(".editorial-menu summary");
       const nav = page.getByRole("navigation", { name: "Principal" });
       for (const width of anchosV1) {
+        const esMovil = width <= 730;
         await page.setViewportSize({ width, height: 840 });
         await page.goto(origin);
         await page.evaluate(async () => {
@@ -495,7 +496,21 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
           }));
         });
         assert.match(await hero.getByRole("heading", { level: 1 }).innerText(), /Del análisis\s+a la solución\./);
-        assert.doesNotMatch(await hero.innerText(), /RFM CORE|Claridez/);
+        assert.doesNotMatch(await hero.innerText(), /RFM CORE|Claridez|Presentación profesional/);
+        assert.equal(await hero.locator("figcaption strong").textContent(), "Roberto David Zamora Alcívar");
+        assert.equal(await hero.locator("figcaption span").textContent(), "Quito · Ecuador");
+        const accionesHero = ["#trabajo", rutaCvPdf, "#contacto"];
+        assert.deepEqual(await hero.getByRole("link").evaluateAll((links) =>
+          links.map((link) => link.getAttribute("href"))), accionesHero);
+        const [foto, titular, ficha, acciones] = await Promise.all(
+          ["img", "h1", "figure", ".editorial-hero__actions"].map((s) => hero.locator(s).boundingBox()),
+        );
+        if (esMovil) {
+          assert(foto.width < width / 2 && acciones.y + acciones.height <= foto.y, `Retrato y acciones a ${width} px`);
+        } else {
+          assert(foto.x + foto.width < titular.x && ficha.y + ficha.height <= acciones.y, `Dos columnas a ${width} px`);
+          if (width >= 1280) assert(foto.width >= 280 && foto.width <= 320, `Ancho del retrato a ${width} px`);
+        }
         assert.deepEqual(await trabajo.getByRole("heading", { level: 3 }).allTextContents(), ["RFM CORE", "Claridez"]);
         for (const { ficha, portada } of registroPublico.proyectos.filter(({ portada }) => portada)) {
           const repositorio = trabajo.getByRole("link", { name: new RegExp(`repositorio de ${ficha.nombre}`, "i") });
@@ -534,7 +549,6 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
         assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), "solid");
         await page.keyboard.press("Enter");
         assert.equal(await page.evaluate(() => document.activeElement.id), "contenido");
-        const esMovil = width <= 730;
         assert.equal(await menu.isVisible(), esMovil);
         if (esMovil) {
           await menu.press("Enter");
@@ -565,6 +579,10 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
         }
         await contacto.getByRole("link", { name: /Volver al inicio/ }).press("Enter");
         await page.waitForFunction(() => location.hash === "#inicio" && document.activeElement.id === "inicio");
+        for (const href of accionesHero) {
+          await page.keyboard.press("Tab");
+          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), href);
+        }
       }
 
       await page.goto(origin);

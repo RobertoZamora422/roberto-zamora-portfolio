@@ -82,15 +82,21 @@ a:focus-visible,
 }
 
 .site-brand {
+  --marca-tamano: clamp(1.5rem, 3.1cqi, 2rem);
   justify-self: start;
-  column-gap: 0.07em;
   min-inline-size: var(--control-height);
   padding-inline-end: 0.375rem;
-  font: 400 clamp(1.5rem, 3.1cqi, 2rem)/1 var(--font-display);
+}
+
+.marca-rz {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.07em;
+  font: 400 var(--marca-tamano, 1.625rem)/1 var(--font-display);
   letter-spacing: -0.085em;
 }
 
-.site-brand span { color: var(--color-accent); letter-spacing: 0; }
+.marca-rz span { color: var(--marca-punto, var(--color-accent)); letter-spacing: 0; }
 
 .site-nav {
   display: flex;
