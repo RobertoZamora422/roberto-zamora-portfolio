@@ -500,8 +500,14 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
         assert.equal(await hero.locator("figcaption strong").textContent(), "Roberto David Zamora Alcívar");
         assert.equal(await hero.locator("figcaption span").textContent(), "Quito · Ecuador");
         const accionesHero = ["#trabajo", rutaCvPdf, "#contacto"];
-        assert.deepEqual(await hero.getByRole("link").evaluateAll((links) =>
-          links.map((link) => link.getAttribute("href"))), accionesHero);
+        const fila = await hero.getByRole("link").evaluateAll((links) => links.map((link) => {
+          const { left, right, top, height } = link.getBoundingClientRect();
+          return { href: link.getAttribute("href"), left, right, centro: top + height / 2 };
+        }));
+        assert.deepEqual(fila.map(({ href }) => href), accionesHero);
+        assert(fila.every(({ centro, left, right }, indice) => (
+          Math.abs(centro - fila[0].centro) < 1 && left >= (fila[indice - 1]?.right ?? 0) && right <= width
+        )), `Acciones en una sola fila a ${width} px`);
         const [foto, titular, ficha, acciones] = await Promise.all(
           ["img", "h1", "figure", ".editorial-hero__actions"].map((s) => hero.locator(s).boundingBox()),
         );
