@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router";
 import { paths, rutaProyecto } from "../rutas";
+import { MarcaRz } from "./marca-rz";
 import { EnlaceCv } from "./perfil";
 
 export function SiteHeader({ nombre, cvPdf, proyectoUnico }: {
@@ -10,7 +11,7 @@ export function SiteHeader({ nombre, cvPdf, proyectoUnico }: {
   return (
     <header className={cvPdf ? "site-header site-header--cv" : "site-header"}>
       <NavLink to={paths.inicio} className="site-brand" end aria-label={nombre ? `RZ. ${nombre}. Volver a Inicio` : "RZ. Volver a Inicio"}>
-        RZ<span>.</span>
+        <MarcaRz />
       </NavLink>
       <nav className="site-nav" aria-label="Principal">
         {proyectoUnico ? (

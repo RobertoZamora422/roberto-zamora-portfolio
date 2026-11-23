@@ -12,6 +12,7 @@ interface TextoConTitulo {
 
 export interface PortadaProfesional {
   area: string;
+  nombreCompleto?: string;
   titular: readonly [primera: string, segunda: string, enfasis: string];
   estudios: string;
   introduccion: string;

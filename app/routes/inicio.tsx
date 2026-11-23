@@ -7,6 +7,7 @@ import { metadatosPagina } from "../contenido/metadatos";
 import { presentacionBase } from "../contenido/publico";
 import { cargarContenido, urlRecursoLocal } from "../contenido/registro.server";
 import { paths, rutaCaso, rutaProyecto } from "../rutas";
+import { MarcaRz } from "../ui/marca-rz";
 import { EnlaceCv } from "../ui/perfil";
 import "../inicio.css";
 
@@ -126,7 +127,7 @@ export default function Inicio() {
   return (
     <>
       <section className="editorial-wrap editorial-hero" id="inicio" tabIndex={-1} aria-labelledby="titulo-inicio">
-        <div>
+        <div className="editorial-hero__copy">
           <p className="editorial-eyebrow">{portada ? `${nombre} · ${portada.area}` : presentacion}</p>
           <h1 id="titulo-inicio">
             {titular ? <>{titular[0]}<br /> {titular[1]} <em>{titular[2]}</em></> : nombre ?? presentacion}
@@ -137,18 +138,23 @@ export default function Inicio() {
               <p className="editorial-hero__detail">{portada.enfoque}</p>
             </>
           ) : <p className="editorial-hero__detail">{propuesta}</p>}
-          <div className="editorial-actions">
+        </div>
+        <div className="editorial-hero__identity">
+          {retrato && (
+            <figure className="editorial-portrait">
+              <div className="editorial-portrait__image"><img src={retrato.src} alt={retrato.alt} /></div>
+              <figcaption>
+                <strong>{portada?.nombreCompleto ?? nombre}</strong>
+                {portada && <span>{portada.ubicacion}</span>}
+              </figcaption>
+            </figure>
+          )}
+          <div className="editorial-actions editorial-hero__actions">
             <a className="editorial-button editorial-button--primary" href="#trabajo">Explorar mi trabajo <Flecha /></a>
             <EnlaceCv pdf={cvPdf} className="editorial-simple-link" flecha />
             <a className="editorial-simple-link" href="#contacto">Contactar <Flecha /></a>
           </div>
         </div>
-        {retrato && (
-          <figure className="editorial-portrait">
-            <div className="editorial-portrait__image"><img src={retrato.src} alt={retrato.alt} /></div>
-            <figcaption><span>Presentación profesional</span>{portada && <span>{portada.ubicacion}</span>}</figcaption>
-          </figure>
-        )}
       </section>
       {portada && (
         <ul className="editorial-wrap editorial-axes" aria-label="Dimensiones del perfil profesional" role="list">
@@ -231,7 +237,7 @@ export default function Inicio() {
             <EnlaceCv pdf={cvPdf} className="editorial-button" flecha />
           </div>
           <footer className="editorial-footer">
-            <a className="editorial-brand" href="#inicio" aria-label="RZ. Volver al inicio">RZ<span>.</span></a>
+            <a className="editorial-brand" href="#inicio" aria-label="RZ. Volver al inicio"><MarcaRz /></a>
             {nombre && <span>{nombre}{portada && " · Ecuador"}</span>}
             <div className="editorial-footer__links">
               {perfiles.map(({ titulo, url }) => (

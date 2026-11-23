@@ -169,9 +169,10 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
       });
       for (const entrada of intereses ?? []) exigirTextos("Área de interés", entrada);
       if (portada) {
-        const { area, titular: [primera, segunda, enfasis], estudios, introduccion, enfoque, ubicacion,
+        const { area, nombreCompleto, titular: [primera, segunda, enfasis], estudios, introduccion, enfoque, ubicacion,
           ejes, capacidades, trayectoria, datos } = portada;
         exigirTextos("Portada", { area, primera, segunda, enfasis, estudios, introduccion, enfoque, ubicacion });
+        if (nombreCompleto !== undefined) exigirTextos("Portada", { nombreCompleto });
         for (const texto of [...ejes, ...trayectoria]) exigirTextos("Portada", { texto });
         for (const entrada of [...capacidades, ...datos]) exigirTextos("Portada", { ...entrada });
       }

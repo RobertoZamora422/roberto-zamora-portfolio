@@ -12,6 +12,7 @@ export const perfilPublico: Perfil = {
   nombre: "Roberto Zamora",
   portada: {
     area: "Ingeniería de Software",
+    nombreCompleto: "Roberto David Zamora Alcívar",
     titular: ["Del análisis", "a la", "solución."],
     estudios: "Estudiante de 8vo semestre de Ingeniería de Software",
     introduccion: "con experiencia práctica en el entorno empresarial e interés en el análisis funcional, el desarrollo de soluciones tecnológicas y la calidad del software.",

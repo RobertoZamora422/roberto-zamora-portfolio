@@ -1,3 +1,4 @@
+import { MarcaRz } from "./marca-rz";
 import { EnlaceCv } from "./perfil";
 
 function NavegacionInicio({ cvPdf }: { cvPdf?: string }) {
@@ -17,7 +18,7 @@ export function CabeceraInicio({ nombre, cvPdf }: { nombre?: string; cvPdf?: str
     <header className="editorial-header">
       <div className="editorial-wrap editorial-header__inner">
         <a className="editorial-brand" href="#inicio" aria-label={nombre ? `RZ. ${nombre}, volver al inicio` : "RZ. Volver al inicio"}>
-          RZ<span>.</span>
+          <MarcaRz />
         </a>
         <div className="editorial-header__desktop"><NavegacionInicio cvPdf={cvPdf} /></div>
         <details className="editorial-menu"
