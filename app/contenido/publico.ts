@@ -19,6 +19,12 @@ export const registroPublico: Registro = {
         resumen: "Sistema web para gestionar consultas, cotizaciones, contratos y análisis financiero de un negocio de eventos.",
         estado: "Solución desplegada"
       },
+      portada: {
+        categoria: "Sistema web",
+        descripcion: "Sistema de gestión comercial y financiera diseñado para un negocio de eventos. Mi participación incluyó el análisis del proceso, la definición de reglas de negocio, la implementación y la verificación técnica.",
+        repositorio: "https://github.com/RobertoZamora422/rfm-core---django-react",
+        visual: { captura: "rfm-core/panel-operativo.webp" },
+      },
       pagina: {
         revision: "aprobado",
         entradilla: "Solución web que integra el recorrido comercial de un negocio de eventos, desde la primera consulta hasta el contrato y los indicadores de rentabilidad.",
@@ -51,7 +57,22 @@ export const registroPublico: Registro = {
           },
         ],
       }
-    }
+    },
+    {
+      slug: "claridez",
+      ficha: {
+        revision: "aprobado",
+        nombre: "Claridez",
+        resumen: "Proyecto de plataforma empresarial B2B multiempresa.",
+        estado: "En desarrollo",
+      },
+      portada: {
+        categoria: "Software empresarial B2B",
+        descripcion: "Proyecto de plataforma empresarial multiempresa. Un espacio para abordar arquitectura, procesos y decisiones de diseño, diferenciando las funcionalidades implementadas de las propuestas futuras.",
+        repositorio: "https://github.com/RobertoZamora422/Claridez",
+        visual: "conceptual",
+      },
+    },
   ],
   casos: [
     {
@@ -59,6 +80,13 @@ export const registroPublico: Registro = {
       slug: "del-interes-comercial-al-contrato",
       proyecto: "rfm-core",
       titulo: "Del interés comercial al contrato",
+      portada: {
+        indicadores: [
+          { valor: "9", descripcion: "Reglas de negocio con trazabilidad documentada en RFM CORE" },
+          { valor: "171/171", descripcion: "Pruebas de backend aprobadas en una ejecución documentada de CI" },
+        ],
+        alcance: "La trazabilidad relaciona reglas, código y pruebas. La ejecución de backend usó SQLite en memoria y datos sintéticos.",
+      },
       resumen: "Diseñé el flujo comercial de Rancho Flor María para que una consulta pueda avanzar a cotización y llegar a contrato cuando se cumplan las reglas de formalización.",
       resumenVisual: [
         {

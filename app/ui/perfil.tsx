@@ -1,11 +1,18 @@
 import type { PerfilProfesional } from "../contenido/perfil.server";
 import { TextLink } from "./elementos";
 
-export function EnlaceCv({ pdf, className }: { pdf?: string; className?: string }) {
+export function EnlaceCv({ pdf, className, abreviar = false, flecha = false }: {
+  pdf?: string;
+  className?: string;
+  abreviar?: boolean;
+  flecha?: boolean;
+}) {
   if (!pdf) return null;
   return (
     <a href={pdf} className={className} target="_blank" rel="noopener"
-      aria-label="Ver CV (PDF, abre en una pestaña nueva)">Ver CV</a>
+      aria-label="Ver CV (PDF, abre en una pestaña nueva)">
+      {abreviar ? "CV" : "Ver CV"}{flecha && <> <span aria-hidden="true">↗</span></>}
+    </a>
   );
 }
 

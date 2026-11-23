@@ -14,6 +14,7 @@ import {
 import "@fontsource/archivo-black/latin-400.css";
 import "@fontsource-variable/geist";
 import { SiteHeader } from "./ui/cabecera";
+import { CabeceraInicio } from "./ui/cabecera-inicio";
 import { cargarContenido, urlRecursoLocal } from "./contenido/registro.server";
 import { favicon } from "./contenido/publicacion";
 import { paths } from "./rutas";
@@ -38,6 +39,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const lastKey = useRef(key);
   const main = useRef<HTMLElement>(null);
   const datos = useRouteLoaderData<typeof loader>("root");
+  const esInicio = pathname === paths.inicio;
   const staticError = pathname.replace(/\/$/, "") === "/404";
   const contactoActivo = pathname.replace(/\/$/, "") === "/cv" && hash === "#contacto";
 
@@ -49,7 +51,7 @@ export function Layout({ children }: { children: ReactNode }) {
   }, [key, hash]);
 
   return (
-    <html lang="es">
+    <html lang="es" className={esInicio ? "tema-editorial" : undefined}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -61,15 +63,17 @@ export function Layout({ children }: { children: ReactNode }) {
       </head>
       <body>
         <a className="skip-link" href="#contenido">Saltar al contenido</a>
-        <div className="site-frame">
-          <SiteHeader {...datos} />
-          <main className="main" id="contenido" ref={main} tabIndex={-1}>
+        <div className={esInicio ? "marco-editorial" : "site-frame"}>
+          {esInicio ? <CabeceraInicio nombre={datos?.nombre} cvPdf={datos?.cvPdf} /> : <SiteHeader {...datos} />}
+          <main className={esInicio ? undefined : "main"} id="contenido" ref={main} tabIndex={-1}>
             {children}
           </main>
-          <footer className="site-footer">
-            <Link to={paths.cv}>CV</Link>
-            <Link to={paths.contacto} aria-current={contactoActivo ? "location" : undefined}>Contacto</Link>
-          </footer>
+          {!esInicio && (
+            <footer className="site-footer">
+              <Link to={paths.cv}>CV</Link>
+              <Link to={paths.contacto} aria-current={contactoActivo ? "location" : undefined}>Contacto</Link>
+            </footer>
+          )}
         </div>
         {!staticError && (
           <>

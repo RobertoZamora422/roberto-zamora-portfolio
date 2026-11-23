@@ -2,9 +2,9 @@ import type { Registro } from "./modelo.ts";
 
 export function seleccionarContenido(registro: Registro) {
   const perfil = registro.perfil?.revision === "aprobado" ? registro.perfil : undefined;
-  const proyectos = registro.proyectos.flatMap(({ slug, ficha, pagina }) => (
+  const proyectos = registro.proyectos.flatMap(({ slug, ficha, pagina, portada }) => (
     ficha.revision === "aprobado"
-      ? [{ slug, ficha, pagina: pagina?.revision === "aprobado" ? pagina : undefined }]
+      ? [{ slug, ficha, portada, pagina: pagina?.revision === "aprobado" ? pagina : undefined }]
       : []
   ));
   const paginas = proyectos.flatMap(({ slug, ficha, pagina }) => (

@@ -64,8 +64,9 @@ export default {
     }
 
     const robots = "User-agent: *\nDisallow:\n";
-    // Cloudflare's email obfuscation respects no-transform on the compatibility page.
+    // Cloudflare's email obfuscation respects no-transform on both pages with mailto links.
     const headers = [
+      "/\n  Cache-Control: public, max-age=0, must-revalidate, no-transform",
       "/cv/\n  Cache-Control: public, max-age=0, must-revalidate, no-transform",
       "/cv\n  Cache-Control: public, max-age=0, must-revalidate, no-transform",
     ];
