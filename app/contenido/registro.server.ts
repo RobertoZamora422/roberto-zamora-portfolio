@@ -1,20 +1,9 @@
+import { rutaRecursoPublico } from "../rutas.ts";
 import { registroPublico } from "./publico.ts";
 import { seleccionarContenido } from "./seleccion.ts";
 
+export const contenido = seleccionarContenido(registroPublico);
+
 export function urlRecursoLocal(archivo: string) {
-  const directorio = import.meta.env.DEV ? "/recursos-contenido" : "/recursos";
-  return `${directorio}/${archivo}`;
-}
-
-export async function cargarRegistro() {
-  if (process.env.PORTFOLIO_PREVIEW === "1") {
-    const { incorporarBorradorEditorial } = await import("./editorial.server.ts");
-    const { registroParaRevision } = await import("../pruebas/datos.ts");
-    return registroParaRevision(await incorporarBorradorEditorial(registroPublico));
-  }
-  return registroPublico;
-}
-
-export async function cargarContenido() {
-  return seleccionarContenido(await cargarRegistro());
+  return import.meta.env.DEV ? `/recursos-contenido/${archivo}` : rutaRecursoPublico(archivo);
 }

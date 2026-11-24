@@ -1,39 +1,26 @@
 import type { Registro } from "./modelo.ts";
 import { perfilPublico } from "./perfil-publico.ts";
 
-// Contexto y posicionamiento acordados en docs/definicion.md.
-export const presentacionBase = {
-  presentacion: "Estudiante de Ingeniería en Software",
-  propuesta: "Comprender problemas. Diseñar soluciones. Generar valor.",
-  oportunidades: "Pasantías y posiciones junior",
-};
-
 export const registroPublico: Registro = {
   perfil: perfilPublico,
   proyectos: [
     {
       slug: "rfm-core",
-      ficha: {
-        revision: "aprobado",
-        nombre: "RFM CORE",
-        resumen: "Sistema web para gestionar consultas, cotizaciones, contratos y análisis financiero de un negocio de eventos.",
-        estado: "Solución desplegada"
-      },
-      portada: {
-        categoria: "Sistema web",
-        descripcion: "Sistema de gestión comercial y financiera diseñado para un negocio de eventos. Mi participación incluyó el análisis del proceso, la definición de reglas de negocio, la implementación y la verificación técnica.",
-        repositorio: "https://github.com/RobertoZamora422/rfm-core---django-react",
-        visual: { captura: "rfm-core/panel-operativo.webp" },
-      },
+      revision: "aprobado",
+      nombre: "RFM CORE",
+      estado: "Solución desplegada",
+      categoria: "Sistema web",
+      descripcion: "Desarrollé un sistema para Rancho Flor María que conecta las consultas de eventos con las cotizaciones, los contratos y el seguimiento financiero.",
+      repositorio: "https://github.com/RobertoZamora422/rfm-core---django-react",
+      aplicacion: "https://ranchoflormaria.com/login",
+      visual: { captura: "rfm-core/panel-operativo.webp" },
       pagina: {
         revision: "aprobado",
-        entradilla: "Solución web que integra el recorrido comercial de un negocio de eventos, desde la primera consulta hasta el contrato y los indicadores de rentabilidad.",
-        destacado: "Desarrollé un sistema web que conecta las consultas, cotizaciones y contratos de un negocio de eventos con su gestión financiera.",
-        problema: "Las consultas, cotizaciones, acuerdos, costos y gastos pertenecen a etapas diferentes y requieren reglas coherentes para distinguir las oportunidades de las ventas.",
-        contexto: "Rancho Flor María es un negocio de eventos y catering de Esmeraldas. Desarrollé el proyecto para apoyar sus actividades comerciales y administrativas.",
-        proposito: "Organizar y conectar el seguimiento comercial con la gestión contractual y los datos financieros del negocio.",
-        solucion: "RFM CORE integra precotización pública, gestión de personas y cotizaciones, formalización de contratos, costos, gastos y reportes. El backend aplica las validaciones y los cálculos críticos.",
-        participacion: "Desarrollé el proyecto de manera individual. Asumí el análisis, el diseño, la implementación, la validación, la documentación y el despliegue.",
+        entradilla: "Diseñé y desarrollé el sistema con el que Rancho Flor María puede dar seguimiento a una consulta de eventos, formalizar un contrato y consultar los costos e ingresos asociados.",
+        problema: "El reto era conservar esos datos durante la negociación y saber qué condiciones debían cumplirse antes de formalizar la venta.",
+        contexto: "Rancho Flor María ofrece servicios de eventos y catering en Esmeraldas. Una consulta puede empezar con una fecha tentativa y un paquete todavía por definir.",
+        solucion: "La precotización pública inicia el seguimiento. El equipo comercial puede preparar la cotización y convertirla en contrato cuando cumple las reglas. El backend valida esa transición y calcula los indicadores financieros a partir de los datos registrados.",
+        participacion: "Fui el único desarrollador. Analicé el proceso comercial, modelé sus reglas e implementé la interfaz y la API. También preparé las pruebas, documenté las decisiones y desplegué la aplicación.",
         tecnologias: ["React", "Vite", "Django", "Django REST Framework", "PostgreSQL"],
         evidencias: ["rfm-e03-decisiones"],
         capturas: [
@@ -51,7 +38,7 @@ export const registroPublico: Registro = {
             archivo: "rfm-core/precotizacion.png",
             titulo: "Precotización pública",
             alt: "Resultado de una precotización de servicio completo con la opción de elegir un paquete después.",
-            descripcion: "La solicitud de servicio completo admite un paquete pendiente. La captura de E01 muestra ese punto de entrada con un evento e importes sintéticos. El canal de WhatsApp quedó sin configurar en la demostración.",
+            descripcion: "La solicitud pública permite elegir el paquete más adelante. El evento y los importes de esta captura son sintéticos.",
             ancho: 1088,
             alto: 725,
           },
@@ -60,18 +47,13 @@ export const registroPublico: Registro = {
     },
     {
       slug: "claridez",
-      ficha: {
-        revision: "aprobado",
-        nombre: "Claridez",
-        resumen: "Proyecto de plataforma empresarial B2B multiempresa.",
-        estado: "En desarrollo",
-      },
-      portada: {
-        categoria: "Software empresarial B2B",
-        descripcion: "Proyecto de plataforma empresarial multiempresa. Un espacio para abordar arquitectura, procesos y decisiones de diseño, diferenciando las funcionalidades implementadas de las propuestas futuras.",
-        repositorio: "https://github.com/RobertoZamora422/Claridez",
-        visual: "conceptual",
-      },
+      revision: "aprobado",
+      nombre: "Claridez",
+      estado: "En desarrollo",
+      categoria: "Software empresarial B2B",
+      descripcion: "Plataforma multiempresa para organizar las solicitudes, cotizaciones y reservas de salones y espacios de eventos.",
+      repositorio: "https://github.com/RobertoZamora422/Claridez",
+      visual: "conceptual",
     },
   ],
   casos: [
@@ -80,14 +62,7 @@ export const registroPublico: Registro = {
       slug: "del-interes-comercial-al-contrato",
       proyecto: "rfm-core",
       titulo: "Del interés comercial al contrato",
-      portada: {
-        indicadores: [
-          { valor: "9", descripcion: "Reglas de negocio con trazabilidad documentada en RFM CORE" },
-          { valor: "171/171", descripcion: "Pruebas de backend aprobadas en una ejecución documentada de CI" },
-        ],
-        alcance: "La trazabilidad relaciona reglas, código y pruebas. La ejecución de backend usó SQLite en memoria y datos sintéticos.",
-      },
-      resumen: "Diseñé el flujo comercial de Rancho Flor María para que una consulta pueda avanzar a cotización y llegar a contrato cuando se cumplan las reglas de formalización.",
+      resumen: "Cómo traduje el proceso comercial de Rancho Flor María en reglas de negocio, decisiones de diseño y pruebas para pasar de una consulta a un contrato.",
       resumenVisual: [
         {
           etiqueta: "Problema",
@@ -115,7 +90,7 @@ export const registroPublico: Registro = {
         situaciones: [
           {
             titulo: "Registrar la solicitud pública",
-            descripcion: "La persona puede enviar una solicitud de servicio completo con el paquete pendiente. El personal puede confirmarla en ese estado."
+            descripcion: "La persona puede enviar una solicitud de servicio completo con el paquete pendiente. El personal puede confirmar esa cotización de origen público aunque el paquete siga pendiente."
           },
           {
             titulo: "Formalizar el contrato",
@@ -128,12 +103,12 @@ export const registroPublico: Registro = {
           { evidencia: "rfm-e01-proceso", texto: "Ver pantalla de precotización", ancla: "pantalla-precotizacion" }
         ]
       },
-      contexto: "En Rancho Flor María, una consulta podía empezar con una fecha tentativa, un número estimado de invitados y una modalidad por decidir. El sistema debía conservar esa información durante el seguimiento y distinguirla de las condiciones acordadas al contratar. La fecha tentativa se registra como dato de la solicitud.",
+      contexto: "En Rancho Flor María, una consulta podía empezar con una fecha tentativa, un número estimado de invitados y una modalidad por decidir. El sistema debía conservar esa información durante el seguimiento y distinguirla de las condiciones acordadas al contratar.",
       alcance: "Definí los datos, las reglas y las transiciones del proceso comercial. Implementé el flujo en React y las validaciones de negocio en Django REST Framework.",
       decisiones: "Separé la cotización del contrato para distinguir una oportunidad de una operación formalizada. Reservé la conversión para cotizaciones confirmadas e incorporé instantáneas para recuperar las condiciones de la oferta cuando son compatibles con los términos finales.",
       trabajo: "Modelé las etapas del proceso y las traduje en entidades, servicios y validaciones. Después documenté la relación entre las reglas, el código y las pruebas, y preparé escenarios para comprobar la conversión y el uso de ofertas históricas.",
-      validacion: "La auditoría local E04 del 11 de noviembre de 2026 partió de d9fe5ae con ajustes de pruebas. QA-06 comprueba el rechazo de la conversión sin paquete y QA-14 distingue cuándo se reutiliza o reconstruye la oferta histórica. Las regresiones se integraron mediante el PR #2. Después, GitHub Actions validó por separado el commit a95ce07 de main: 171/171 pruebas de backend y 25/25 de frontend. La ficha E04 enlaza las pruebas y la ejecución de CI.",
-      resultadosYLimites: "Las pruebas del backend usaron SQLite en memoria y datos sintéticos. El rechazo de una segunda conversión se comprobó de forma secuencial; queda sin validar la concurrencia con PostgreSQL. E04 no cubrió recorridos de interfaz en navegador ni el envío efectivo de mensajes. La captura de E01 ilustra el alta pública y los resultados de CI no acreditan recorridos de extremo a extremo. El impacto en tiempos de atención, conversión y rentabilidad sigue sin medir.",
+      validacion: "En la auditoría local, QA-06 comprobó el rechazo de la conversión sin paquete. QA-14 comprobó cuándo se reutiliza la oferta histórica y cuándo se reconstruye. Tras integrar estas regresiones, GitHub Actions aprobó 171 de 171 pruebas de backend y 25 de 25 de frontend en el commit a95ce07. E04 enlaza la ejecución y documenta por separado la auditoría local.",
+      resultadosYLimites: "Las pruebas de backend usaron SQLite en memoria y datos sintéticos. Comprobé el rechazo de una segunda conversión secuencial. Quedaron fuera de la auditoría la concurrencia en PostgreSQL, los recorridos en navegador y el envío efectivo de mensajes. El impacto en tiempos de atención, conversión y rentabilidad sigue sin medirse.",
       aprendizajes: "Aprendí a definir qué significa cada estado y a comprobar las condiciones de cada transición. Los escenarios de oferta histórica me ayudaron a distinguir qué datos deben conservarse y cuándo la aplicación los reconstruye.",
       competencia: "Análisis funcional e ingeniería de requisitos",
       periodo: "2026",
@@ -181,6 +156,5 @@ export const registroPublico: Registro = {
       afirmacion: "Documenta la auditoría local, enlaza las regresiones integradas y distingue los resultados de GitHub Actions.",
       recurso: { archivo: "rfm-core/e04-verificacion.html" }
     }
-  ],
-  casoDestacado: "del-interes-comercial-al-contrato"
+  ]
 };

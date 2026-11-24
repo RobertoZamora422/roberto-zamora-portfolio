@@ -1,64 +1,39 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, useLoaderData, type MetaFunction } from "react-router";
-import "@fontsource-variable/dm-sans";
-import "@fontsource-variable/newsreader/standard.css";
-import "@fontsource-variable/newsreader/standard-italic.css";
+import { Link, useLoaderData, useRouteLoaderData, type MetaFunction } from "react-router";
+import type { loader as loaderGlobal } from "../root";
 import { metadatosPagina } from "../contenido/metadatos";
-import { presentacionBase } from "../contenido/publico";
-import { cargarContenido, urlRecursoLocal } from "../contenido/registro.server";
-import { paths, rutaCaso, rutaProyecto } from "../rutas";
-import { MarcaRz } from "../ui/marca-rz";
-import { EnlaceCv } from "../ui/perfil";
-import "../inicio.css";
+import { contenido, urlRecursoLocal } from "../contenido/registro.server";
+import { paths, rutaProyecto } from "../rutas";
+import { EnlacesProyecto } from "../ui/enlaces-proyecto";
+import { EnlaceCv } from "../ui/enlace-cv";
 
-export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
-  ...metadatosPagina({
-    titulo: loaderData?.portada
-      ? `${loaderData.nombre} · ${loaderData.portada.titular.join(" ")}`
-      : `${loaderData?.nombre ?? "Portafolio profesional"} · RZ.`,
-    descripcion: loaderData?.descripcion ?? "Portafolio de tecnología, procesos y análisis funcional.",
-    ruta: paths.inicio,
-  }),
-  { name: "theme-color", content: "#f7f6f1" },
-];
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => metadatosPagina({
+  titulo: "Roberto Zamora · Software Engineering Student",
+  descripcion: loaderData?.descripcion ?? "Portafolio de tecnología, procesos y análisis funcional.",
+  ruta: paths.inicio,
+});
 
-export async function loader() {
-  const { perfil, proyectos, proyectoDestacado, casoDestacado } = await cargarContenido();
+export function loader() {
+  const { perfil, proyectos } = contenido;
   const portada = perfil?.portada;
   const retrato = perfil?.retrato?.revision === "aprobado" ? perfil.retrato : undefined;
-  const cv = perfil?.cvPdf?.revision === "aprobado" ? perfil.cvPdf : undefined;
   const whatsapp = perfil?.whatsapp?.revision === "aprobado" ? perfil.whatsapp : undefined;
-  const tarjetas = proyectos.flatMap(({ slug, ficha, pagina, portada }) => {
-    if (!portada) return [];
-    const { categoria, descripcion, repositorio, visual } = portada;
+  const tarjetas = proyectos.map(({ slug, nombre, estado, categoria, descripcion, repositorio, aplicacion, visual, pagina }) => {
     const captura = visual === "conceptual" ? undefined : pagina?.capturas?.find(
       ({ revision, archivo }) => revision === "aprobado" && archivo === visual.captura,
     );
-    return [{
-      slug, nombre: ficha.nombre, meta: `${categoria} · ${ficha.estado}`, descripcion, repositorio,
+    return {
+      slug, nombre, meta: `${categoria} · ${estado}`, descripcion, repositorio, aplicacion,
       ruta: pagina ? rutaProyecto(slug) : undefined,
       conceptual: visual === "conceptual",
       captura: captura && { src: urlRecursoLocal(captura.archivo), alt: captura.alt, ancho: captura.ancho, alto: captura.alto },
-    }];
+    };
   });
   return {
     portada, tarjetas,
-    nombre: perfil?.nombre,
-    presentacion: perfil?.presentacion ?? presentacionBase.presentacion,
-    propuesta: perfil?.propuesta ?? presentacionBase.propuesta,
-    descripcion: portada ? `${portada.estudios} ${portada.introduccion}` : perfil?.descripcionInicio,
-    cvPdf: cv && urlRecursoLocal(cv.archivo),
+    descripcion: portada ? `${portada.estudios} ${portada.introduccion}` : undefined,
     retrato: retrato && { src: urlRecursoLocal(retrato.archivo), alt: retrato.alt },
-    correo: perfil?.correo,
     whatsapp: whatsapp?.numero,
-    enlaces: perfil?.enlaces,
-    sobreMi: perfil?.sobreMi,
-    proyecto: proyectoDestacado && {
-      nombre: proyectoDestacado.ficha.nombre,
-      descripcion: proyectoDestacado.pagina.destacado,
-      ruta: rutaProyecto(proyectoDestacado.slug),
-    },
-    rutaCasoDestacado: casoDestacado && !casoDestacado.portada ? rutaCaso(casoDestacado.slug) : undefined,
   };
 }
 
@@ -95,14 +70,13 @@ function EncabezadoSeccion({ id, indice, titulo, children }: {
 }
 
 function TarjetaProyecto({ tarjeta }: { tarjeta: Awaited<ReturnType<typeof loader>>["tarjetas"][number] }) {
-  const { nombre, meta, descripcion, repositorio, ruta, conceptual, captura } = tarjeta;
+  const { nombre, meta, descripcion, repositorio, aplicacion, ruta, conceptual, captura } = tarjeta;
   return (
     <article className="editorial-project">
       {conceptual && (
-        <figure className="editorial-art">
-          <div className="editorial-art__grid" aria-hidden="true"><span /><span /><span /><span /></div>
-          <figcaption>Recurso conceptual</figcaption>
-        </figure>
+        <div className="editorial-art" aria-hidden="true">
+          <div className="editorial-art__grid"><span /><span /><span /><span /></div>
+        </div>
       )}
       {captura && (
         <div className="editorial-project__image">
@@ -115,10 +89,7 @@ function TarjetaProyecto({ tarjeta }: { tarjeta: Awaited<ReturnType<typeof loade
         <p>{descripcion}</p>
         <div className="editorial-project__links">
           {ruta && <Link to={ruta}>Explorar el proyecto <Flecha /></Link>}
-          <a href={repositorio} target="_blank" rel="noopener noreferrer"
-            aria-label={`${ruta ? "Repositorio" : "Consultar repositorio"} de ${nombre} en GitHub`}>
-            {ruta ? "Repositorio" : "Consultar repositorio"} <Flecha />
-          </a>
+          <EnlacesProyecto nombre={nombre} repositorio={repositorio} aplicacion={aplicacion} soloRepositorio={!ruta} />
         </div>
       </div>
     </article>
@@ -126,8 +97,8 @@ function TarjetaProyecto({ tarjeta }: { tarjeta: Awaited<ReturnType<typeof loade
 }
 
 export default function Inicio() {
-  const { portada, tarjetas, nombre, presentacion, propuesta, cvPdf, retrato,
-    correo, whatsapp, enlaces, sobreMi, proyecto, rutaCasoDestacado } = useLoaderData<typeof loader>();
+  const { portada, tarjetas, retrato, whatsapp } = useLoaderData<typeof loader>();
+  const { nombre, cvPdf, correo, mailto } = useRouteLoaderData<typeof loaderGlobal>("root") ?? {};
   const [copiaActiva, setCopiaActiva] = useState(false);
   const [estadoCopia, setEstadoCopia] = useState("");
   useEffect(() => { setCopiaActiva(true); }, []);
@@ -143,23 +114,21 @@ export default function Inicio() {
   }
 
   const titular = portada?.titular;
-  const mailto = correo && `mailto:${encodeURIComponent(correo).replace("%40", "@")}`;
   const asunto = encodeURIComponent(`Oportunidad profesional${nombre ? ` - ${nombre}` : ""}`);
-  const perfiles = [...(enlaces ?? [])].sort((a, b) => Number(b.titulo === "LinkedIn") - Number(a.titulo === "LinkedIn"));
   return (
     <>
       <section className="editorial-wrap editorial-hero" id="inicio" tabIndex={-1} aria-labelledby="titulo-inicio">
         <div className="editorial-hero__copy">
-          <p className="editorial-eyebrow">{portada ? `${nombre} · ${portada.area}` : presentacion}</p>
+          <p className="editorial-eyebrow">{portada ? `${nombre} · ${portada.area}` : "Portafolio profesional"}</p>
           <h1 id="titulo-inicio">
-            {titular ? <>{titular[0]}<br /> {titular[1]} <em>{titular[2]}</em></> : nombre ?? presentacion}
+            {titular ? <>{titular[0]}<br /> {titular[1]} <em>{titular[2]}</em></> : nombre ?? "Portafolio profesional"}
           </h1>
-          {portada ? (
+          {portada && (
             <>
               <p className="editorial-hero__intro"><strong>{portada.estudios}</strong> {portada.introduccion}</p>
               <p className="editorial-hero__detail">{portada.enfoque}</p>
             </>
-          ) : <p className="editorial-hero__detail">{propuesta}</p>}
+          )}
         </div>
         <div className="editorial-hero__identity">
           {retrato && (
@@ -173,7 +142,7 @@ export default function Inicio() {
           )}
           <div className="editorial-actions editorial-hero__actions">
             <a className="editorial-button editorial-button--primary" href="#trabajo">Explorar mi trabajo <Flecha /></a>
-            <EnlaceCv pdf={cvPdf} className="editorial-simple-link" flecha />
+            <EnlaceCv pdf={cvPdf} className="editorial-simple-link" />
             <a className="editorial-simple-link" href="#contacto">Contactar <Flecha /></a>
           </div>
         </div>
@@ -190,18 +159,9 @@ export default function Inicio() {
         <EncabezadoSeccion id="titulo-trabajo" indice="01 — Mi trabajo" titulo="Ideas que se convierten en soluciones.">
           Una selección de proyectos donde aplico análisis de necesidades, criterios de diseño y conocimientos tecnológicos.
         </EncabezadoSeccion>
-        {tarjetas.length ? (
-          <div className="editorial-work">
-            {tarjetas.map((tarjeta) => <TarjetaProyecto tarjeta={tarjeta} key={tarjeta.slug} />)}
-          </div>
-        ) : proyecto && (
-          <article className="editorial-project editorial-project__copy">
-            <h3>{proyecto.nombre}</h3>
-            <p>{proyecto.descripcion}</p>
-            <div className="editorial-project__links"><Link to={proyecto.ruta}>Explorar el proyecto <Flecha /></Link></div>
-          </article>
-        )}
-        {rutaCasoDestacado && <Link to={rutaCasoDestacado}>Leer el caso de estudio <Flecha /></Link>}
+        <div className="editorial-work">
+          {tarjetas.map((tarjeta) => <TarjetaProyecto tarjeta={tarjeta} key={tarjeta.slug} />)}
+        </div>
       </section>
 
       <section className="editorial-wrap editorial-section" id="aportacion" tabIndex={-1} aria-labelledby="titulo-aportacion">
@@ -226,7 +186,7 @@ export default function Inicio() {
             {portada && "Me motiva comprender por qué una solución importa y cómo puede contribuir al trabajo de otras personas."}
           </EncabezadoSeccion>
           <div className="editorial-about__copy">
-            <div>{(portada?.trayectoria ?? sobreMi)?.map((parrafo) => <p key={parrafo}>{parrafo}</p>)}</div>
+            <div>{portada?.trayectoria.map((parrafo) => <p key={parrafo}>{parrafo}</p>)}</div>
             {portada && (
               <dl className="editorial-facts">
                 {portada.datos.map(({ titulo, descripcion }) => (
@@ -258,18 +218,9 @@ export default function Inicio() {
                 {copiaActiva && <BotonCopiar etiqueta="Copiar correo" onClick={() => copiarContacto(correo, "Correo copiado")} />}
               </div>
             )}
-            <EnlaceCv pdf={cvPdf} className="editorial-button" flecha />
+            <EnlaceCv pdf={cvPdf} className="editorial-button" />
           </div>
           <p className="editorial-contact__status" role="status" aria-atomic="true">{estadoCopia}</p>
-          <footer className="editorial-footer">
-            <a className="editorial-brand" href="#inicio" aria-label="RZ. Volver al inicio"><MarcaRz /></a>
-            <div className="editorial-footer__links">
-              {perfiles.map(({ titulo, url }) => (
-                <a key={url} href={url} target="_blank" rel="noopener noreferrer">{titulo} <Flecha /></a>
-              ))}
-              {mailto && <a href={mailto}>Correo <Flecha /></a>}
-            </div>
-          </footer>
         </div>
       </section>
     </>

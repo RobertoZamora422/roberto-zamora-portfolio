@@ -19,18 +19,17 @@ test("La indexación exige un origen HTTPS público y la revisión ignora el ori
   assert.deepEqual(configuracionPublicacion({ ...publicacion, PORTFOLIO_PREVIEW: "1" }), { origen: undefined, indexar: false });
 });
 
-test("La ficha y la página se aprueban de forma independiente y RFM CORE tiene prioridad", () => {
+test("La tarjeta y la página individual se aprueban de forma independiente", () => {
   const registro = registroFixture();
   const [base] = registro.proyectos;
   const rfm = { ...base, slug: "rfm-core", pagina: { ...base.pagina, revision: "borrador" } };
-  registro.proyectos.push(rfm, { ...base, slug: "oculto", ficha: { ...base.ficha, revision: "borrador" } });
+  registro.proyectos.push(rfm, { ...base, slug: "oculto", revision: "borrador" });
   const contenido = seleccionarContenido(registro);
   assert.deepEqual(contenido.proyectos.map(({ slug }) => slug), [base.slug, rfm.slug]);
   assert.equal(contenido.proyectos[1].pagina, undefined);
   assert.deepEqual(contenido.paginas.map(({ slug }) => slug), [base.slug]);
-  assert.equal(contenido.proyectoDestacado.slug, base.slug);
   rfm.pagina.revision = "aprobado";
-  assert.equal(seleccionarContenido(registro).proyectoDestacado.slug, rfm.slug);
+  assert.deepEqual(seleccionarContenido(registro).paginas.map(({ slug }) => slug), [base.slug, rfm.slug]);
 });
 
 for (const [entidad, grupo] of [["Proyecto", "proyectos"], ["Caso", "casos"], ["Evidencia", "evidencias"]]) {
@@ -43,7 +42,7 @@ for (const [entidad, grupo] of [["Proyecto", "proyectos"], ["Caso", "casos"], ["
 
 const erroresDeRegistro = [
   ["slug inválido", (r) => { r.proyectos[0].slug = "../otro"; }, /identificador inválido/],
-  ["página aprobada con ficha en borrador", (r) => { r.proyectos[0].ficha.revision = "borrador"; }, /página aprobada sin ficha aprobada/],
+  ["página aprobada con ficha en borrador", (r) => { r.proyectos[0].revision = "borrador"; }, /página aprobada sin ficha aprobada/],
   ["proyecto inexistente", (r) => { r.casos[0].proyecto = "otro"; }, /referencia inexistente «otro»/],
   ["evidencia inexistente", (r) => { r.proyectos[0].pagina.evidencias = ["otra"]; }, /referencia inexistente «otra»/],
   ["evidencia en borrador", (r) => { r.evidencias[0].revision = "borrador"; }, /referencia sin aprobación/],
@@ -57,15 +56,10 @@ const erroresDeRegistro = [
   ["recurso editorial en el registro público", (r) => { r.evidencias[0].recurso.archivo = "revision-editorial/ejemplo.html"; }, /reservado para revisión local/],
   ["URL de evidencia inválida", (r) => { r.evidencias[0].recurso = { url: "javascript:alert(1)" }; }, /se requiere una URL HTTPS/],
   ["portada con captura sin aprobar", (r) => {
-    r.proyectos[0].portada = {
-      categoria: "Sistema web", descripcion: "Portada QA", repositorio: "https://example.org/qa",
-      visual: { captura: "captura-qa.png" },
-    };
+    r.proyectos[0].visual = { captura: "captura-qa.png" };
   }, /la portada requiere una captura aprobada/],
-  ["destacado en borrador", (r) => {
-    r.casos[0].revision = "borrador";
-    r.evidencias[0].recurso = { url: "https://example.org/evidencia" };
-  }, /Caso destacado: referencia sin aprobación/],
+  ["URL de aplicación inválida", (r) => { r.proyectos[0].aplicacion = "http://example.org"; }, /URL HTTPS/],
+  ["caso de proyecto sin página aprobada", (r) => { delete r.proyectos[0].pagina; }, /referencia sin aprobación/],
 ];
 
 for (const [nombre, cambiar, error] of erroresDeRegistro) {

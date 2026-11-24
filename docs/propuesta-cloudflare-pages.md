@@ -1,36 +1,31 @@
-# Propuesta de Cloudflare Pages · RZ.
+# Despliegue en Cloudflare Pages
 
-La candidata se sirve localmente desde `build/client`. Esta propuesta deja lista la configuración para el lanzamiento cuando se autoricen el dominio y la publicación.
-
-| Opción | Valor propuesto |
+| Ajuste | Valor |
 | --- | --- |
-| Proyecto | Cloudflare Pages estático, sin Pages Functions. |
-| Directorio raíz | Raíz del repositorio. |
-| Node.js | `24.18.1`, fijado en `.node-version`. |
-| Instalación y compilación | `npm ci && npm run build`, con `SKIP_DEPENDENCY_INSTALL=1` para hacer explícita la instalación desde el lockfile. |
-| Directorio de salida | `build/client`. |
-| Dominio | Asociar el dominio aprobado y verificar HTTPS antes de activar indexación. |
-| Producción | Definir `PORTFOLIO_ORIGEN` con el origen HTTPS aprobado, sin ruta. Activar `PORTFOLIO_INDEXAR=1` al autorizar la indexación. |
-| Vistas previas alojadas | Desactivar despliegues automáticos de ramas de revisión. Si se necesitan, restringir el acceso y dejar `PORTFOLIO_INDEXAR=0`. |
+| Directorio raíz | Raíz del repositorio |
+| Node.js | Versión de `.node-version` |
+| Compilación | `npm ci && npm run build` con `SKIP_DEPENDENCY_INSTALL=1` si la instalación se gestiona en ese comando |
+| Salida | `build/client`, incluidos `_headers`, `_redirects`, `_routes.json` y `_worker.js` |
+| Origen canónico | `PORTFOLIO_ORIGEN` debe contener el origen HTTPS del dominio aprobado |
+| Indexación | `PORTFOLIO_INDEXAR=1` en la compilación destinada a indexarse. El valor predeterminado es `0`. |
 
-Referencias de configuración. [Compilación en Pages](https://developers.cloudflare.com/pages/configuration/build-configuration/) · [Imagen de compilación y Node.js](https://developers.cloudflare.com/pages/configuration/build-image/) · [Controles de ramas](https://developers.cloudflare.com/pages/configuration/branch-build-controls/) · [Acceso a vistas previas](https://developers.cloudflare.com/pages/configuration/preview-deployments/)
+El prerender genera tres páginas y sus datos de navegación. La compilación incorpora el PDF oficial y cuatro documentos de evidencia. Con un origen configurado se emiten canonical, Open Graph y la tarjeta social. Con indexación habilitada, el sitemap contiene las tres páginas y las cuatro evidencias en sus URLs canónicas. El PDF lleva `X-Robots-Tag: noindex`. Las compilaciones de revisión permiten a los rastreadores leer la directiva `noindex`. [Configuración de compilación](https://developers.cloudflare.com/pages/configuration/build-configuration/) · [Encabezados](https://developers.cloudflare.com/pages/configuration/headers/)
 
-`npm run build` integra solo el registro aprobado. `npm run build:prueba` sigue reservado a la revisión local y produce un directorio distinto. La compilación candidata aplica `noindex` mediante HTML y `X-Robots-Tag`. Su `robots.txt` permite leer esa directiva. La privacidad de una vista previa alojada requiere control de acceso. [Directiva noindex](https://developers.google.com/search/docs/crawling-indexing/block-indexing) · [Encabezados de Pages](https://developers.cloudflare.com/pages/configuration/headers/)
+El 24 de noviembre de 2026, el dominio `robertozamora.claridez.com` servía Inicio con canonical a su propia raíz y `noindex` en HTML y en la respuesta HTTP. En ese estado `/sitemap.xml` respondía 404.
 
-Con el origen aprobado, la compilación genera canónicas absolutas y completa Open Graph con la tarjeta RZ. La activación de indexación añade `sitemap.xml` y lo anuncia en `robots.txt`. Las evidencias HTML usan las rutas sin extensión que sirve Pages. El archivo `404.html` permite responder HTTP 404 en las rutas desconocidas. La configuración de lanzamiento también aplica `noindex` a las URLs de `pages.dev`. [Rutas de Pages](https://developers.cloudflare.com/pages/configuration/serving-pages/) · [Sitemaps](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap) · [Open Graph](https://ogp.me/)
+## Compatibilidad de enlaces
 
-Tras el primer despliegue autorizado, comprobar HTTPS y el host canónico, las respuestas 200 y 404, el correo, las evidencias, la entrega de la tarjeta social y las directivas de indexación en el dominio real. Conservar el identificador de la versión para poder revertirla. [Dominios personalizados](https://developers.cloudflare.com/pages/configuration/custom-domains/) · [Reversión](https://developers.cloudflare.com/pages/configuration/rollbacks/)
+| Ruta anterior, con o sin barra final | Destino del 301 |
+| --- | --- |
+| `/proyectos/` | `/#trabajo` |
+| `/sobre-mi/` | `/#sobre-mi` |
+| `/cv/` | `/#contacto` |
+| `/casos-de-estudio/` | `/casos-de-estudio/del-interes-comercial-al-contrato/` |
 
-## Correo sin JavaScript
+Las reglas coinciden con rutas exactas. Un navegador que abre `/cv/#contacto` solicita `/cv/`, recibe el fragmento explícito en `Location` y sitúa al visitante en Contacto. Pages conserva su normalización de las evidencias de `.html` a la URL sin extensión. [Redirecciones de Pages](https://developers.cloudflare.com/pages/configuration/redirects/)
 
-En el despliegue consultado el 12 de noviembre de 2026, `/cv/#contacto` en `robertozamora.claridez.com` contenía `__cf_email__`, un enlace a `/cdn-cgi/l/email-protection` y el script `email-decode.min.js`. La misma ruta en `roberto-zamora-portfolio.pages.dev` entregaba el `mailto:` original. Cloudflare documenta que Email Address Obfuscation modifica el HTML y necesita el decodificador para recuperar el enlace. [Email Address Obfuscation](https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/)
+El comportamiento predeterminado de Pages al faltar `404.html` es servir Inicio con HTTP 200 en rutas desconocidas. El pequeño manejador de `cloudflare/respuesta.js` permite recuperar un enlace perdido con HTTP 404 y un acceso a Inicio. El archivo `_routes.json` deja las páginas, evidencias y redirecciones en el servicio estático. [Servicio de páginas](https://developers.cloudflare.com/pages/configuration/serving-pages/) · [Modo avanzado de Pages Functions](https://developers.cloudflare.com/pages/functions/advanced-mode/)
 
-El incremento 5A añade `no-transform` al encabezado `Cache-Control` de `/cv/` y `/cv` en el archivo `_headers` generado. Cloudflare documenta que respeta esa directiva para la ofuscación. Después de desplegar, comprobar en el host público que `/cv/#contacto` entrega el encabezado, muestra el correo y conserva el `mailto:` con JavaScript desactivado. Revisar el HTML de respuesta para confirmar la ausencia del decodificador. [Encabezados de Pages](https://developers.cloudflare.com/pages/configuration/headers/) · [Condiciones de la ofuscación](https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/#troubleshoot-email-obfuscation)
+## Comprobación de la versión publicada
 
-Si el borde aún reescribe el correo tras esa comprobación, crear una **Configuration Rule** de la zona con **Email Obfuscation → Off** y este filtro exacto. El fragmento `#contacto` se resuelve en el navegador.
-
-```text
-(http.host eq "robertozamora.claridez.com" and http.request.uri.path in {"/cv" "/cv/"})
-```
-
-Verificar la prioridad si otras Configuration Rules coinciden con esas rutas y repetir la prueba sin JavaScript tras actualizar la versión servida. [Configuration Rules](https://developers.cloudflare.com/rules/configuration-rules/) · [Ajuste Email Obfuscation](https://developers.cloudflare.com/rules/configuration-rules/settings/#email-obfuscation)
+Desde el dominio canónico, comprobar los destinos 301, un enlace desconocido, el PDF, los cuatro documentos, canonical, Open Graph, sitemap y los encabezados de las vistas previas. Las tres páginas con correo en el pie llevan `Cache-Control: no-transform` para conservar el enlace `mailto:` con JavaScript desactivado. Revisar también el encabezado en el dominio real, donde pueden intervenir reglas de zona. [Ofuscación de correo](https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/)

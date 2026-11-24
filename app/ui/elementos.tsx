@@ -11,22 +11,6 @@ export function PageIntro({ title, kicker, children }: { title: string; kicker?:
   );
 }
 
-export function ActionLink({
-  to,
-  children,
-  primary = false,
-}: {
-  to: string;
-  children: ReactNode;
-  primary?: boolean;
-}) {
-  return (
-    <Link className={primary ? "action-link action-link--primary" : "action-link"} to={to}>
-      {children}
-    </Link>
-  );
-}
-
 export function Arrow({ back = false }: { back?: boolean }) {
   return <span className="link-arrow" aria-hidden="true">{back ? "←" : "→"}</span>;
 }

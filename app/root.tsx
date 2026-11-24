@@ -1,36 +1,25 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import {
-  Link,
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-  isRouteErrorResponse,
-  useLocation,
-  useRouteError,
-  useRouteLoaderData,
-} from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLocation, useRouteLoaderData } from "react-router";
 import "@fontsource/archivo-black/latin-400.css";
-import "@fontsource-variable/geist";
-import { SiteHeader } from "./ui/cabecera";
-import { CabeceraInicio } from "./ui/cabecera-inicio";
-import { cargarContenido, urlRecursoLocal } from "./contenido/registro.server";
+import "@fontsource-variable/dm-sans";
+import "@fontsource-variable/newsreader/standard.css";
+import "@fontsource-variable/newsreader/standard-italic.css";
+import { Cabecera } from "./ui/cabecera";
+import { MarcaRz } from "./ui/marca-rz";
+import { contenido, urlRecursoLocal } from "./contenido/registro.server";
 import { favicon } from "./contenido/publicacion";
 import { paths } from "./rutas";
-import { NoEncontrada } from "./routes/no-encontrada";
-import { PageIntro } from "./ui/elementos";
+import "./inicio.css";
 import "./styles.css";
 
-export const meta = () => [{ title: "Portafolio profesional" }];
-
-export async function loader() {
-  const { perfil, proyectos, paginas, casos } = await cargarContenido();
+export function loader() {
+  const { perfil } = contenido;
   return {
     nombre: perfil?.nombre,
     cvPdf: perfil?.cvPdf?.revision === "aprobado" ? urlRecursoLocal(perfil.cvPdf.archivo) : undefined,
-    proyectoUnico: proyectos.length === 1 && paginas.length === 1 && casos.length <= 1
-      ? paginas[0].slug : undefined,
+    correo: perfil?.correo,
+    mailto: perfil?.correo && `mailto:${encodeURIComponent(perfil.correo).replace("%40", "@")}`,
+    enlaces: perfil?.enlaces,
   };
 }
 
@@ -39,48 +28,47 @@ export function Layout({ children }: { children: ReactNode }) {
   const lastKey = useRef(key);
   const main = useRef<HTMLElement>(null);
   const datos = useRouteLoaderData<typeof loader>("root");
-  const esInicio = pathname === paths.inicio;
-  const staticError = pathname.replace(/\/$/, "") === "/404";
-  const contactoActivo = pathname.replace(/\/$/, "") === "/cv" && hash === "#contacto";
 
   useEffect(() => {
     if (key === lastKey.current) return;
     lastKey.current = key;
-    const anchor = hash ? document.getElementById(hash.slice(1)) : null;
-    (anchor ?? main.current)?.focus({ preventScroll: true });
+    const destino = hash ? document.getElementById(hash.slice(1)) : null;
+    (destino ?? main.current)?.focus({ preventScroll: true });
   }, [key, hash]);
 
   return (
-    <html lang="es" className={esInicio ? "tema-editorial" : undefined}>
+    <html lang="es" className="tema-editorial">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#f7f6f1" />
         <link rel="icon" href={import.meta.env.DEV ? "/recursos-contenido/sitio/favicon.ico" : favicon.ruta}
           sizes={favicon.tamanos} type="image/vnd.microsoft.icon" />
-        {process.env.PORTFOLIO_INDEXAR !== "1" && !staticError && <meta name="robots" content="noindex" />}
+        {process.env.PORTFOLIO_INDEXAR !== "1" && <meta name="robots" content="noindex" />}
         <Meta />
         <Links />
       </head>
       <body>
         <a className="skip-link" href="#contenido">Saltar al contenido</a>
-        <div className={esInicio ? "marco-editorial" : "site-frame"}>
-          {esInicio ? <CabeceraInicio nombre={datos?.nombre} cvPdf={datos?.cvPdf} /> : <SiteHeader {...datos} />}
-          <main className={esInicio ? undefined : "main"} id="contenido" ref={main} tabIndex={-1}>
+        <div className="marco-editorial">
+          <Cabecera nombre={datos?.nombre} cvPdf={datos?.cvPdf} />
+          <main className={pathname === paths.inicio ? undefined : "editorial-wrap interior"} id="contenido" ref={main} tabIndex={-1}>
             {children}
           </main>
-          {!esInicio && (
-            <footer className="site-footer">
-              <Link to={paths.cv}>CV</Link>
-              <Link to={paths.contacto} aria-current={contactoActivo ? "location" : undefined}>Contacto</Link>
-            </footer>
-          )}
+          <footer className="pie-global">
+            <div className="editorial-wrap editorial-footer">
+              <a className="editorial-brand" href="/" aria-label="RZ. Volver al inicio"><MarcaRz /></a>
+              <div className="editorial-footer__links">
+                {datos?.enlaces?.map(({ titulo, url }) => (
+                  <a key={url} href={url} target="_blank" rel="noopener noreferrer">{titulo} <span aria-hidden="true">↗</span></a>
+                ))}
+                {datos?.mailto && <a href={datos.mailto}>Correo <span aria-hidden="true">↗</span></a>}
+              </div>
+            </div>
+          </footer>
         </div>
-        {!staticError && (
-          <>
-            <ScrollRestoration />
-            <Scripts />
-          </>
-        )}
+        <ScrollRestoration />
+        <Scripts />
       </body>
     </html>
   );
@@ -91,7 +79,5 @@ export default function App() {
 }
 
 export function ErrorBoundary() {
-  const error = useRouteError();
-  if (isRouteErrorResponse(error) && error.status === 404) return <NoEncontrada />;
-  return <PageIntro title="No se pudo cargar esta página" />;
+  return <section className="page-intro"><h1>No se pudo cargar esta página</h1><a href="/">Volver al inicio</a></section>;
 }

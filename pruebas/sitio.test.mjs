@@ -10,18 +10,13 @@ import { chromium } from "playwright-core";
 import { registroPublico } from "../app/contenido/publico.ts";
 import { favicon } from "../app/contenido/publicacion.ts";
 import { perfilPublico } from "../app/contenido/perfil-publico.ts";
-import { anchos, anchosV1, capturarCasos, capturarEditorial, capturarIncremento5a, capturarPerfil, capturarRevision, capturarV1, seccionesV1, vistas, vistasCasos } from "./capturas.mjs";
+import { anchos, capturarRevision, vistas } from "./capturas.mjs";
 import { perfilAprobado, registroFixture } from "./registro-fixture.mjs";
 import { conPages } from "./servidor.mjs";
 
 const ejecutar = promisify(execFile);
 const axe = createRequire(import.meta.url).resolve("axe-core/axe.min.js");
-const preview = ".local/prerender/client";
 const publico = "build/client";
-const proyecto = vistas[2].ruta;
-const [catalogoCasos, caso] = vistasCasos.map(({ ruta }) => ruta);
-const recurso = "/recursos/pruebas/decision-portafolio-revision.txt";
-const tituloCaso = "Separar el proyecto del caso de estudio";
 const desconocidas = ["/proyectos/slug-desconocido/", "/casos-de-estudio/slug-desconocido/", "/ruta-desconocida/"];
 const marcasRevision = /decision-portafolio-revision|separar-proyecto-y-caso|revision-editorial|rfm_rz_paquete_integracion|E04-evidencia-RFM-CORE\.zip|Vista local de revisión|Recurso de revisión local|Registro sintético|Datos de prueba|Tu nombre|Tu foto|Probar con mi foto|data-planned/iu;
 const rutaRfm = "/proyectos/rfm-core/";
@@ -30,17 +25,10 @@ const rutaCasoRfm = `/casos-de-estudio/${slugCasoRfm}/`;
 const tituloCasoRfm = "Del interés comercial al contrato";
 const rutaCvPdf = perfilPublico.cvPdf?.revision === "aprobado" ? `/recursos/${perfilPublico.cvPdf.archivo}` : null;
 const evidenciasRfm = ["e01-proceso", "e02-trazabilidad", "e03-decisiones", "e04-verificacion"];
-const casoRfmPublico = registroPublico.casos.find(({ slug, revision }) => slug === slugCasoRfm && revision === "aprobado");
-const rutaEvidenciaPrivada = (nombre) => `/recursos/revision-editorial/rfm-core/${nombre}.html`;
-const rutaEvidencia = (nombre) => casoRfmPublico ? `/recursos/rfm-core/${nombre}.html` : rutaEvidenciaPrivada(nombre);
-const borradorEditorial = await readFile(".local/contenido-editorial/registro.json", "utf8").then(JSON.parse, (error) => {
-  if (error.code !== "ENOENT") throw error;
-});
-const casoRfm = borradorEditorial?.casos.find(({ slug }) => slug === slugCasoRfm);
 
-if (process.env.PORTFOLIO_CAPTURAS_EDITORIAL === "1" && !casoRfmPublico && !casoRfm) {
-  throw new Error("Falta el caso RFM CORE para generar la galería editorial");
-}
+const rutaEvidencia = (nombre) => `/recursos/rfm-core/${nombre}`;
+const titulos = ["Roberto Zamora · Software Engineering Student", "RFM CORE · Roberto Zamora", `${tituloCasoRfm} · Roberto Zamora`];
+const antiguas = [["/proyectos", "/#trabajo"], ["/sobre-mi", "/#sobre-mi"], ["/cv", "/#contacto"], ["/casos-de-estudio", rutaCasoRfm]];
 
 async function comprobarArtefacto(carpeta, marcas) {
   const archivos = await readdir(carpeta, { recursive: true, withFileTypes: true });
@@ -55,8 +43,8 @@ async function comprobar404(origin, rutas) {
     const respuesta = await fetch(origin + ruta, { redirect: "manual" });
     assert.equal(respuesta.status, 404, ruta);
     const html = await respuesta.text();
-    assert.match(html, /<h1>Página no encontrada<\/h1>/);
-    assert.match(html, /<meta name="robots" content="noindex"/);
+    assert.match(html, /href="\/">Volver al inicio/);
+    assert.equal(respuesta.headers.get("x-robots-tag"), "noindex");
     assert.doesNotMatch(html, /<script\b/);
   }
 }
@@ -74,14 +62,11 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
   const pdf = perfilPublico.cvPdf?.revision === "aprobado" ? perfilPublico.cvPdf.archivo : undefined;
   assert.deepEqual(recursos.filter((archivo) => archivo.endsWith(".pdf")).map((archivo) => archivo.replaceAll("\\", "/")), pdf ? [pdf] : []);
   assert(recursos.every((archivo) => !/\.zip$|\.env|\.sqlite|\.pem$/i.test(archivo)));
-  const rutasExcluidas = evidenciasRfm.map(rutaEvidenciaPrivada);
-  if (!registroPublico.proyectos.some(({ slug, pagina }) => slug === "rfm-core" && pagina?.revision === "aprobado")) {
-    rutasExcluidas.push(rutaRfm, rutaRfm + "_.data");
-  }
-  if (!registroPublico.casos.some(({ slug, revision }) => slug === slugCasoRfm && revision === "aprobado")) {
-    rutasExcluidas.push(rutaCasoRfm, rutaCasoRfm + "_.data");
-    await comprobarArtefacto(publico, /del-interes-comercial-al-contrato|Del interés comercial al contrato|rfm-e0[1-4]/iu);
-  }
+  const archivos = (await readdir(publico, { recursive: true })).map(ruta => ruta.replaceAll("\\", "/"));
+  assert.deepEqual(archivos.filter(f => f.endsWith(".html")).sort(), [
+    ...vistas.map(({ ruta }) => ruta.slice(1) + "index.html"), ...evidenciasRfm.map(nombre => rutaEvidencia(nombre).slice(1) + ".html"),
+  ].sort());
+  assert.deepEqual(archivos.filter(f => f.endsWith(".data")).sort(), vistas.map(({ ruta }) => ruta.slice(1) + "_.data").sort());
   const html = await readFile(join(publico, "index.html"), "utf8");
   assert.match(html, /name="robots" content="noindex"/);
   assert.doesNotMatch(html, /rel="canonical"|property="og:url"/);
@@ -95,6 +80,14 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
     const inicio = await fetch(origin);
     assert.equal(inicio.headers.get("x-robots-tag"), "noindex");
     assert.match(inicio.headers.get("cache-control") ?? "", /(?:^|, )no-transform(?:$|,)/);
+    const etag = inicio.headers.get("etag");
+    assert(etag);
+    for (const opciones of [{ method: "HEAD" }, { headers: { "If-None-Match": etag } }, { headers: { Range: "bytes=0-16" } }]) {
+      const perdida = await fetch(origin + "/enlace-perdido", opciones);
+      assert.equal(perdida.status, 404);
+      assert.equal(perdida.headers.get("x-robots-tag"), "noindex");
+      if (opciones.method === "HEAD") assert.equal(await perdida.text(), "");
+    }
     const robots = await fetch(origin + "/robots.txt");
     assert.equal(robots.status, 200);
     assert.equal(await robots.text(), "User-agent: *\nDisallow:\n");
@@ -112,10 +105,12 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
       assert.deepEqual(Buffer.from(await icono.arrayBuffer()), ico);
     }
     await comprobar404(origin, ["/sitemap.xml"]);
-    for (const ruta of ["/", "/proyectos/", "/casos-de-estudio/", "/sobre-mi/", "/cv/", rutaRfm, rutaCasoRfm]) {
+    for (const [i, { ruta }] of vistas.entries()) {
       const respuesta = await fetch(origin + ruta);
       assert.equal(respuesta.status, 200, ruta);
+      assert.match(respuesta.headers.get("cache-control"), /no-transform/);
       const pagina = await respuesta.text();
+      assert(pagina.includes(`<title>${titulos[i]}</title>`) && pagina.includes(`property="og:title" content="${titulos[i]}"`));
       const iconos = pagina.match(/<link rel="icon"[^>]*>/g) ?? [];
       assert.equal(iconos.length, 1, ruta);
       assert(iconos[0].includes(`href="${favicon.ruta}"`), ruta);
@@ -125,14 +120,22 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
       }
       assert.doesNotMatch(pagina, /rel="canonical"|property="og:url"/, ruta);
     }
-    const catalogo = await fetch(origin + catalogoCasos);
-    assert.equal(catalogo.status, 200);
-    const htmlCasos = await catalogo.text();
-    assert.match(htmlCasos, /<h1>Casos de estudio<\/h1>/);
-    if (!registroPublico.casos.some(({ revision }) => revision === "aprobado")) {
-      assert.match(htmlCasos, /Por ahora no hay casos de estudio publicados/);
+    const pdf = await fetch(origin + rutaCvPdf);
+    assert.equal(pdf.status, 200);
+    assert.match(pdf.headers.get("content-type"), /^application\/pdf/);
+    assert.equal(pdf.headers.get("content-disposition"), "inline");
+    assert.equal(pdf.headers.get("x-robots-tag"), "noindex");
+    assert.deepEqual(Buffer.from(await pdf.arrayBuffer()), await readFile(join("recursos-contenido", perfilPublico.cvPdf.archivo)));
+    for (const [ruta, destino] of antiguas) {
+      for (const origen of [ruta, ruta + "/"]) {
+        const respuesta = await fetch(origin + origen, { redirect: "manual" });
+        assert.equal(respuesta.status, 301, origen);
+        assert.equal(new URL(respuesta.headers.get("location"), origin).href, origin + destino);
+      }
     }
-    await comprobar404(origin, [...desconocidas, caso, caso + "_.data", recurso, ...rutasExcluidas]);
+    await comprobar404(origin, [...desconocidas, "/404/", "/404.html", "/proyectos/claridez/",
+      "/recursos/pruebas/decision-portafolio-revision.txt", "/recursos/ausente.html", "/assets/perdido.js",
+      ...antiguas.map(([ruta]) => ruta + "/_.data")]);
   });
 });
 
@@ -160,14 +163,14 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
     ...casoBase, slug: "caso-borrador-qa", revision: "borrador", titulo: "Caso sin aprobar QA",
     evidencias: ["archivo-borrador-qa"],
   }, {
-    ...casoBase, slug: "caso-con-ficha-qa", proyecto: "solo-ficha-qa", titulo: "Caso con ficha QA",
+    ...casoBase, slug: "otro-caso-qa", proyecto: "otro-proyecto-qa", titulo: "Otro caso QA",
     competencia: undefined, periodo: undefined, aprendizajes: undefined,
   });
   registro.proyectos.push({
-    slug: "borrador-qa",
-    ficha: { ...base.ficha, revision: "borrador", nombre: "Borrador aislado QA" },
+    ...base, slug: "borrador-qa", revision: "borrador", nombre: "Borrador aislado QA",
     pagina: { ...base.pagina, revision: "borrador", evidencias: ["archivo-borrador-qa"] },
-  }, { slug: "solo-ficha-qa", ficha: { ...base.ficha, nombre: "Proyecto con ficha QA" } });
+  }, { ...base, slug: "solo-ficha-qa", nombre: "Proyecto con ficha QA", pagina: undefined },
+    { ...base, slug: "otro-proyecto-qa", nombre: "Otro proyecto QA" });
   registro.evidencias.push({
     ...registro.evidencias[0], revision: "borrador", id: "archivo-borrador-qa",
     recurso: { archivo: "archivo-borrador-qa.txt" },
@@ -181,7 +184,7 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
     registro.evidencias.push({ ...registro.evidencias[0], id, tipo, titulo: tipo, recurso: { url } });
     casoBase.evidencias.push(id);
   }
-  const entradas = ["app", "package.json", "react-router.config.ts", "tsconfig.json", "vite.config.ts"];
+  const entradas = ["app", "cloudflare", "package.json", "react-router.config.ts", "tsconfig.json", "vite.config.ts"];
   await Promise.all(entradas.map((entrada) => cp(entrada, join(carpeta, entrada), { recursive: true })));
   await symlink(resolve("node_modules"), join(carpeta, "node_modules"), process.platform === "win32" ? "junction" : "dir");
   await appendFile(join(carpeta, "app/contenido/publico.ts"), `\nObject.assign(registroPublico, ${JSON.stringify(registro)});\n`);
@@ -205,55 +208,33 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
   const salida = join(carpeta, publico);
   await comprobarArtefacto(salida, /borrador-qa|Borrador aislado QA|Caso sin aprobar QA|recurso-sin-revision-qa|Copia directa QA|retrato-no-autorizado-qa/iu);
   await comprobarArtefacto(salida, marcasRevision);
-  const [inicio, catalogo, ficha, indice, detalle, soloFicha] = await Promise.all([
-    "index.html", "proyectos/index.html", "proyectos/solucion-qa/index.html", "casos-de-estudio/index.html",
-    "casos-de-estudio/caso-qa/index.html", "casos-de-estudio/caso-con-ficha-qa/index.html",
+  const [inicio, ficha, detalle, otroProyecto, otroCaso] = await Promise.all([
+    "index.html", "proyectos/solucion-qa/index.html", "casos-de-estudio/caso-qa/index.html",
+    "proyectos/otro-proyecto-qa/index.html", "casos-de-estudio/otro-caso-qa/index.html",
   ].map((archivo) => readFile(join(salida, archivo), "utf8")));
   assert.match(inicio, /Presentación de portada QA/);
-  assert.match(inicio, /<h1 id="titulo-inicio">Perfil QA<\/h1>/);
-  assert.match(inicio, /rel="canonical" href="https:\/\/example\.org\/"/);
-  assert.match(inicio, /property="og:url" content="https:\/\/example\.org\/"/);
   assert.match(inicio, /href="mailto:talento%2Bqa@example\.test\?subject=/);
-  assert.doesNotMatch(inicio, /12025550147|wa\.me/);
+  assert.match(inicio, /href="https:\/\/example.org\/perfil-qa"/);
   assert.match(inicio, /<img[^>]+src="\/recursos\/retrato-qa.png"[^>]+alt="Retrato QA"/);
-  const cv = await readFile(join(salida, "cv/index.html"), "utf8");
-  assert.match(cv, /rel="canonical" href="https:\/\/example\.org\/cv\/"/);
-  assert.match(cv, /property="og:url" content="https:\/\/example\.org\/cv\/"/);
-  assert.match(cv, /property="og:image" content="https:\/\/example\.org\/recursos\/sitio\/rz-social\.png"/);
-  assert.doesNotMatch(cv, /name="robots" content="noindex"/);
-  const documentoSeo = await readFile(join(salida, "recursos/documento-qa.html"), "utf8");
-  assert.match(documentoSeo, /rel="canonical" href="https:\/\/example\.org\/recursos\/documento-qa"/);
+  assert.doesNotMatch(inicio, /12025550147|wa\.me|href="\/casos-de-estudio\//);
+  assert.match(ficha, /Presentación de ficha QA/);
+  assert.match(ficha, /href="\/casos-de-estudio\/caso-qa\/"/);
+  assert.doesNotMatch(ficha, /otro-caso-qa/);
+  assert.match(otroProyecto, /href="\/casos-de-estudio\/otro-caso-qa\/"/);
+  assert.match(otroCaso, /href="\/proyectos\/otro-proyecto-qa\/"/);
+  assert.doesNotMatch(otroCaso, /href="#aprendizajes"/);
+  assert.match(detalle, /<title>Caso QA · Roberto Zamora<\/title>/);
+  assert.match(detalle, /name="description" content="Resumen QA"/);
+  for (const texto of ["Periodo QA", "Aprendizajes QA", "Comprobación pendiente QA", "Medición pendiente QA", "Qué demuestra",
+    "Fuente QA", "Autoría QA", "Decisión documentada", "Artefacto de análisis y documentación", "Prueba y resultado verificable",
+    "Evidencia técnica", 'href="https://example.org/tecnica-qa"']) assert(detalle.includes(texto), texto);
   const sitemap = await readFile(join(salida, "sitemap.xml"), "utf8");
   const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(([, url]) => url);
-  assert.deepEqual(urls.toSorted(), [
-    "/", "/proyectos/", "/casos-de-estudio/", "/sobre-mi/", "/cv/", "/proyectos/solucion-qa/",
-    "/casos-de-estudio/caso-qa/", "/casos-de-estudio/caso-con-ficha-qa/", "/recursos/documento-qa",
+  assert.deepEqual(urls.toSorted(), ["/", "/proyectos/solucion-qa/", "/proyectos/otro-proyecto-qa/",
+    "/casos-de-estudio/caso-qa/", "/casos-de-estudio/otro-caso-qa/", "/recursos/documento-qa",
   ].map((ruta) => `https://example.org${ruta}`).sort());
   assert.match(await readFile(join(salida, "robots.txt"), "utf8"), /Sitemap: https:\/\/example\.org\/sitemap\.xml/);
-  assert.match(cv, /href="mailto:talento%2Bqa@example\.test">talento\+qa@example\.test/);
-  assert.match(cv, /href="https:\/\/example\.org\/perfil-qa">Perfil externo QA/);
-  assert.doesNotMatch(inicio, /Resumen de catálogo QA|Presentación de ficha QA/);
-  assert.match(catalogo, /Resumen de catálogo QA/);
-  assert.doesNotMatch(catalogo, /Presentación de portada QA|Presentación de ficha QA/);
-  assert.match(catalogo, /href="\/proyectos\/solucion-qa\/"/);
-  assert.match(ficha, /Presentación de ficha QA/);
-  assert.doesNotMatch(ficha, /Presentación de portada QA|Resumen de catálogo QA/);
-  for (const html of [inicio, ficha, indice]) assert.match(html, /href="\/casos-de-estudio\/caso-qa\/"/);
-  assert.match(indice, /Análisis funcional QA/);
-  assert.match(indice, /Resumen QA/);
-  assert.match(indice, /Solución QA/);
-  assert.doesNotMatch(indice, /Por ahora no hay casos de estudio publicados/);
-  assert.match(detalle, /<title>Caso QA · Casos de estudio<\/title>/);
-  assert.match(detalle, /name="description" content="Resumen QA"/);
-  assert.match(detalle, /href="\/proyectos\/solucion-qa\/"/);
-  for (const texto of [
-    "Periodo QA", "Aprendizajes QA", "Comprobación pendiente QA", "Medición pendiente QA",
-    "Qué demuestra", "Fuente QA", "Autoría QA", "Decisión documentada", "Artefacto de análisis y documentación",
-    "Prueba y resultado verificable", "Evidencia técnica",
-  ]) assert(detalle.includes(texto), texto);
-  assert.match(detalle, /href="https:\/\/example.org\/tecnica-qa"/);
-  assert.match(soloFicha, /Proyecto con ficha QA/);
-  assert.doesNotMatch(soloFicha, /href="\/proyectos\/solo-ficha-qa\/"|href="#aprendizajes"/);
+  assert.match(inicio, /property="og:image" content="https:\/\/example.org\/recursos\/sitio\/rz-social.png"/);
 
   await conPages(salida, async (origin) => {
     for (const url of urls) {
@@ -285,192 +266,17 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
   await assert.rejects(compilar, /Falta el archivo «archivo-aprobado-qa.txt»/);
 });
 
-test("Vista local en Wrangler con HTML, navegación, teclado, fuentes y axe", { timeout: 150_000 }, async () => {
-  await conPages(preview, async (origin) => {
-    for (const [ruta, titulo] of [[proyecto, "Portafolio web"], [caso, tituloCaso]]) {
-      const documento = await fetch(origin + ruta, { redirect: "manual" });
-      assert.equal(documento.status, 200, ruta);
-      const html = await documento.text();
-      assert.match(html, new RegExp(`<h1>${titulo}</h1>`));
-      assert.match(html, /<html lang="es">/);
-      assert.match(html, /name="robots" content="noindex"/);
-      const datos = await fetch(origin + ruta + "_.data");
-      assert.equal(datos.status, 200, datos.url);
-      assert.match(await datos.text(), new RegExp(titulo));
-    }
-    const evidencia = await fetch(origin + recurso);
-    assert.equal(evidencia.status, 200);
-    assert.match(await evidencia.text(), /Recurso de revisión local/);
-    await comprobar404(origin, [...desconocidas, "/proyectos/claridez/"]);
-
-    const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
-    console.log(`Chromium ${browser.version()}`);
-    try {
-      const sinJs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 840 } });
-      const simple = await sinJs.newPage();
-      await simple.goto(origin + "/proyectos/");
-      await simple.getByRole("link", { name: "Ver ficha de Portafolio web" }).click();
-      await simple.getByRole("heading", { name: "Portafolio web", exact: true }).waitFor();
-      await simple.getByRole("link", { name: tituloCaso }).click();
-      await simple.getByRole("heading", { name: tituloCaso, exact: true }).waitFor();
-      await simple.locator(".case-index summary").press("Enter");
-      await simple.getByRole("navigation", { name: "Secciones del caso" }).getByRole("link", { name: "Evidencias" }).press("Enter");
-      assert.equal(new URL(simple.url()).hash, "#evidencias");
-      assert.equal(await simple.evaluate(() => document.activeElement.id), "evidencias");
-      const archivo = await simple.getByRole("link", { name: /Consultar evidencia/ }).getAttribute("href");
-      assert.equal(archivo, recurso);
-      await sinJs.close();
-
-      const page = await browser.newPage();
-      const errores = [];
-      page.on("pageerror", (error) => errores.push(error.message));
-      await page.goto(origin + catalogoCasos);
-      await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Proyectos", exact: true }).click();
-      await page.getByRole("heading", { name: "Proyectos", exact: true }).waitFor();
-      assert.equal(await page.getByRole("link", { name: "Ver ficha de Portafolio web" }).count(), 1);
-      const columnas = await page.locator(".project-row > p").evaluateAll((resumenes) => (
-        resumenes.map((resumen) => resumen.getBoundingClientRect().left)
-      ));
-      assert(columnas.every((x) => Math.abs(x - columnas[0]) < 1), "Alineación de las filas del catálogo");
-      await page.evaluate(() => { window.pruebaNavegacion = true; });
-      for (const [ruta, enlace, titulo, seccion] of [
-        [proyecto, "Ver ficha de Portafolio web", "Portafolio web", "Proyectos"],
-        [caso, tituloCaso, tituloCaso, "Casos de estudio"],
-      ]) {
-        const datos = page.waitForResponse((response) => new URL(response.url()).pathname === ruta + "_.data");
-        await page.getByRole("link", { name: enlace, exact: true }).click();
-        assert.equal((await datos).status(), 200);
-        await page.getByRole("heading", { name: titulo, exact: true }).waitFor();
-        assert(await page.evaluate(() => window.pruebaNavegacion));
-        const nav = page.getByRole("navigation", { name: "Principal" });
-        assert.equal(await nav.getByRole("link", { name: seccion, exact: true }).getAttribute("aria-current"), "page");
-      }
-      await page.goBack();
-      await page.getByRole("heading", { name: "Portafolio web", exact: true }).waitFor();
-      assert.equal((await page.reload()).status(), 200);
-      await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Casos de estudio" }).click();
-      await page.getByRole("link", { name: `Leer caso «${tituloCaso}»` }).click();
-      await page.getByRole("heading", { name: tituloCaso, exact: true }).waitFor();
-      await page.getByRole("link", { name: "Portafolio web", exact: true }).click();
-      await page.getByRole("heading", { name: "Portafolio web", exact: true }).waitFor();
-
-      for (const width of anchos) {
-        await page.setViewportSize({ width, height: 840 });
-        await page.goto(origin + catalogoCasos);
-        const secuencia = ["/", "/proyectos/", "/casos-de-estudio/", "/sobre-mi/",
-          ...(rutaCvPdf ? [rutaCvPdf] : []), "/cv/#contacto"];
-        await page.keyboard.press("Tab");
-        assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#contenido");
-        assert.equal(await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle), "solid");
-        for (const href of secuencia) {
-          await page.keyboard.press("Tab");
-          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), href);
-        }
-        await page.goto(origin + catalogoCasos);
-        await page.keyboard.press("Tab");
-        await page.keyboard.press("Enter");
-        assert.equal(await page.evaluate(() => document.activeElement.id), "contenido");
-        await page.getByRole("contentinfo").getByRole("link", { name: "Contacto", exact: true }).click();
-        await page.waitForFunction(() => location.hash === "#contacto" && document.activeElement.id === "contacto");
-        assert.equal(await page.getByRole("contentinfo").getByRole("link", { name: "Contacto", exact: true }).getAttribute("aria-current"), "location");
-
-        for (const { ruta } of [...vistas.slice(1), ...vistasCasos]) {
-          await page.goto(origin + ruta);
-          const resultado = await page.evaluate(async () => {
-            const caracteres = "Ingeniería · ñ á é í ó ú ü";
-            const fuentes = await Promise.all([
-              '400 16px "Archivo Black"', '610 16px "Geist Variable"',
-            ].map((fuente) => document.fonts.load(fuente, caracteres)));
-            return {
-              fuentes: fuentes.every((familia) => familia.some((fuente) => fuente.status === "loaded")),
-              ancho: document.documentElement.scrollWidth,
-              controles: [...document.querySelectorAll(".site-frame a, .case-index summary")]
-                .map((control) => control.getBoundingClientRect().height).filter(Boolean),
-            };
-          });
-          assert(resultado.fuentes, ruta);
-          assert(resultado.ancho <= width, `${ruta} a ${width} px`);
-          assert(resultado.controles.every((altura) => altura >= 44), `${ruta} controles a ${width} px`);
-          await page.addScriptTag({ path: axe });
-          await comprobarAccesibilidad(page, `${ruta} axe a ${width} px`);
-        }
-
-        const indice = page.getByRole("navigation", { name: "Secciones del caso" });
-        const resumen = indice.locator("summary");
-        const esMovil = width < 896;
-        await page.getByRole("link", { name: "Portafolio web", exact: true }).focus();
-        if (esMovil) {
-          assert(await resumen.isVisible());
-          await page.keyboard.press("Tab");
-          assert(await resumen.evaluate((elemento) => elemento === document.activeElement));
-          assert.equal(await resumen.evaluate((elemento) => getComputedStyle(elemento).outlineStyle), "solid");
-          await page.keyboard.press("Space");
-          await comprobarAccesibilidad(page, `Índice abierto a ${width} px`);
-        } else {
-          assert.equal(await indice.evaluate((elemento) => getComputedStyle(elemento).position), "sticky");
-        }
-        for (const href of ["#contexto", "#alcance", "#decisiones", "#trabajo", "#validacion", "#evidencias"]) {
-          await page.keyboard.press("Tab");
-          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), href);
-        }
-        await page.keyboard.press("Enter");
-        await page.waitForFunction(() => location.hash === "#evidencias" && document.activeElement.id === "evidencias");
-        await page.locator('.case-index a[href="#evidencias"][aria-current="location"]').first().waitFor({ state: "attached" });
-        if (esMovil) {
-          assert.equal(await resumen.evaluate((elemento) => elemento.parentElement.open), false);
-          assert.match(await resumen.textContent(), /Evidencias/);
-        }
-        await page.keyboard.press("Tab");
-        assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), recurso);
-
-        await page.goto(origin + catalogoCasos);
-        await page.goto(origin + caso + "#decisiones");
-        await page.locator('.case-index a[href="#decisiones"][aria-current="location"]').first().waitFor({ state: "attached" });
-        await page.evaluate(() => window.scrollTo(0, 0));
-        await page.locator('.case-index a[href="#contexto"][aria-current="location"]').first().waitFor({ state: "attached" });
-        await page.getByRole("banner").getByRole("link", { name: "Contacto", exact: true }).click();
-        await page.waitForFunction(() => location.hash === "#contacto" && document.activeElement.id === "contacto");
-        await page.goBack();
-        await page.getByRole("heading", { name: tituloCaso, exact: true }).waitFor();
-        await page.getByRole("contentinfo").getByRole("link", { name: "CV", exact: true }).click();
-        await page.waitForURL(origin + "/cv/");
-      }
-      await page.goto(origin);
-      await page.locator("#contenido h1").evaluate((elemento) => {
-        elemento.textContent = "Nombre profesional con apellidos extensos e ingeniería";
-      });
-      assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-      assert.deepEqual(errores, [], "Errores de ejecución e hidratación");
-      await conPages(publico, async (originPublico) => {
-        for (const width of anchos) {
-          await page.setViewportSize({ width, height: 840 });
-          await page.goto(originPublico + catalogoCasos);
-          assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-          await page.addScriptTag({ path: axe });
-          await comprobarAccesibilidad(page, `Catálogo público a ${width} px`);
-        }
-        if (process.env.PORTFOLIO_CAPTURAS === "1") {
-          await capturarRevision(browser, origin);
-          await capturarCasos(browser, origin, originPublico);
-        }
-      });
-    } finally {
-      await browser.close();
-    }
-  });
-});
-
-test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escritorio y móvil", { timeout: 150_000 }, async () => {
+test("Inicio renderiza las cinco secciones, las anclas y los enlaces en escritorio y móvil", { timeout: 150_000 }, async () => {
   await conPages(publico, async (origin) => {
     const respuesta = await fetch(origin);
     const html = await respuesta.text();
     assert.equal(respuesta.status, 200);
-    assert.match(html, /<title>Roberto Zamora · Del análisis a la solución\.<\/title>/);
+    assert.match(html, /<title>Roberto Zamora · Software Engineering Student<\/title>/);
     assert.match(html, /name="description" content="Estudiante de 8vo semestre de Ingeniería de Software/);
-    assert.match(html, /property="og:title" content="Roberto Zamora · Del análisis a la solución\."/);
-    for (const [id] of seccionesV1) assert.match(html, new RegExp(`id="${id}"`));
+    assert.match(html, /property="og:title" content="Roberto Zamora · Software Engineering Student"/);
+    for (const id of ["inicio", "trabajo", "aportacion", "sobre-mi", "contacto"]) assert.match(html, new RegExp(`id="${id}"`));
     assert.doesNotMatch(html, /raw\.githubusercontent\.com|fonts\.googleapis\.com|MAQUETA CONCEPTUAL/);
-    assert.doesNotMatch(html, /editorial-proof|171\/171|Reglas de negocio con trazabilidad documentada|La trazabilidad relaciona reglas|Consultar evidencias/);
+    assert.doesNotMatch(html, /Recurso conceptual|editorial-proof|171\/171|Reglas de negocio con trazabilidad documentada|La trazabilidad relaciona reglas|Consultar evidencias/);
 
     const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
     try {
@@ -478,6 +284,7 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
       await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin });
       const errores = [];
       page.on("pageerror", (error) => errores.push(error.message));
+      page.on("console", (mensaje) => { if (mensaje.type() === "error") errores.push(mensaje.text()); });
       page.on("response", (respuesta) => {
         if (respuesta.url().startsWith(origin) && respuesta.status() >= 400) errores.push(respuesta.url());
       });
@@ -485,10 +292,10 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
       const trabajo = page.locator("#trabajo");
       const contacto = page.locator("#contacto");
       const accionesContacto = contacto.locator(".editorial-contact__actions");
-      const pieContacto = contacto.locator("footer");
+      const pieContacto = page.getByRole("contentinfo");
       const menu = page.locator(".editorial-menu summary");
       const nav = page.getByRole("navigation", { name: "Principal" });
-      for (const width of anchosV1) {
+      for (const width of anchos) {
         const esMovil = width <= 730;
         await page.setViewportSize({ width, height: 840 });
         await page.goto(origin);
@@ -522,10 +329,15 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
           if (width >= 1280) assert(foto.width >= 280 && foto.width <= 320, `Ancho del retrato a ${width} px`);
         }
         assert.deepEqual(await trabajo.getByRole("heading", { level: 3 }).allTextContents(), ["RFM CORE", "Claridez"]);
-        for (const { ficha, portada } of registroPublico.proyectos.filter(({ portada }) => portada)) {
-          const repositorio = trabajo.getByRole("link", { name: new RegExp(`repositorio de ${ficha.nombre}`, "i") });
-          assert.equal(await repositorio.getAttribute("href"), portada.repositorio);
+        for (const proyecto of registroPublico.proyectos) {
+          const repositorio = trabajo.getByRole("link", { name: new RegExp(`repositorio de ${proyecto.nombre}`, "i") });
+          assert.equal(await repositorio.getAttribute("href"), proyecto.repositorio);
         }
+        const [rfm, claridez] = await trabajo.getByRole("article").all();
+        assert.deepEqual((await rfm.getByRole("link").allTextContents()).map(t => t.replace("↗", "").trim()),
+          ["Explorar el proyecto", "Ver aplicación", "Repositorio"]);
+        assert.equal(await rfm.getByRole("link", { name: /Ver aplicación/ }).getAttribute("href"), "https://ranchoflormaria.com/login");
+        assert.equal(await claridez.getByRole("link").count(), 1);
         assert.equal(await page.locator("#aportacion h3").count(), 4);
         assert.match(await page.locator("#sobre-mi").innerText(), /Universidad de Las Américas \(UDLA\)[\s\S]*Rancho Flor María/);
         const tituloContacto = contacto.getByRole("heading", { name: "Trabajemos juntos.", exact: true });
@@ -559,7 +371,7 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
         assert.equal(medidas.movimiento, "auto");
         assert(medidas.controles.every((altura) => altura >= 44), `Acciones a ${width} px`);
         await page.addScriptTag({ path: axe });
-        await comprobarAccesibilidad(page, `Inicio V1 a ${width} px`);
+        await comprobarAccesibilidad(page, `Inicio a ${width} px`);
 
         await page.keyboard.press("Tab");
         assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#contenido");
@@ -572,7 +384,7 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
           await nav.waitFor();
           await comprobarAccesibilidad(page, `Menú móvil abierto a ${width} px`);
           await page.keyboard.press("Tab");
-          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "#trabajo");
+          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), "/#trabajo");
           await page.keyboard.press("Escape");
           assert(await menu.evaluate((control) => control === document.activeElement && !control.parentElement.open));
         }
@@ -616,21 +428,17 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
         for (const { titulo, url } of perfilPublico.enlaces) {
           assert.equal(await pieContacto.getByRole("link", { name: titulo, exact: true }).getAttribute("href"), url);
         }
-        await contacto.getByRole("link", { name: /Volver al inicio/ }).press("Enter");
-        await page.waitForFunction(() => location.hash === "#inicio" && document.activeElement.id === "inicio");
-        for (const href of accionesHero) {
-          await page.keyboard.press("Tab");
-          assert.equal(await page.evaluate(() => document.activeElement.getAttribute("href")), href);
-        }
+        await pieContacto.getByRole("link", { name: /Volver al inicio/ }).press("Enter");
+        await page.waitForURL(origin + "/");
       }
 
       await page.goto(origin);
-      await page.evaluate(() => { window.pruebaV1 = true; });
+      await page.evaluate(() => { window.mismaSesion = true; });
       await trabajo.getByRole("link", { name: "Explorar el proyecto" }).press("Enter");
       await page.waitForURL(origin + rutaRfm);
-      assert(await page.evaluate(() => window.pruebaV1));
+      assert(await page.evaluate(() => window.mismaSesion));
       await page.getByRole("heading", { name: "RFM CORE", level: 1 }).waitFor();
-      await page.getByRole("link", { name: tituloCasoRfm, exact: true }).press("Enter");
+      await page.getByRole("link", { name: /^Leer caso de estudio/ }).press("Enter");
       await page.waitForURL(origin + rutaCasoRfm);
       const fichas = page.getByRole("region", { name: "Evidencias", exact: true });
       for (const nombre of evidenciasRfm) {
@@ -653,119 +461,86 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
           assert.equal(await acceso.getAttribute("target"), "_blank");
           assert.equal(await acceso.getAttribute("download"), null);
         }
-        assert.equal(await simple.locator("#contacto footer").getByRole("link", { name: "Correo", exact: true }).getAttribute("href"), `mailto:${perfilPublico.correo}`);
+        assert.equal(await simple.getByRole("contentinfo").getByRole("link", { name: "Correo", exact: true }).getAttribute("href"), `mailto:${perfilPublico.correo}`);
         assert.equal(await simple.getByRole("link", { name: "WhatsApp", exact: true }).getAttribute("href"), `https://wa.me/${perfilPublico.whatsapp.numero.slice(1)}`);
         assert.equal(await simple.locator("#contacto").getByRole("button", { name: /^Copiar/ }).count(), 0);
       } finally {
         await simple.close();
       }
-      if (process.env.PORTFOLIO_CAPTURAS_V1 === "1") await capturarV1(browser, origin);
+      if (process.env.PORTFOLIO_CAPTURAS === "1") await capturarRevision(browser, origin);
     } finally {
       await browser.close();
     }
   });
 });
 
-test("Perfil y CV conservan el contacto, las evidencias y los accesos sin JavaScript", { timeout: 180000 }, async () => {
+test("Cabecera global, compatibilidad de enlaces y regreso con y sin JavaScript", { timeout: 150_000 }, async () => {
   await conPages(publico, async (origin) => {
     const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
+    const anclas = ["/#trabajo", "/#aportacion", "/#sobre-mi", "/#contacto"];
+    const enlaces = [anclas[0], anclas[1], anclas[2], rutaCvPdf, anclas[3]];
     try {
-      const page = await browser.newPage();
-      const errores = [];
-      page.on("pageerror", (error) => errores.push(error.message));
-      const rutas = [["/sobre-mi/", "Sobre mí"], ["/cv/", "Roberto Zamora"]];
-      for (const [ruta, titulo] of rutas) {
-        const respuesta = await fetch(origin + ruta);
-        assert.equal(respuesta.status, 200, ruta);
-        const html = await respuesta.text();
-        assert(html.includes(`<h1>${titulo}</h1>`));
-        assert.match(html, /name="robots" content="noindex"/);
-        if (ruta === "/sobre-mi/") assert.match(html, /Universidad de Las Américas \(UDLA\) · En curso/);
-        else {
-          assert.match(respuesta.headers.get("cache-control"), /(?:^|, )no-transform(?:$|,)/);
-          assert.doesNotMatch(html, /Imprimir CV|Experiencia en proyectos|Perfil profesional<\/h2>/);
-          if (rutaCvPdf) assert.doesNotMatch(html, /El CV en PDF aún no está disponible/);
+      for (const javaScriptEnabled of [true, false]) {
+        const page = await browser.newPage({ javaScriptEnabled, reducedMotion: "reduce" });
+        for (const [ruta, destino] of [...antiguas.map(([ruta, destino]) => [ruta + "/", destino]), ["/cv/#contacto", "/#contacto"]]) {
+          assert.equal((await page.goto(origin + ruta)).status(), 200);
+          assert.equal(page.url(), origin + destino);
+          if (destino.includes("#")) assert.equal(await page.locator(":target").getAttribute("id"), destino.split("#")[1]);
         }
-        const datos = await fetch(origin + ruta + "_.data");
-        assert.equal(datos.status, 200);
-        assert.match(await datos.text(), /Roberto Zamora/);
-      }
-      for (const ancho of anchos) {
-        await page.setViewportSize({ width: ancho, height: 840 });
-        for (const [ruta] of rutas) {
-          await page.goto(origin + ruta);
-          const medida = await page.evaluate(async () => {
-            const fuentes = await Promise.all(['400 16px "Archivo Black"', '600 16px "Geist Variable"']
-              .map((fuente) => document.fonts.load(fuente, "Roberto Zamora · Ingeniería")));
-            return {
-              fuentes: fuentes.every((caras) => caras.some((cara) => cara.status === "loaded")),
-              ancho: document.documentElement.scrollWidth,
-            };
-          });
-          assert(medida.fuentes && medida.ancho <= ancho, `${ruta} a ${ancho} px`);
-          await page.addScriptTag({ path: axe });
-          await comprobarAccesibilidad(page, `${ruta} a ${ancho} px`);
-        }
-        await page.goto(origin + "/sobre-mi/");
-        await page.getByRole("heading", { name: "Competencias en práctica" }).waitFor();
-        await page.getByRole("link", { name: "Ir a contacto", exact: true }).press("Enter");
-        await page.waitForFunction(() => location.hash === "#contacto" && document.activeElement.id === "contacto");
-        const correo = page.getByRole("region", { name: "Contacto" })
-          .getByRole("link", { name: perfilPublico.correo, exact: true });
-        assert.equal(await correo.getAttribute("href"), `mailto:${perfilPublico.correo}`);
-      }
-      await page.goto(origin + "/sobre-mi/");
-      assert.deepEqual(await page.locator(".page-intro .perfil-detalle > p").allTextContents(), perfilPublico.sobreMi);
-      const competencias = page.getByRole("region", { name: "Competencias en práctica" });
-      const enlaces = await competencias.getByRole("link").evaluateAll((links) => links.map(({ href }) => href));
-      assert.equal(enlaces.length, 5);
-      for (const url of enlaces) {
-        const respuesta = await fetch(url);
-        assert.equal(respuesta.status, 200, url);
-        await respuesta.body.cancel();
-      }
-      await competencias.getByRole("link", { name: /^E01/ }).press("Enter");
-      await page.getByRole("heading", { name: "E01 — Proceso comercial" }).waitFor();
-      if (rutaCvPdf) {
-        const respuesta = await fetch(origin + rutaCvPdf, { redirect: "error" });
-        assert.equal(respuesta.status, 200);
-        assert.match(respuesta.headers.get("content-type"), /^application\/pdf(?:$|;)/);
-        assert.equal(respuesta.headers.get("content-disposition"), "inline");
-        assert.deepEqual(Buffer.from(await respuesta.arrayBuffer()),
-          await readFile(join("recursos-contenido", perfilPublico.cvPdf.archivo)));
-      }
-      const simple = await browser.newPage({ javaScriptEnabled: false });
-      try {
-        for (const [ruta] of [...rutas, [rutaRfm], [rutaCasoRfm], ["/proyectos/"], ["/casos-de-estudio/"]]) {
-          await simple.goto(origin + (ruta === "/cv/" ? "/cv/#contacto" : ruta));
-          const botones = simple.getByRole("link", { name: /^Ver CV/ });
-          if (rutaCvPdf) {
-            assert.equal(await botones.count(), rutas.some(([principal]) => ruta === principal) ? 2 : 1, ruta);
-            for (const boton of await botones.all()) {
-              assert.equal(await boton.getAttribute("href"), rutaCvPdf);
-              assert.equal(await boton.getAttribute("target"), "_blank");
-              assert.equal(await boton.getAttribute("download"), null);
+        const perdida = await page.goto(origin + "/este-enlace-no-existe/");
+        assert.equal(perdida.status(), 404);
+        await page.getByRole("link", { name: "Volver al inicio del portafolio" }).press("Enter");
+        await page.waitForURL(origin + "/");
+
+        for (const width of [1440, 390]) {
+          await page.setViewportSize({ width, height: 840 });
+          for (const { ruta } of vistas) {
+            for (const destino of anclas) {
+              await page.goto(origin + ruta);
+              const cabecera = page.getByRole("banner");
+              assert.equal(await cabecera.getByRole("link", { name: /RZ/ }).getAttribute("href"), "/");
+              if (width === 390) await cabecera.locator("summary").press("Enter");
+              const nav = cabecera.getByRole("navigation", { name: "Principal" });
+              assert.deepEqual(await nav.getByRole("link").evaluateAll(lista => lista.map(a => a.getAttribute("href"))), enlaces);
+              await nav.locator(`a[href="${destino}"]`).press("Enter");
+              await page.waitForURL(origin + destino);
+              assert.equal(await page.locator(":target").getAttribute("id"), destino.slice(2));
             }
-          } else assert.equal(await botones.count(), 0);
-          if (ruta !== "/sobre-mi/" && ruta !== "/cv/") continue;
-          const enlaces = simple.getByRole("list", { name: "Perfiles públicos" });
-          for (const { titulo, url } of perfilPublico.enlaces) {
-            assert.equal(await enlaces.getByRole("link", { name: titulo, exact: true }).getAttribute("href"), url);
           }
         }
-        await simple.goto(origin + "/cv/#contacto");
-        assert.equal(await simple.locator(":target").getAttribute("id"), "contacto");
-        assert.equal(await simple.getByRole("link", { name: perfilPublico.correo }).getAttribute("href"), `mailto:${perfilPublico.correo}`);
-      } finally {
-        await simple.close();
+        await page.goto(origin + rutaCasoRfm);
+        await page.getByRole("link", { name: "Volver a RFM CORE" }).press("Enter");
+        await page.getByRole("link", { name: "Volver a mi trabajo" }).press("Enter");
+        await page.waitForURL(origin + "/#trabajo");
+        await page.close();
       }
-      assert.deepEqual(errores, []);
-      if (process.env.PORTFOLIO_CAPTURAS_CANDIDATA === "1") await capturarPerfil(browser, origin, true);
-      else if (process.env.PORTFOLIO_CAPTURAS_PERFIL === "1") await capturarPerfil(browser, origin);
-      if (process.env.PORTFOLIO_CAPTURAS_5A === "1") {
-        const base = process.env.PORTFOLIO_BASE_5A ?? ".local/incremento-5a-base/client";
-        await conPages(base, (anterior) => capturarIncremento5a(browser, anterior, origin));
+
+      const page = await browser.newPage();
+      const revisados = new Set();
+      for (const ruta of [...vistas.map(v => v.ruta), ...evidenciasRfm.map(rutaEvidencia)]) {
+        await page.goto(origin + ruta);
+        const destinos = await page.locator("a[href]").evaluateAll(enlaces => enlaces.map(a => a.href));
+        for (const href of destinos) {
+          const url = new URL(href);
+          if (url.origin !== origin || revisados.has(href)) continue;
+          revisados.add(href);
+          assert(!antiguas.some(([ruta]) => ruta === url.pathname.replace(/\/$/, "")), href);
+          const respuesta = await page.request.get(href);
+          assert.equal(respuesta.status(), 200, href);
+          if (url.hash) assert((await respuesta.text()).includes(`id="${decodeURIComponent(url.hash.slice(1))}"`), href);
+        }
       }
+      await page.goto(origin + rutaRfm);
+      assert.equal(await page.getByRole("link", { name: /Ver aplicación/ }).getAttribute("href"), "https://ranchoflormaria.com/login");
+      assert.equal(await page.getByRole("link", { name: /Repositorio de RFM CORE/ }).getAttribute("href"), registroPublico.proyectos[0].repositorio);
+      assert.equal(await page.locator(".page-intro a").filter({ hasText: /caso de estudio/i }).count(), 0);
+      const [pdf] = await Promise.all([
+        page.context().waitForEvent("response", res => res.url() === origin + rutaCvPdf),
+        page.getByRole("banner").getByRole("link", { name: /^Ver CV/ }).click(),
+      ]);
+      assert.equal(pdf.status(), 200);
+      assert.match((await pdf.allHeaders())["content-type"], /^application\/pdf/);
+      await page.close();
     } finally {
       await browser.close();
     }
@@ -773,21 +548,10 @@ test("Perfil y CV conservan el contacto, las evidencias y los accesos sin JavaSc
 });
 
 test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
-  skip: !casoRfmPublico && !casoRfm && "Sin caso RFM CORE",
-  timeout: 120_000,
+  timeout: 240_000,
 }, async () => {
-  if (casoRfm) {
-    const respaldo = borradorEditorial.proyectos.find(({ slug }) => slug === "rfm-core");
-    assert.equal(casoRfm.revision, "borrador");
-    assert.equal(respaldo.ficha.revision, "borrador");
-    assert.equal(respaldo.pagina.revision, "borrador");
-    for (const id of casoRfm.evidencias) {
-      assert.equal(borradorEditorial.evidencias.find((evidencia) => evidencia.id === id)?.revision, "borrador");
-    }
-  }
-  assert.equal((casoRfmPublico ?? casoRfm).evidencias.length, 4);
-
-  await conPages(casoRfmPublico ? publico : preview, async (origin) => {
+  assert.equal(registroPublico.casos.find(({ slug }) => slug === slugCasoRfm).evidencias.length, 4);
+  await conPages(publico, async (origin) => {
     for (const [ruta, titulo] of [[rutaRfm, "RFM CORE"], [rutaCasoRfm, tituloCasoRfm]]) {
       const documento = await fetch(origin + ruta, { redirect: "manual" });
       assert.equal(documento.status, 200, ruta);
@@ -798,10 +562,13 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
       assert.equal(datos.status, 200, datos.url);
       assert((await datos.text()).includes(titulo), datos.url);
     }
-    if (casoRfmPublico) {
+    {
       for (const evidencia of evidenciasRfm) {
         const ruta = rutaEvidencia(evidencia);
         const archivo = `rfm-core/${evidencia}.html`;
+        const anterior = await fetch(origin + ruta + ".html", { redirect: "manual" });
+        assert.equal(anterior.status, 308);
+        assert.equal(new URL(anterior.headers.get("location"), origin).pathname, ruta);
         const documento = await fetch(origin + ruta);
         assert.equal(documento.status, 200, ruta);
         const recurso = await readFile(join("recursos-contenido", archivo), "utf8");
@@ -817,43 +584,46 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
 
     const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
     try {
-      const page = await browser.newPage();
+      const page = await browser.newPage({ reducedMotion: "reduce" });
       const errores = [];
       page.on("pageerror", (error) => errores.push(error.message));
+      page.on("console", (mensaje) => { if (mensaje.type() === "error") errores.push(mensaje.text()); });
       await page.goto(origin);
       const enlaceDestacado = page.locator("#trabajo").getByRole("link", { name: "Leer el caso de estudio" });
-      if (casoRfmPublico) assert.equal(await enlaceDestacado.count(), 0);
-      else await enlaceDestacado.waitFor();
+      assert.equal(await enlaceDestacado.count(), 0);
       for (const [ruta, enlace, titulo] of [
-        [rutaRfm, "Explorar el proyecto", "RFM CORE"], [rutaCasoRfm, tituloCasoRfm, tituloCasoRfm],
+        [rutaRfm, "Explorar el proyecto", "RFM CORE"], [rutaCasoRfm, /^Leer caso de estudio/, tituloCasoRfm],
       ]) {
         const datos = page.waitForResponse((respuesta) => new URL(respuesta.url()).pathname === ruta + "_.data");
         await page.getByRole("link", { name: enlace, exact: true }).press("Enter");
         assert.equal((await datos).status(), 200, ruta);
         await page.getByRole("heading", { name: titulo, exact: true }).waitFor();
       }
-      await page.getByRole("link", { name: "RFM CORE", exact: true }).press("Enter");
+      await page.getByRole("link", { name: "Volver a RFM CORE", exact: true }).press("Enter");
       await page.getByRole("heading", { name: "RFM CORE", exact: true }).waitFor();
 
       for (const ancho of anchos) {
         await page.setViewportSize({ width: ancho, height: 840 });
-        for (const ruta of ["/proyectos/", "/casos-de-estudio/", rutaRfm, rutaCasoRfm, ...evidenciasRfm.map(rutaEvidencia)]) {
+        for (const ruta of [rutaRfm, rutaCasoRfm, ...evidenciasRfm.map(rutaEvidencia)]) {
           const respuesta = await page.goto(origin + ruta);
           assert.equal(respuesta.status(), 200, ruta);
-          const medida = await page.evaluate(async () => {
-            const fuentes = await Promise.all(['400 16px "Archivo Black"', '610 16px "Geist Variable"']
+          const medida = await page.evaluate(async (esEvidencia) => {
+            const fuentes = await Promise.all(['400 16px "Archivo Black"', esEvidencia ? '610 16px "Geist Variable"' : '600 16px "DM Sans Variable"']
               .map((fuente) => document.fonts.load(fuente, "Análisis")));
             return {
+              controles: esEvidencia ? [] : [...document.querySelectorAll("header a, main a, summary, footer a")]
+                .map(control => control.getBoundingClientRect().height).filter(Boolean),
               fuentes: fuentes.every((caras) => caras.some((cara) => cara.status === "loaded")),
               ancho: document.documentElement.scrollWidth,
             };
-          });
+          }, ruta.startsWith("/recursos/"));
           assert(medida.fuentes && medida.ancho <= ancho, `${ruta} a ${ancho} px`);
+          assert(medida.controles.every(altura => altura >= 44), `Controles de ${ruta} a ${ancho} px`);
           await page.addScriptTag({ path: axe });
           await comprobarAccesibilidad(page, `${ruta} a ${ancho} px`);
         }
 
-        if (casoRfmPublico) {
+        {
           await page.goto(origin + rutaRfm);
           const producto = page.getByRole("region", { name: "El producto", exact: true });
           assert.deepEqual(await producto.getByRole("img").evaluateAll((imagenes) => Promise.all(imagenes.map(async (img) => {
@@ -894,6 +664,8 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
         if (await resumen.isVisible()) await resumen.press("Space");
         await indice.getByRole("link", { name: "Evidencias", exact: true }).press("Enter");
         await page.waitForFunction(() => location.hash === "#evidencias" && document.activeElement.id === "evidencias");
+        await indice.locator('a[href="#evidencias"][aria-current="location"]').first().waitFor({ state: "attached" });
+        if (await resumen.isVisible()) assert.equal(await resumen.evaluate(el => el.parentElement.open), false);
         const fichas = page.getByRole("region", { name: "Evidencias", exact: true }).getByRole("article");
         assert.equal(await fichas.count(), 4);
         for (const [indice, evidencia] of evidenciasRfm.entries()) {
@@ -917,6 +689,11 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
           await page.waitForURL(origin + rutaCasoRfm + "#evidencias");
         }
 
+        await page.goto(origin + rutaCasoRfm + "#validacion");
+        await page.locator('.case-index a[href="#validacion"][aria-current="location"]').first().waitFor({ state: "attached" });
+        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+        await page.locator('.case-index a[href="#aprendizajes"][aria-current="location"]').first().waitFor({ state: "attached" });
+
         await page.goto(origin + rutaEvidencia("e01-proceso"));
         await page.getByText("Ampliar el diagrama completo", { exact: true }).press("Enter");
         const visor = page.getByRole("region", { name: "Visor del diagrama a tamaño original" });
@@ -933,10 +710,6 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
         await comprobarAccesibilidad(page, `E01 ampliado a ${ancho} px`);
       }
       assert.deepEqual(errores, [], "Errores de ejecución e hidratación");
-      if (process.env.PORTFOLIO_CAPTURAS_EDITORIAL === "1") {
-        await capturarEditorial(browser, origin, { proyecto: rutaRfm, caso: rutaCasoRfm, e01: rutaEvidencia("e01-proceso") },
-          casoRfmPublico && evidenciasRfm.slice(1).map(rutaEvidencia));
-      }
     } finally {
       await browser.close();
     }

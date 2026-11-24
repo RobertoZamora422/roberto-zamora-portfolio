@@ -1,5 +1,7 @@
 # Plan técnico de fase 3
 
+Plan histórico de implementación por incrementos. Para desarrollar y probar la versión actual, consulta el [README](../README.md).
+
 **Estado · Incremento 1 aprobado. Integración de RZ. en el incremento 2 disponible para revisión.**
 
 La fase desarrolla la [dirección visual aprobada](diseno-ux-ui.md) con React, TypeScript y Vite sobre Cloudflare Pages. La preparación de contenido de negocio avanza en paralelo. Los [requisitos de fase 1](requisitos.md) y sus condiciones de publicación son los criterios de aceptación.

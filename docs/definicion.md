@@ -1,6 +1,10 @@
 # Definición del producto
 
-**Estado · Fase 1 cerrada a nivel documental**
+El producto vigente se dirige a reclutadores y equipos técnicos que evalúan candidaturas para pasantías y puestos junior. La presentación concentra formación, trabajo y contacto en Inicio. RFM CORE y su caso permiten examinar el alcance técnico y personal. [Arquitectura vigente](arquitectura-de-informacion.md)
+
+## Definición histórica de la fase 1
+
+Las secciones siguientes conservan las decisiones de alcance y posicionamiento de la primera fase.
 
 ## Propósito y audiencia
 

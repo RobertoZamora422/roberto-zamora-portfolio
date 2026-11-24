@@ -27,37 +27,19 @@ export interface PortadaProfesional {
 export interface Perfil {
   revision: Revision;
   nombre: string;
-  presentacion: string;
-  propuesta: string;
-  oportunidades: string;
-  descripcionInicio?: string;
-  sobreMi?: readonly string[];
-  formacion: readonly { programa: string; institucion?: string; estado?: string; periodo?: string }[];
-  trayectoria: readonly { titulo?: string; descripcion: string; evidencias: readonly string[] }[];
   cvPdf?: ArchivoRevisado;
   retrato?: ArchivoRevisado & { alt: string };
-  intereses?: readonly { titulo: string; descripcion: string }[];
   correo?: string;
   whatsapp?: { revision: Revision; numero: string };
   enlaces?: readonly { titulo: string; url: string }[];
-  casos?: readonly string[];
-  portada?: PortadaProfesional;
-}
-
-interface FichaProyecto {
-  revision: Revision;
-  nombre: string;
-  resumen: string;
-  estado: string;
+  portada: PortadaProfesional;
 }
 
 export interface PaginaProyecto {
   revision: Revision;
   entradilla: string;
-  destacado: string;
   problema: string;
   contexto: string;
-  proposito: string;
   solucion: string;
   participacion: string;
   tecnologias?: readonly string[];
@@ -73,14 +55,15 @@ export interface PaginaProyecto {
 
 export interface Proyecto {
   slug: string;
-  ficha: FichaProyecto;
+  revision: Revision;
+  nombre: string;
+  categoria: string;
+  estado: string;
+  descripcion: string;
+  repositorio: string;
+  aplicacion?: string;
+  visual: "conceptual" | { captura: string };
   pagina?: PaginaProyecto;
-  portada?: {
-    categoria: string;
-    descripcion: string;
-    repositorio: string;
-    visual: "conceptual" | { captura: string };
-  };
 }
 
 export interface Caso {
@@ -105,11 +88,6 @@ export interface Caso {
     situaciones: readonly { titulo: string; descripcion: string }[];
     referencias: readonly { evidencia: string; texto: string; ancla: string }[];
   };
-  fichasBreves?: boolean;
-  portada?: {
-    indicadores: readonly { valor: string; descripcion: string }[];
-    alcance: string;
-  };
 }
 
 export interface Evidencia {
@@ -128,5 +106,4 @@ export interface Registro {
   proyectos: readonly Proyecto[];
   casos: readonly Caso[];
   evidencias: readonly Evidencia[];
-  casoDestacado?: string;
 }

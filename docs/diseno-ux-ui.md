@@ -1,8 +1,12 @@
 # Cierre de diseño UX/UI
 
-**Estado · RZ. aprobado e integrado en el incremento 2.**
+## Dirección vigente
 
-## RZ. · Dirección vigente
+Las tres páginas comparten la identidad de Inicio. Newsreader compone los titulares, DM Sans el texto y Archivo Black la firma RZ. El fondo marfil y los verdes dan continuidad entre la portada, la ficha y el caso. La cabecera fija, el menú móvil y el pie se generan desde un solo layout.
+
+La ficha de RFM CORE combina texto, dos capturas ampliables y una invitación al caso tras la participación personal. El caso ofrece una síntesis inicial, navegación por secciones y documentos con fuentes y autoría. Sus evidencias conservan su composición documental aprobada.
+
+## Referencia histórica del incremento 2
 
 La aprobación cubre la cabecera compartida, Inicio, Proyectos y la ficha individual en escritorio y móvil. La referencia archivada conserva la maqueta aprobada. [Maqueta RZ.](referencias/incremento-2/portafolio-rz.html)
 

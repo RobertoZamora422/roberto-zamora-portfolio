@@ -59,14 +59,14 @@ async function resolverArchivo(carpeta: string, archivo: string) {
   return ruta;
 }
 
-export async function validarRegistro(registro: Registro, carpetaRecursos: string, { revisionLocal = false } = {}) {
+export async function validarRegistro(registro: Registro, carpetaRecursos: string) {
   const proyectos = indexar("Proyecto", registro.proyectos, ({ slug }) => slug);
-  const casos = indexar("Caso", registro.casos, ({ slug }) => slug);
+  indexar("Caso", registro.casos, ({ slug }) => slug);
   const evidencias = indexar("Evidencia", registro.evidencias, ({ id }) => id);
   const archivosAprobados = new Map<string, string>();
 
   async function validarArchivo(origen: string, archivo: string, revision: Revision) {
-    if (!revisionLocal && (archivo.startsWith("pruebas/") || archivo.startsWith("revision-editorial/"))) {
+    if (archivo.startsWith("pruebas/") || archivo.startsWith("revision-editorial/")) {
       throw new Error(`${origen}: recurso reservado para revisión local`);
     }
     const ruta = await resolverArchivo(carpetaRecursos, archivo);
@@ -79,28 +79,24 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
     for (const id of ids) validarReferencia(origen, id, evidencias, revision, (entrada) => entrada.revision);
   }
 
-  for (const { slug, ficha, pagina, portada } of registro.proyectos) {
+  for (const { slug, revision, nombre, estado, categoria, descripcion, repositorio, aplicacion, visual, pagina } of registro.proyectos) {
     const origen = `Proyecto «${slug}»`;
-    const { revision, nombre, resumen, estado } = ficha;
     validarRevision(origen, revision);
-    if (revision === "aprobado") exigirTextos(origen, { nombre, resumen, estado });
-    if (portada) {
-      const { categoria, descripcion, repositorio, visual } = portada;
-      exigirTextos(origen, { categoria, descripcion });
-      validarUrl(origen, repositorio);
-      if (revision === "aprobado" && visual !== "conceptual" && (
-        pagina?.revision !== "aprobado"
-        || !pagina.capturas?.some(({ archivo, revision }) => archivo === visual.captura && revision === "aprobado")
-      )) throw new Error(`${origen}: la portada requiere una captura aprobada`);
-    }
+    if (revision === "aprobado") exigirTextos(origen, { nombre, estado, categoria, descripcion });
+    validarUrl(origen, repositorio);
+    if (aplicacion !== undefined) validarUrl(origen, aplicacion);
+    if (revision === "aprobado" && visual !== "conceptual" && (
+      pagina?.revision !== "aprobado"
+      || !pagina.capturas?.some(({ archivo, revision }) => archivo === visual.captura && revision === "aprobado")
+    )) throw new Error(`${origen}: la portada requiere una captura aprobada`);
     if (!pagina) continue;
 
-    const { revision: revisionPagina, evidencias: ids, entradilla, destacado,
-      problema, contexto, proposito, solucion, participacion } = pagina;
+    const { revision: revisionPagina, evidencias: ids, entradilla,
+      problema, contexto, solucion, participacion } = pagina;
     validarRevision(origen, revisionPagina);
     if (revisionPagina === "aprobado") {
       if (revision !== "aprobado") throw new Error(`${origen}: página aprobada sin ficha aprobada`);
-      exigirTextos(origen, { entradilla, destacado, problema, contexto, proposito, solucion, participacion });
+      exigirTextos(origen, { entradilla, problema, contexto, solucion, participacion });
     }
     validarEvidencias(origen, ids, revisionPagina);
     for (const { revision: revisionCaptura, archivo, titulo, alt, descripcion, ancho, alto } of pagina.capturas ?? []) {
@@ -117,17 +113,13 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
 
   for (const caso of registro.casos) {
     const { slug, revision, proyecto, evidencias: ids, titulo, resumen, contexto,
-      alcance, decisiones, trabajo, validacion, resultadosYLimites, resumenVisual, ejemplo, portada } = caso;
+      alcance, decisiones, trabajo, validacion, resultadosYLimites, resumenVisual, ejemplo } = caso;
     const origen = `Caso «${slug}»`;
     validarRevision(origen, revision);
-    validarReferencia(origen, proyecto, proyectos, revision, (entrada) => entrada.ficha.revision);
+    validarReferencia(origen, proyecto, proyectos, revision, (entrada) => entrada.pagina?.revision ?? "borrador");
     if (revision === "aprobado") {
       exigirTextos(origen, { titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites });
       for (const { etiqueta, valor } of resumenVisual ?? []) exigirTextos(origen, { etiqueta, valor });
-      if (portada) {
-        exigirTextos(origen, { alcancePortada: portada.alcance });
-        for (const indicador of portada.indicadores) exigirTextos(origen, indicador);
-      }
       if (ejemplo) {
         exigirTextos(origen, { titulo: ejemplo.titulo });
         for (const situacion of ejemplo.situaciones) exigirTextos(origen, situacion);
@@ -154,28 +146,16 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
   }
 
   if (registro.perfil) {
-    const { revision, nombre, presentacion, propuesta, oportunidades, descripcionInicio, sobreMi, formacion, trayectoria,
-      casos: referencias, correo, enlaces, cvPdf, retrato, intereses, portada, whatsapp } = registro.perfil;
+    const { revision, nombre, correo, enlaces, cvPdf, retrato, portada, whatsapp } = registro.perfil;
     validarRevision("Perfil", revision);
     if (revision === "aprobado") {
-      exigirTextos("Perfil", { nombre, presentacion, propuesta, oportunidades });
-      if (descripcionInicio !== undefined) exigirTextos("Perfil", { descripcionInicio });
-      for (const parrafo of sobreMi ?? []) exigirTextos("Sobre mí", { parrafo });
-      for (const { programa, institucion, estado, periodo } of formacion) exigirTextos("Formación", {
-        programa,
-        ...(institucion !== undefined && { institucion }),
-        ...(estado !== undefined && { estado }),
-        ...(periodo !== undefined && { periodo }),
-      });
-      for (const entrada of intereses ?? []) exigirTextos("Área de interés", entrada);
-      if (portada) {
-        const { area, nombreCompleto, titular: [primera, segunda, enfasis], estudios, introduccion, enfoque, ubicacion,
-          ejes, capacidades, trayectoria, datos } = portada;
-        exigirTextos("Portada", { area, primera, segunda, enfasis, estudios, introduccion, enfoque, ubicacion });
-        if (nombreCompleto !== undefined) exigirTextos("Portada", { nombreCompleto });
-        for (const texto of [...ejes, ...trayectoria]) exigirTextos("Portada", { texto });
-        for (const entrada of [...capacidades, ...datos]) exigirTextos("Portada", { ...entrada });
-      }
+      exigirTextos("Perfil", { nombre });
+      const { area, nombreCompleto, titular: [primera, segunda, enfasis], estudios, introduccion, enfoque, ubicacion,
+        ejes, capacidades, trayectoria, datos } = portada;
+      exigirTextos("Portada", { area, primera, segunda, enfasis, estudios, introduccion, enfoque, ubicacion });
+      if (nombreCompleto !== undefined) exigirTextos("Portada", { nombreCompleto });
+      for (const texto of [...ejes, ...trayectoria]) exigirTextos("Portada", { texto });
+      for (const entrada of [...capacidades, ...datos]) exigirTextos("Portada", { ...entrada });
     }
     if (cvPdf) {
       validarRevision("CV", cvPdf.revision);
@@ -198,11 +178,6 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
       if (!formatoImagen.test(retrato.archivo)) throw new Error("Retrato: formato de imagen inválido");
       await validarArchivo("Retrato", retrato.archivo, revisionDelArchivo);
     }
-    for (const { titulo, descripcion, evidencias: ids } of trayectoria) {
-      if (revision === "aprobado") exigirTextos("Trayectoria", { descripcion, ...(titulo !== undefined && { titulo }) });
-      validarEvidencias("Trayectoria", ids, revision);
-    }
-    for (const id of referencias ?? []) validarReferencia("Perfil", id, casos, revision, (entrada) => entrada.revision);
     if (correo !== undefined && (typeof correo !== "string" || !/^[a-z\d.!#$%&'*+/=?^_`{|}~-]+@[a-z\d-]+(?:\.[a-z\d-]+)+$/i.test(correo))) {
       throw new Error("Perfil: correo inválido");
     }
@@ -213,8 +188,5 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
     for (const { url } of enlaces ?? []) validarUrl("Perfil", url);
   }
 
-  if (registro.casoDestacado) {
-    validarReferencia("Caso destacado", registro.casoDestacado, casos, "aprobado", (entrada) => entrada.revision);
-  }
   return archivosAprobados;
 }

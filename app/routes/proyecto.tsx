@@ -1,64 +1,52 @@
 import { useLoaderData, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { metadatosPagina } from "../contenido/metadatos";
-import { cargarContenido, urlRecursoLocal } from "../contenido/registro.server";
+import { contenido, urlRecursoLocal } from "../contenido/registro.server";
 import { paths, rutaCaso, rutaProyecto } from "../rutas";
 import { PageIntro, TextLink } from "../ui/elementos";
+import { EnlacesProyecto } from "../ui/enlaces-proyecto";
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { paginas, casos, evidencias } = await cargarContenido();
-  const proyecto = paginas.find(({ slug }) => slug === params.slug);
+export function loader({ params }: LoaderFunctionArgs) {
+  const proyecto = contenido.paginas.find(({ slug }) => slug === params.slug);
   if (!proyecto) throw new Response(null, { status: 404 });
-
-  const { ficha, pagina } = proyecto;
+  const { slug, nombre, estado, aplicacion, repositorio, pagina } = proyecto;
+  const { entradilla, contexto, problema, solucion, participacion, tecnologias } = pagina;
   return {
-    nombre: ficha.nombre,
-    estado: ficha.estado,
-    entradilla: pagina.entradilla,
-    problema: pagina.problema,
-    contexto: pagina.contexto,
-    proposito: pagina.proposito,
-    solucion: pagina.solucion,
-    participacion: pagina.participacion,
-    tecnologias: pagina.tecnologias,
+    slug, nombre, estado, aplicacion, repositorio, entradilla, contexto, problema, solucion, participacion, tecnologias,
     capturas: pagina.capturas?.filter(({ revision }) => revision === "aprobado")
-      .map(({ archivo, ...captura }) => ({ ...captura, url: urlRecursoLocal(archivo) })),
-    evidencias: evidencias.filter(({ id }) => pagina.evidencias.includes(id)).map(({ id, titulo, recurso }) => ({
-      id,
-      titulo,
-      url: "archivo" in recurso ? urlRecursoLocal(recurso.archivo) : recurso.url,
-    })),
-    casos: casos.filter(({ proyecto: slug }) => slug === proyecto.slug).map(({ slug, titulo }) => ({
-      titulo,
-      ruta: rutaCaso(slug),
+      .map(({ archivo, titulo, alt, descripcion, ancho, alto }) => ({ titulo, alt, descripcion, ancho, alto, url: urlRecursoLocal(archivo) })),
+    casos: contenido.casos.filter((caso) => caso.proyecto === slug).map(({ slug, titulo, resumen }) => ({
+      titulo, resumen, ruta: rutaCaso(slug),
     })),
   };
 }
 
-export const meta: MetaFunction<typeof loader> = ({ loaderData, params }) => loaderData && params.slug
-  ? metadatosPagina({ titulo: `${loaderData.nombre} · Proyectos`, descripcion: loaderData.entradilla, ruta: rutaProyecto(params.slug) })
-  : [{ title: "Página no encontrada · Portafolio profesional" }, { name: "robots", content: "noindex" }];
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => loaderData
+  ? metadatosPagina({ titulo: `${loaderData.nombre} · Roberto Zamora`, descripcion: loaderData.entradilla, ruta: rutaProyecto(loaderData.slug), tipo: "article" })
+  : [];
 
 export default function Proyecto() {
   const proyecto = useLoaderData<typeof loader>();
-  const casoUnico = proyecto.casos.length === 1 ? proyecto.casos[0] : undefined;
-
   return (
     <article className="project-detail">
-      <PageIntro title={proyecto.nombre} kicker={(
-        <nav className="project-crumb" aria-label="Ubicación del proyecto">
-          <TextLink to={paths.proyectos} back>Volver a Proyectos</TextLink>
-        </nav>
-      )}>
+      <PageIntro title={proyecto.nombre} kicker={<TextLink to={paths.trabajo} back>Volver a mi trabajo</TextLink>}>
         <p className="lead">{proyecto.entradilla}</p>
-        {casoUnico && <TextLink to={casoUnico.ruta}>{casoUnico.titulo}</TextLink>}
+        <div className="editorial-project__links">
+          <EnlacesProyecto nombre={proyecto.nombre} aplicacion={proyecto.aplicacion} repositorio={proyecto.repositorio} />
+        </div>
       </PageIntro>
       <dl className="project-facts" aria-label="Datos del proyecto">
         <div><dt>Estado</dt><dd>{proyecto.estado}</dd></div>
-        {!!proyecto.tecnologias?.length && (
-          <div><dt>Tecnologías</dt><dd>{proyecto.tecnologias.join(", ")}</dd></div>
-        )}
+        {!!proyecto.tecnologias?.length && <div><dt>Tecnologías</dt><dd>{proyecto.tecnologias.join(", ")}</dd></div>}
       </dl>
       <div className="project-story">
+        <section aria-labelledby="problema">
+          <h2 id="problema">Contexto y problema</h2>
+          <div className="project-story__body"><p>{proyecto.contexto}</p><p>{proyecto.problema}</p></div>
+        </section>
+        <section aria-labelledby="solucion">
+          <h2 id="solucion">La solución</h2>
+          <p>{proyecto.solucion}</p>
+        </section>
         {!!proyecto.capturas?.length && (
           <section className="project-product" aria-labelledby="producto">
             <h2 id="producto">El producto</h2>
@@ -74,42 +62,21 @@ export default function Proyecto() {
             </div>
           </section>
         )}
-        <section aria-labelledby="problema">
-          <h2 id="problema">El problema</h2>
-          <div className="project-story__body">
-            <p>{proyecto.contexto}</p>
-            <p>{proyecto.problema}</p>
-          </div>
-        </section>
-        <section aria-labelledby="solucion">
-          <h2 id="solucion">La solución</h2>
-          <div className="project-story__body">
-            <p>{proyecto.proposito}</p>
-            <p>{proyecto.solucion}</p>
-          </div>
-        </section>
         <section aria-labelledby="participacion">
-          <h2 id="participacion">Participación personal</h2>
-          <div className="project-story__body">
-            <p>{proyecto.participacion}</p>
-            <ul className="project-links" role="list" aria-label="Evidencias de la participación">
-              {proyecto.evidencias.map(({ id, titulo, url }) => (
-                <li key={id}><a className="text-link" href={url}>{titulo}</a></li>
-              ))}
-            </ul>
+          <h2 id="participacion">Mi participación</h2>
+          <p>{proyecto.participacion}</p>
+        </section>
+      </div>
+      {proyecto.casos.map(({ ruta, titulo, resumen }) => (
+        <section className="lectura-caso" key={ruta} aria-label={`Caso de estudio · ${titulo}`}>
+          <p className="editorial-section__index">Caso de estudio</p>
+          <div>
+            <h2>{titulo}.</h2>
+            <p>{resumen}</p>
+            <TextLink to={ruta} label={`Leer caso de estudio: ${titulo}`}>Leer caso de estudio</TextLink>
           </div>
         </section>
-        {proyecto.casos.length > 1 && (
-          <section aria-labelledby="casos-relacionados">
-            <h2 id="casos-relacionados">Casos relacionados</h2>
-            <ul className="project-links" role="list">
-              {proyecto.casos.map(({ titulo, ruta }) => (
-                <li key={ruta}><TextLink to={ruta}>{titulo}</TextLink></li>
-              ))}
-            </ul>
-          </section>
-        )}
-      </div>
+      ))}
     </article>
   );
 }

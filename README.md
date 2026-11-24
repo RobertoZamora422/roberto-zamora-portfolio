@@ -1,77 +1,31 @@
-# Portafolio profesional de Ingeniería en Software
+# Portafolio de Roberto Zamora
 
-**Comprender problemas. Diseñar soluciones. Generar valor.**
+Portafolio en español para evaluar el trabajo de Roberto Zamora como estudiante de Ingeniería de Software que busca una pasantía o una posición junior.
 
-Portafolio personal para oportunidades de pasantías y posiciones junior. Reúne proyectos, casos de estudio y evidencias que permiten examinar aportes concretos.
-
-## Estado del proyecto
-
-**Fase 3 · Incremento 5A.** La revisión local prioriza RFM CORE y sus evidencias. El currículum oficial será el PDF proporcionado por Roberto Zamora.
-
-| Documento | Qué encontrarás |
+| Página | Contenido |
 | --- | --- |
-| [Definición del producto](docs/definicion.md) | Audiencia, alcance, criterios de éxito, fases y decisiones. |
-| [Arquitectura de información](docs/arquitectura-de-informacion.md) | Rutas, recorridos, modelo de contenido y plantilla de casos. |
-| [Requisitos y validación](docs/requisitos.md) | Comportamiento esperado, estrategia técnica y criterios de aceptación. |
-| [Cierre de diseño UX/UI](docs/diseno-ux-ui.md) | Identidad aprobada, reglas visuales y patrones por vista. |
-| [Plan técnico de fase 3](docs/plan-tecnico-fase-3.md) | Orden de implementación y comprobaciones por incremento. |
-| [Informe del incremento 1](docs/informe-incremento-1.md) | Archivos, decisiones, comandos, resultados y comprobaciones pendientes. |
-| [Informe del incremento 2](docs/informe-incremento-2.md) | Revisión visual, flujo editorial y resultados de las pruebas. |
-| [Informe de integración de RZ.](docs/informe-integracion-rz.md) | Cambios, pruebas y comparación con la maqueta aprobada. |
-| [Informe del incremento 3A](docs/informe-incremento-3a.md) | Casos de estudio, evidencias y verificación de la publicación estática. |
-| [Revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core.md) | Integración inicial, fuentes y alcance de E04. |
-| [Segunda revisión editorial de RFM CORE](docs/informe-revision-editorial-rfm-core-v2.md) | Apertura del caso, ejemplo funcional, evidencias y captura del producto. |
-| [Actualización editorial de E04](docs/informe-revision-editorial-rfm-core-v3.md) | Auditoría local, regresiones integradas, validación de CI y pendientes de publicación. |
-| [Versión candidata de RFM CORE](docs/informe-candidata-rfm-core.md) | Recorrido local, recursos, verificaciones y autorización pendiente. |
-| [Incremento 3B](docs/informe-incremento-3b.md) | Identidad, Sobre mí, CV, contacto y revisión local. |
-| [Incremento 4](docs/informe-incremento-4.md) | Candidata completa, metadatos, comprobaciones y propuesta de Cloudflare Pages. |
-| [Incremento 5A](docs/informe-incremento-5a.md) | Portada, navegación, evidencias visuales, compatibilidad del CV y plan de integración 5B. |
+| `/` | Presentación, Mi trabajo, Cómo aporto, Sobre mí y Contacto. Incluye el acceso al repositorio de Claridez. |
+| `/proyectos/rfm-core/` | Contexto de Rancho Flor María, producto, tecnologías, participación personal y accesos a la aplicación y al repositorio. |
+| `/casos-de-estudio/del-interes-comercial-al-contrato/` | Decisiones, validación, resultados y cuatro evidencias del flujo comercial de RFM CORE. |
 
-## Desarrollo local
+La cabecera de las tres páginas enlaza con las secciones de Inicio y con el CV oficial en PDF. El pie reúne los perfiles profesionales y el correo.
 
-Usa la versión de Node indicada en `.node-version` y npm.
+## Desarrollo y comprobación
 
-```text
-npm ci
-npm run dev
-```
+Usa Node.js 24 según `.node-version`. Desde la raíz del repositorio ejecuta `npm ci` y `npm run dev`. Para comprobar la versión que recibirá un visitante de Cloudflare Pages, usa Wrangler sobre el artefacto compilado.
 
-La vista de desarrollo incluye la ficha de Portafolio web y su caso de estudio para revisión. Para servir la compilación estática local con Wrangler, ejecuta lo siguiente.
-
-```text
+```sh
 npm run typecheck
-npm run build:prueba
-npm run preview:prueba
-```
-
-Abre `http://127.0.0.1:8788/` y recorre Proyectos → Portafolio web → Separar el proyecto del caso de estudio. El mismo caso aparece en `/casos-de-estudio/`. La salida de revisión queda en `.local/prerender/client`. `npm run build` genera el artefacto público en `build/client` a partir del registro aprobado.
-
-## Pruebas y capturas
-
-```text
+npm run build
 npm test
-npx playwright-core install chromium
-npm run revision:visual
+npm run test:sitio
+npm run preview
 ```
 
-`npm test` verifica el registro. `npm run test:sitio` verifica ambas compilaciones y los recorridos en Chromium y Wrangler. `npm run revision:visual` genera las galerías `.local/revision-rz/index.html` y `.local/revision-incremento-3a/index.html`. Si usas un Chromium instalado, define `CHROMIUM_PATH` con la ruta a su ejecutable antes de ejecutar las pruebas de sitio.
+`npm run preview` sirve `build/client` en `http://127.0.0.1:8789/`. Las pruebas de sitio usan Chromium, Playwright, axe y Wrangler. Puedes instalar el navegador con `npx playwright-core install chromium` o indicar el ejecutable de Chrome o Chromium mediante `CHROMIUM_PATH`. Ejecuta `npm run revision:visual` para generar las 18 capturas y su galería en `.local/revision-arquitectura/index.html`.
 
-## Registro de contenido
+## Contenido, evidencias y publicación
 
-El modelo vive en `app/contenido/modelo.ts` y las entradas para publicación se incorporan a `app/contenido/publico.ts`. Aprueba la ficha y la página individual por separado. Inicio, catálogo y ficha toman sus textos de campos distintos de la misma entrada. Para adjuntar una evidencia local, referencia el archivo relativo a `recursos-contenido/` desde una evidencia aprobada. La compilación copia los archivos aprobados bajo `/recursos/` y valida los identificadores, las referencias y los archivos.
+El registro de proyectos, casos y evidencias vive en `app/contenido/publico.ts`. Los textos de perfil y los recursos personales aprobados están en `app/contenido/perfil-publico.ts`. La relación `caso.proyecto` determina dónde se presenta cada caso y su enlace de regreso. La compilación valida esa relación y copia desde `recursos-contenido/` los archivos aprobados. El PNG original del retrato queda como fuente editorial y el sitio entrega su versión WebP.
 
-El retrato es opcional. Para incorporar uno, registra `perfil.retrato` con la ruta relativa a `recursos-contenido/`, el texto alternativo y su estado de aprobación. El perfil y el retrato requieren aprobación para aparecer en el artefacto público.
-
-Las muestras usan `app/pruebas/datos.ts`. Cuando existe `.local/contenido-editorial/registro.json`, la vista local carga los borradores editoriales y sus recursos en `recursos-contenido/revision-editorial/`. El registro público se reserva para material autorizado. Los borradores editoriales y sus recursos quedan fuera de Git y de la compilación pública.
-
-`npm run revision:editorial` verifica la versión candidata de RFM CORE y genera `.local/candidata-rfm-core/index.html` a partir de `build/client`. Para recorrer esa compilación localmente, ejecuta `npx wrangler pages dev build/client --ip 127.0.0.1 --port 8789` y abre `http://127.0.0.1:8789/`.
-
-`npm run revision:perfil` genera `.local/revision-incremento-3b/index.html` con capturas del perfil vigente. Para recorrer el perfil en revisión usa `npm run preview:prueba` y abre Inicio, `/sobre-mi/` o `/cv/` en `http://127.0.0.1:8788/`.
-
-`npm run revision:candidata` verifica el incremento 4 y genera `.local/revision-incremento-4/index.html`. `npm run preview:candidata` sirve `build/client` en `http://127.0.0.1:8789/`. La configuración de origen e indexación se detalla en la [propuesta de Cloudflare Pages](docs/propuesta-cloudflare-pages.md).
-
-`npm run revision:5a` genera la comparación antes y después a 1280, 390 y 320 px en `.local/revision-incremento-5a/index.html`. Usa `.local/incremento-5a-base/client` como compilación de referencia. El [informe 5A](docs/informe-incremento-5a.md) documenta cómo reproducirla.
-
-El repositorio utiliza la rama `main`. El titular del portafolio gestiona los commits y el push. La configuración del despliegue se definirá al preparar la publicación.
-
-La publicación pública requiere un caso de negocio aprobado, con evidencia verificable de un aporte personal, y la aprobación del perfil, el CV y el contacto.
+La arquitectura, los criterios de verificación y las variables de despliegue se documentan en [Arquitectura de información](docs/arquitectura-de-informacion.md), [Requisitos y validación](docs/requisitos.md) y [Cloudflare Pages](docs/propuesta-cloudflare-pages.md). Los informes de incrementos y las maquetas en `docs/` conservan el historial de diseño y de revisión de RFM CORE.

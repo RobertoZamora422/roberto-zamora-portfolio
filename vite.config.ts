@@ -8,7 +8,6 @@ export default defineConfig({
   plugins: [reactRouter()],
   publicDir: false,
   define: {
-    "process.env.PORTFOLIO_PREVIEW": JSON.stringify(process.env.PORTFOLIO_PREVIEW ?? "0"),
     "process.env.PORTFOLIO_ORIGEN": JSON.stringify(origen ?? ""),
     "process.env.PORTFOLIO_INDEXAR": JSON.stringify(indexar ? "1" : "0"),
   },

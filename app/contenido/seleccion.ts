@@ -1,25 +1,16 @@
 import type { Registro } from "./modelo.ts";
 
 export function seleccionarContenido(registro: Registro) {
-  const perfil = registro.perfil?.revision === "aprobado" ? registro.perfil : undefined;
-  const proyectos = registro.proyectos.flatMap(({ slug, ficha, pagina, portada }) => (
-    ficha.revision === "aprobado"
-      ? [{ slug, ficha, portada, pagina: pagina?.revision === "aprobado" ? pagina : undefined }]
-      : []
-  ));
-  const paginas = proyectos.flatMap(({ slug, ficha, pagina }) => (
-    pagina ? [{ slug, ficha, pagina }] : []
-  ));
-  const casos = registro.casos.filter((caso) => caso.revision === "aprobado");
-  const evidencias = registro.evidencias.filter((evidencia) => evidencia.revision === "aprobado");
-
+  const proyectos = registro.proyectos.filter(({ revision }) => revision === "aprobado")
+    .map(({ pagina, ...proyecto }) => ({
+      ...proyecto, pagina: pagina?.revision === "aprobado" ? pagina : undefined,
+    }));
+  const paginas = proyectos.flatMap(({ pagina, ...proyecto }) => pagina ? [{ ...proyecto, pagina }] : []);
   return {
-    perfil,
+    perfil: registro.perfil?.revision === "aprobado" ? registro.perfil : undefined,
     proyectos,
     paginas,
-    casos,
-    evidencias,
-    proyectoDestacado: paginas.find(({ slug }) => slug === "rfm-core") ?? paginas[0],
-    casoDestacado: casos.find(({ slug }) => slug === registro.casoDestacado),
+    casos: registro.casos.filter(({ revision }) => revision === "aprobado"),
+    evidencias: registro.evidencias.filter(({ revision }) => revision === "aprobado"),
   };
 }

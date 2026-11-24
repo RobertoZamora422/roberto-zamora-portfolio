@@ -1,18 +1,17 @@
 export const proyectoAprobado = {
   slug: "solucion-qa",
-  ficha: {
-    revision: "aprobado",
-    nombre: "Solución QA",
-    resumen: "Resumen de catálogo QA",
-    estado: "Estado verificado QA",
-  },
+  revision: "aprobado",
+  nombre: "Solución QA",
+  estado: "Estado verificado QA",
+  categoria: "Sistema QA",
+  descripcion: "Presentación de portada QA",
+  repositorio: "https://example.org/proyecto",
+  visual: "conceptual",
   pagina: {
     revision: "aprobado",
     entradilla: "Presentación de ficha QA",
-    destacado: "Presentación de portada QA",
     problema: "Problema QA",
     contexto: "Contexto QA",
-    proposito: "Propósito QA",
     solucion: "Solución documentada QA",
     participacion: "Participación documentada QA",
     evidencias: ["archivo-aprobado-qa"],
@@ -48,11 +47,11 @@ export const casoAprobado = {
 export const perfilAprobado = {
   revision: "aprobado",
   nombre: "Perfil QA",
-  presentacion: "Presentación QA",
-  propuesta: "Propuesta QA.",
-  oportunidades: "Oportunidades QA.",
-  formacion: [],
-  trayectoria: [],
+  portada: {
+    area: "Área QA", titular: ["Titular", "de", "prueba"], estudios: "Estudios QA",
+    introduccion: "Introducción QA", enfoque: "Enfoque QA", ubicacion: "Lugar QA",
+    ejes: [], capacidades: [], trayectoria: [], datos: [],
+  },
   retrato: { revision: "aprobado", archivo: "retrato-qa.png", alt: "Retrato QA" },
 };
 
@@ -61,6 +60,5 @@ export function registroFixture() {
     proyectos: [proyectoAprobado],
     evidencias: [evidenciaAprobada],
     casos: [casoAprobado],
-    casoDestacado: casoAprobado.slug,
   });
 }

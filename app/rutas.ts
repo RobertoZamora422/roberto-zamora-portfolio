@@ -1,11 +1,13 @@
 export const paths = {
   inicio: "/",
-  proyectos: "/proyectos/",
-  casos: "/casos-de-estudio/",
-  perfil: "/sobre-mi/",
-  cv: "/cv/",
-  contacto: "/cv/#contacto",
+  trabajo: "/#trabajo",
+  aportacion: "/#aportacion",
+  sobreMi: "/#sobre-mi",
+  contacto: "/#contacto",
 } as const;
 
-export const rutaProyecto = (slug: string) => `${paths.proyectos}${slug}/`;
-export const rutaCaso = (slug: string) => `${paths.casos}${slug}/`;
+export const rutaProyecto = (slug: string) => `/proyectos/${slug}/`;
+export const rutaCaso = (slug: string) => `/casos-de-estudio/${slug}/`;
+
+// Pages sirve los documentos HTML en su URL sin extensión.
+export const rutaRecursoPublico = (archivo: string) => `/recursos/${archivo.replace(/\.html$/, "")}`;

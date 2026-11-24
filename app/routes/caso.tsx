@@ -1,25 +1,26 @@
 import { useLoaderData, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { metadatosPagina } from "../contenido/metadatos";
-import { cargarContenido, urlRecursoLocal } from "../contenido/registro.server";
-import { paths, rutaCaso, rutaProyecto } from "../rutas";
+import { contenido, urlRecursoLocal } from "../contenido/registro.server";
+import { rutaCaso, rutaProyecto } from "../rutas";
 import { PageIntro, TextLink } from "../ui/elementos";
 import { ListaEvidencias } from "../ui/evidencias";
 import { IndiceCaso } from "../ui/indice-caso";
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const { casos, proyectos, evidencias } = await cargarContenido();
+export function loader({ params }: LoaderFunctionArgs) {
+  const { casos, paginas, evidencias } = contenido;
   const caso = casos.find(({ slug }) => slug === params.slug);
   if (!caso) throw new Response(null, { status: 404 });
 
-  const proyecto = proyectos.find(({ slug }) => slug === caso.proyecto);
+  const proyecto = paginas.find(({ slug }) => slug === caso.proyecto);
+  if (!proyecto) throw new Response(null, { status: 404 });
   const { slug, titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites,
-    competencia, periodo, aprendizajes, resumenVisual, ejemplo, fichasBreves } = caso;
+    competencia, periodo, aprendizajes, resumenVisual, ejemplo } = caso;
   return {
     slug, titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites,
-    competencia, periodo, aprendizajes, resumenVisual, ejemplo, fichasBreves,
-    proyecto: proyecto && {
-      nombre: proyecto.ficha.nombre,
-      ruta: proyecto.pagina ? rutaProyecto(proyecto.slug) : undefined,
+    competencia, periodo, aprendizajes, resumenVisual, ejemplo,
+    proyecto: {
+      nombre: proyecto.nombre,
+      ruta: rutaProyecto(proyecto.slug),
     },
     evidencias: caso.evidencias.flatMap((referencia) => {
       const evidencia = evidencias.find(({ id }) => id === referencia);
@@ -32,8 +33,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) => loaderData
-  ? metadatosPagina({ titulo: `${loaderData.titulo} · Casos de estudio`, descripcion: loaderData.resumen, ruta: rutaCaso(loaderData.slug), tipo: "article" })
-  : [{ title: "Página no encontrada · Portafolio profesional" }, { name: "robots", content: "noindex" }];
+  ? metadatosPagina({ titulo: `${loaderData.titulo} · Roberto Zamora`, descripcion: loaderData.resumen, ruta: rutaCaso(loaderData.slug), tipo: "article" })
+  : [];
 
 export default function Caso() {
   const caso = useLoaderData<typeof loader>();
@@ -74,7 +75,7 @@ export default function Caso() {
     ) },
     ...(caso.evidencias.length ? [{
       id: "evidencias", titulo: "Evidencias",
-      contenido: <ListaEvidencias evidencias={caso.evidencias} breve={caso.fichasBreves}
+      contenido: <ListaEvidencias evidencias={caso.evidencias}
         encabezado={resumenVisual?.length ? "h4" : "h3"} />,
     }] : []),
     ...(caso.aprendizajes ? [{ id: "aprendizajes", titulo: "Aprendizajes", contenido: <p>{caso.aprendizajes}</p> }] : []),
@@ -83,12 +84,9 @@ export default function Caso() {
   return (
     <article className="case-detail">
       <PageIntro title={caso.titulo} kicker={(
-        <nav className="project-crumb" aria-label="Ubicación del caso">
-          <TextLink to={paths.casos} back>Volver a Casos de estudio</TextLink>
-        </nav>
+        <TextLink to={caso.proyecto.ruta} back>Volver a {caso.proyecto.nombre}</TextLink>
       )}>
         <p className="lead">{caso.resumen}</p>
-        {process.env.PORTFOLIO_PREVIEW === "1" && <p className="technical-label">Vista local de revisión</p>}
       </PageIntro>
       {!!resumenVisual?.length && (
         <section className="case-overview" aria-labelledby="resumen-caso">
@@ -107,15 +105,10 @@ export default function Caso() {
           </dl>
         </section>
       )}
-      <dl className={resumenVisual?.length ? "project-facts case-facts case-facts--secondary" : "project-facts case-facts"} aria-label="Datos del caso">
-        {caso.proyecto && (
-          <div><dt>Proyecto</dt><dd>{caso.proyecto.ruta
-            ? <TextLink to={caso.proyecto.ruta}>{caso.proyecto.nombre}</TextLink>
-            : caso.proyecto.nombre}</dd></div>
-        )}
+      {(caso.competencia || caso.periodo) && <dl className={resumenVisual?.length ? "project-facts case-facts case-facts--secondary" : "project-facts case-facts"} aria-label="Datos del caso">
         {caso.competencia && <div><dt>Competencia principal</dt><dd>{caso.competencia}</dd></div>}
         {caso.periodo && <div><dt>Periodo</dt><dd>{caso.periodo}</dd></div>}
-      </dl>
+      </dl>}
       {!!resumenVisual?.length && <h2 className="case-technical-title" id="detalle-tecnico" tabIndex={-1}>Detalle técnico</h2>}
       <div className="case-layout">
         <IndiceCaso key={caso.slug} secciones={secciones} />
