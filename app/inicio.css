@@ -233,6 +233,7 @@
 .editorial-axes strong { font-size: 0.875rem; font-weight: 600; }
 
 .editorial-section { padding-block-end: 7.5rem; }
+#trabajo.editorial-section { padding-block-end: clamp(4.75rem, 9vw, 6.75rem); }
 .editorial-section__header {
   display: grid;
   grid-template-columns: 14.375rem minmax(0, 1fr);
@@ -351,19 +352,6 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-.editorial-proof {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
-  margin-block-start: 1.5rem;
-  border-block: 1px solid var(--editorial-line);
-}
-.editorial-proof__item { display: grid; align-content: start; gap: 0.8125rem; padding: 1.4375rem 1.5625rem 1.4375rem 0; }
-.editorial-proof__item strong { color: var(--editorial-green); font: 500 2.4375rem/1 var(--editorial-display); }
-.editorial-proof__item span { max-inline-size: 15rem; color: var(--editorial-muted); font-size: 0.75rem; line-height: 1.5; }
-.editorial-proof__note { align-self: center; color: var(--editorial-muted); font-size: 0.8125rem; line-height: 1.7; }
-.editorial-proof__note a { color: var(--editorial-green); padding-block: 0.25rem; }
-.editorial-proof__note a:hover { text-decoration-thickness: 2px; }
-
 .editorial-abilities {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -417,9 +405,34 @@
 }
 .editorial-contact .editorial-section__header { margin-block-end: 2.75rem; }
 .editorial-contact .editorial-section__index { color: #b4cbb7; }
-.editorial-contact h2 { color: var(--editorial-surface); font-size: clamp(3.875rem, 7vw, 6.25rem); }
+.editorial-contact h2 { max-inline-size: none; color: var(--editorial-surface); font-size: clamp(3.875rem, 7vw, 6.25rem); }
 .editorial-contact .editorial-section__header div > p { max-inline-size: 30.625rem; color: var(--editorial-light); }
-.editorial-contact__actions { gap: 0.75rem; margin-block-end: 4.0625rem; }
+.editorial-contact__actions { gap: 0.75rem; }
+.editorial-contact__channel { display: flex; }
+.editorial-contact__channel .editorial-button { flex: 1; }
+.tema-editorial .editorial-contact__channel .editorial-button:hover { transform: none; }
+.tema-editorial .editorial-contact__channel:has(button) .editorial-button { border-inline-end: 0; }
+.editorial-contact__copy {
+  display: grid;
+  place-items: center;
+  min-inline-size: 3rem;
+  min-block-size: 2.75rem;
+  border: 1px solid #9db7a3;
+  padding: 0.5rem;
+  background: transparent;
+  color: #f3f6ef;
+  cursor: pointer;
+}
+.editorial-contact__copy:hover { background: #355440; }
+.editorial-contact__copy:focus-visible { outline: 3px solid var(--editorial-focus); outline-offset: 3px; }
+.editorial-contact__status {
+  min-block-size: 1.3125rem;
+  margin-block: 0.75rem 2rem;
+  color: var(--editorial-light);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  user-select: text;
+}
 .tema-editorial .editorial-contact .editorial-button { border-color: #9db7a3; color: #f3f6ef; }
 .tema-editorial .editorial-contact .editorial-button:hover { background: #355440; }
 .tema-editorial .editorial-contact .editorial-button--primary { border-color: #e9f0e8; background: #e9f0e8; color: #203b2b; }
@@ -520,8 +533,6 @@
   .editorial-section__header { grid-template-columns: minmax(0, 1fr); gap: 0.8125rem; margin-block-end: 1.6875rem; }
   .editorial-section__header h2 { font-size: clamp(2.9375rem, 10vw, 4.1875rem); }
   .editorial-work, .editorial-abilities { grid-template-columns: minmax(0, 1fr); }
-  .editorial-proof { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .editorial-proof__note { grid-column: 1 / -1; border-block-start: 1px solid var(--editorial-line); padding-block: 0.9375rem; }
   .editorial-abilities article:nth-child(n) {
     grid-template-columns: 2.5rem minmax(0, 1fr);
     padding: 1.4375rem 0;
@@ -532,6 +543,10 @@
   .editorial-contact { padding-block: 4.125rem 1.75rem; }
   .editorial-contact .editorial-section__header { margin-block-end: 1.5625rem; }
   .editorial-contact h2 { font-size: min(4.625rem, 17.6vw); }
+}
+
+@media (max-width: 30rem) {
+  .editorial-contact__actions { display: grid; grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 23.75rem) {

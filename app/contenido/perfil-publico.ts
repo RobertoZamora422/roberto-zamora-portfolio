@@ -54,6 +54,7 @@ export const perfilPublico: Perfil = {
   ],
   formacion: [formacion],
   correo: "robertozamora421@gmail.com",
+  whatsapp: { revision: "aprobado", numero: "+593960485065" },
   enlaces: [
     { titulo: "GitHub", url: "https://github.com/RobertoZamora422" },
     { titulo: "LinkedIn", url: "https://www.linkedin.com/in/roberto-zamora-alcivar" },

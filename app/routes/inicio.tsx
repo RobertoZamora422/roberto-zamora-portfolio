@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLoaderData, type MetaFunction } from "react-router";
 import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/newsreader/standard.css";
@@ -50,7 +50,7 @@ export async function loader() {
     cvPdf: cv && urlRecursoLocal(cv.archivo),
     retrato: retrato && { src: urlRecursoLocal(retrato.archivo), alt: retrato.alt },
     correo: perfil?.correo,
-    whatsapp: whatsapp && `https://wa.me/${whatsapp.numero.slice(1)}`,
+    whatsapp: whatsapp?.numero,
     enlaces: perfil?.enlaces,
     sobreMi: perfil?.sobreMi,
     proyecto: proyectoDestacado && {
@@ -58,15 +58,23 @@ export async function loader() {
       descripcion: proyectoDestacado.pagina.destacado,
       ruta: rutaProyecto(proyectoDestacado.slug),
     },
-    caso: casoDestacado && {
-      ruta: rutaCaso(casoDestacado.slug),
-      prueba: casoDestacado.portada,
-    },
+    rutaCasoDestacado: casoDestacado && !casoDestacado.portada ? rutaCaso(casoDestacado.slug) : undefined,
   };
 }
 
 function Flecha() {
   return <span aria-hidden="true">↗</span>;
+}
+
+function BotonCopiar({ etiqueta, onClick }: { etiqueta: string; onClick: () => void }) {
+  return (
+    <button type="button" className="editorial-contact__copy" aria-label={etiqueta} title={etiqueta} onClick={onClick}>
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+        <rect x="8" y="8" width="12" height="12" rx="2" />
+        <path d="M5 16a2 2 0 0 1-1-2V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 1" />
+      </svg>
+    </button>
+  );
 }
 
 function EncabezadoSeccion({ id, indice, titulo, children }: {
@@ -119,7 +127,21 @@ function TarjetaProyecto({ tarjeta }: { tarjeta: Awaited<ReturnType<typeof loade
 
 export default function Inicio() {
   const { portada, tarjetas, nombre, presentacion, propuesta, cvPdf, retrato,
-    correo, whatsapp, enlaces, sobreMi, proyecto, caso } = useLoaderData<typeof loader>();
+    correo, whatsapp, enlaces, sobreMi, proyecto, rutaCasoDestacado } = useLoaderData<typeof loader>();
+  const [copiaActiva, setCopiaActiva] = useState(false);
+  const [estadoCopia, setEstadoCopia] = useState("");
+  useEffect(() => { setCopiaActiva(true); }, []);
+
+  async function copiarContacto(dato: string, confirmacion: string) {
+    setEstadoCopia("");
+    try {
+      await navigator.clipboard.writeText(dato);
+      setEstadoCopia(confirmacion);
+    } catch {
+      setEstadoCopia(`No se pudo copiar automáticamente. Copia este dato: ${dato}`);
+    }
+  }
+
   const titular = portada?.titular;
   const mailto = correo && `mailto:${encodeURIComponent(correo).replace("%40", "@")}`;
   const asunto = encodeURIComponent(`Oportunidad profesional${nombre ? ` - ${nombre}` : ""}`);
@@ -179,17 +201,7 @@ export default function Inicio() {
             <div className="editorial-project__links"><Link to={proyecto.ruta}>Explorar el proyecto <Flecha /></Link></div>
           </article>
         )}
-        {caso?.prueba ? (
-          <div className="editorial-proof" role="group" aria-label="Evidencia técnica">
-            {caso.prueba.indicadores.map(({ valor, descripcion }) => (
-              <div className="editorial-proof__item" key={valor}><strong>{valor}</strong><span>{descripcion}</span></div>
-            ))}
-            <p className="editorial-proof__note">
-              {caso.prueba.alcance}{" "}
-              <Link to={`${caso.ruta}#evidencias`}>Consultar evidencias <Flecha /></Link>
-            </p>
-          </div>
-        ) : caso && <Link to={caso.ruta}>Leer el caso de estudio <Flecha /></Link>}
+        {rutaCasoDestacado && <Link to={rutaCasoDestacado}>Leer el caso de estudio <Flecha /></Link>}
       </section>
 
       <section className="editorial-wrap editorial-section" id="aportacion" tabIndex={-1} aria-labelledby="titulo-aportacion">
@@ -228,17 +240,29 @@ export default function Inicio() {
 
       <section className="editorial-contact" id="contacto" tabIndex={-1} aria-labelledby="titulo-contacto">
         <div className="editorial-wrap">
-          <EncabezadoSeccion id="titulo-contacto" indice="04 — Contacto" titulo={<>Trabajemos<br /> juntos.</>}>
+          <EncabezadoSeccion id="titulo-contacto" indice="04 — Contacto" titulo="Trabajemos juntos.">
             Si consideras que mi perfil puede encajar en tu organización, me gustaría conversar.
           </EncabezadoSeccion>
           <div className="editorial-actions editorial-contact__actions">
-            {mailto && <a className="editorial-button editorial-button--primary" href={`${mailto}?subject=${asunto}`}>Escribirme por correo <Flecha /></a>}
-            {whatsapp && <a className="editorial-button" href={whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp <Flecha /></a>}
+            {whatsapp && (
+              <div className="editorial-contact__channel">
+                <a className="editorial-button editorial-button--primary" href={`https://wa.me/${whatsapp.slice(1)}`}
+                  target="_blank" rel="noopener noreferrer">WhatsApp <Flecha /></a>
+                {copiaActiva && <BotonCopiar etiqueta="Copiar número de WhatsApp" onClick={() => copiarContacto(whatsapp, "Número copiado")} />}
+              </div>
+            )}
+            {correo && (
+              <div className="editorial-contact__channel">
+                <a className={whatsapp ? "editorial-button" : "editorial-button editorial-button--primary"}
+                  href={`${mailto}?subject=${asunto}`}>Correo <Flecha /></a>
+                {copiaActiva && <BotonCopiar etiqueta="Copiar correo" onClick={() => copiarContacto(correo, "Correo copiado")} />}
+              </div>
+            )}
             <EnlaceCv pdf={cvPdf} className="editorial-button" flecha />
           </div>
+          <p className="editorial-contact__status" role="status" aria-atomic="true">{estadoCopia}</p>
           <footer className="editorial-footer">
             <a className="editorial-brand" href="#inicio" aria-label="RZ. Volver al inicio"><MarcaRz /></a>
-            {nombre && <span>{nombre}{portada && " · Ecuador"}</span>}
             <div className="editorial-footer__links">
               {perfiles.map(({ titulo, url }) => (
                 <a key={url} href={url} target="_blank" rel="noopener noreferrer">{titulo} <Flecha /></a>

@@ -469,11 +469,13 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
     assert.match(html, /name="description" content="Estudiante de 8vo semestre de Ingeniería de Software/);
     assert.match(html, /property="og:title" content="Roberto Zamora · Del análisis a la solución\."/);
     for (const [id] of seccionesV1) assert.match(html, new RegExp(`id="${id}"`));
-    assert.doesNotMatch(html, /raw\.githubusercontent\.com|fonts\.googleapis\.com|MAQUETA CONCEPTUAL|wa\.me\//);
+    assert.doesNotMatch(html, /raw\.githubusercontent\.com|fonts\.googleapis\.com|MAQUETA CONCEPTUAL/);
+    assert.doesNotMatch(html, /editorial-proof|171\/171|Reglas de negocio con trazabilidad documentada|La trazabilidad relaciona reglas|Consultar evidencias/);
 
     const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
     try {
       const page = await browser.newPage({ reducedMotion: "reduce" });
+      await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin });
       const errores = [];
       page.on("pageerror", (error) => errores.push(error.message));
       page.on("response", (respuesta) => {
@@ -482,6 +484,8 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
       const hero = page.locator("#inicio");
       const trabajo = page.locator("#trabajo");
       const contacto = page.locator("#contacto");
+      const accionesContacto = contacto.locator(".editorial-contact__actions");
+      const pieContacto = contacto.locator("footer");
       const menu = page.locator(".editorial-menu summary");
       const nav = page.getByRole("navigation", { name: "Principal" });
       for (const width of anchosV1) {
@@ -524,7 +528,14 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
         }
         assert.equal(await page.locator("#aportacion h3").count(), 4);
         assert.match(await page.locator("#sobre-mi").innerText(), /Universidad de Las Américas \(UDLA\)[\s\S]*Rancho Flor María/);
-        assert.equal(await contacto.getByRole("link", { name: "WhatsApp" }).count(), 0);
+        const tituloContacto = contacto.getByRole("heading", { name: "Trabajemos juntos.", exact: true });
+        const lineasContacto = await tituloContacto.evaluate((titulo) => {
+          const rango = document.createRange();
+          rango.selectNodeContents(titulo);
+          return rango.getClientRects().length;
+        });
+        if (!esMovil) assert.equal(lineasContacto, 1, `Titular de contacto a ${width} px`);
+        assert.doesNotMatch(await pieContacto.innerText(), /Roberto Zamora · Ecuador/);
         const medidas = await page.evaluate(async () => {
           const fuentes = await Promise.all([
             '500 68px "Newsreader Variable"', 'italic 400 68px "Newsreader Variable"', '600 16px "DM Sans Variable"',
@@ -539,7 +550,7 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
             titulos,
             fuentes: fuentes.every((caras) => caras.some((cara) => cara.status === "loaded")),
             movimiento: getComputedStyle(document.documentElement).scrollBehavior,
-            controles: [...document.querySelectorAll("header a, header summary, .editorial-actions a, .editorial-project__links a, footer a")]
+            controles: [...document.querySelectorAll("header a, header summary, .editorial-actions a, .editorial-actions button, .editorial-project__links a, footer a")]
               .map((control) => control.getBoundingClientRect().height).filter(Boolean),
           };
         });
@@ -575,13 +586,35 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
           }, ancla);
           if (esMovil) assert.equal(await nav.isVisible(), false);
         }
-        const primario = contacto.getByRole("link", { name: "Escribirme por correo" });
-        const destino = new URL(await primario.getAttribute("href"));
+        const whatsapp = accionesContacto.getByRole("link", { name: "WhatsApp", exact: true });
+        const correo = accionesContacto.getByRole("link", { name: "Correo", exact: true });
+        const cv = accionesContacto.getByRole("link", { name: /^Ver CV/ });
+        const numero = perfilPublico.whatsapp.numero;
+        assert.equal(await whatsapp.getAttribute("href"), `https://wa.me/${numero.slice(1)}`);
+        assert.equal(await whatsapp.getAttribute("target"), "_blank");
+        assert.equal(await cv.getAttribute("href"), rutaCvPdf);
+        assert.equal(await cv.getAttribute("target"), "_blank");
+        const destino = new URL(await correo.getAttribute("href"));
         assert.equal(destino.protocol, "mailto:");
         assert.equal(destino.pathname, perfilPublico.correo);
         assert.equal(destino.searchParams.get("subject"), "Oportunidad profesional - Roberto Zamora");
+        for (const [enlace, etiqueta, mensaje, dato] of [
+          [whatsapp, "Copiar número de WhatsApp", "Número copiado", numero],
+          [correo, "Copiar correo", "Correo copiado", perfilPublico.correo],
+        ]) {
+          await page.keyboard.press("Tab");
+          assert(await enlace.evaluate((control) => control === document.activeElement));
+          await page.keyboard.press("Tab");
+          const copiar = accionesContacto.getByRole("button", { name: etiqueta });
+          assert(await copiar.evaluate((control) => control === document.activeElement && control.matches(":focus-visible")));
+          await page.keyboard.press("Space");
+          await contacto.getByRole("status").getByText(mensaje, { exact: true }).waitFor();
+          assert.equal(await page.evaluate(() => navigator.clipboard.readText()), dato);
+        }
+        await page.keyboard.press("Tab");
+        assert(await cv.evaluate((control) => control === document.activeElement));
         for (const { titulo, url } of perfilPublico.enlaces) {
-          assert.equal(await contacto.getByRole("link", { name: titulo, exact: true }).getAttribute("href"), url);
+          assert.equal(await pieContacto.getByRole("link", { name: titulo, exact: true }).getAttribute("href"), url);
         }
         await contacto.getByRole("link", { name: /Volver al inicio/ }).press("Enter");
         await page.waitForFunction(() => location.hash === "#inicio" && document.activeElement.id === "inicio");
@@ -597,10 +630,8 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
       await page.waitForURL(origin + rutaRfm);
       assert(await page.evaluate(() => window.pruebaV1));
       await page.getByRole("heading", { name: "RFM CORE", level: 1 }).waitFor();
-      await page.goBack();
-      await trabajo.getByRole("link", { name: "Consultar evidencias" }).press("Enter");
-      await page.waitForURL(origin + rutaCasoRfm + "#evidencias");
-      await page.waitForFunction(() => document.activeElement.id === "evidencias");
+      await page.getByRole("link", { name: tituloCasoRfm, exact: true }).press("Enter");
+      await page.waitForURL(origin + rutaCasoRfm);
       const fichas = page.getByRole("region", { name: "Evidencias", exact: true });
       for (const nombre of evidenciasRfm) {
         const href = rutaEvidencia(nombre);
@@ -622,10 +653,9 @@ test("Inicio V1 renderiza las cinco secciones, las anclas y los enlaces en escri
           assert.equal(await acceso.getAttribute("target"), "_blank");
           assert.equal(await acceso.getAttribute("download"), null);
         }
-        assert.equal(await simple.getByRole("link", { name: "Correo", exact: true }).getAttribute("href"), `mailto:${perfilPublico.correo}`);
-        await simple.goto(origin);
-        await simple.getByRole("link", { name: "Consultar evidencias" }).press("Enter");
-        await simple.waitForURL(origin + rutaCasoRfm + "#evidencias");
+        assert.equal(await simple.locator("#contacto footer").getByRole("link", { name: "Correo", exact: true }).getAttribute("href"), `mailto:${perfilPublico.correo}`);
+        assert.equal(await simple.getByRole("link", { name: "WhatsApp", exact: true }).getAttribute("href"), `https://wa.me/${perfilPublico.whatsapp.numero.slice(1)}`);
+        assert.equal(await simple.locator("#contacto").getByRole("button", { name: /^Copiar/ }).count(), 0);
       } finally {
         await simple.close();
       }
@@ -791,7 +821,9 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
       const errores = [];
       page.on("pageerror", (error) => errores.push(error.message));
       await page.goto(origin);
-      await page.locator("#trabajo").getByRole("link", { name: casoRfmPublico ? "Consultar evidencias" : "Leer el caso de estudio" }).waitFor();
+      const enlaceDestacado = page.locator("#trabajo").getByRole("link", { name: "Leer el caso de estudio" });
+      if (casoRfmPublico) assert.equal(await enlaceDestacado.count(), 0);
+      else await enlaceDestacado.waitFor();
       for (const [ruta, enlace, titulo] of [
         [rutaRfm, "Explorar el proyecto", "RFM CORE"], [rutaCasoRfm, tituloCasoRfm, tituloCasoRfm],
       ]) {
