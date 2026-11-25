@@ -5,13 +5,12 @@ type EvidenciaConsultable = Pick<Evidencia, "id" | "titulo" | "tipo" | "afirmaci
   url: string;
 };
 
-function FichaEvidencia({ titulo, tipo, afirmacion, fuente, autoria, url, encabezado: Encabezado }:
-  EvidenciaConsultable & { encabezado: "h3" | "h4" }) {
+function FichaEvidencia({ titulo, tipo, afirmacion, fuente, autoria, url }: EvidenciaConsultable) {
   return (
     <article className="panel evidence-card">
       <div className="evidence-card__title">
         <p className="technical-label">{tipo}</p>
-        <Encabezado>{titulo}</Encabezado>
+        <h4>{titulo}</h4>
       </div>
       <dl className="evidence-card__details">
         <div><dt>Qué demuestra</dt><dd>{afirmacion}</dd></div>
@@ -25,14 +24,13 @@ function FichaEvidencia({ titulo, tipo, afirmacion, fuente, autoria, url, encabe
   );
 }
 
-export function ListaEvidencias({ evidencias, encabezado = "h3" }: {
+export function ListaEvidencias({ evidencias }: {
   evidencias: readonly EvidenciaConsultable[];
-  encabezado?: "h3" | "h4";
 }) {
   return (
     <ul className="evidence-list" role="list">
       {evidencias.map((evidencia) => <li key={evidencia.id}>
-        <FichaEvidencia {...evidencia} encabezado={encabezado} />
+        <FichaEvidencia {...evidencia} />
       </li>)}
     </ul>
   );

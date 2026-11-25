@@ -4,9 +4,9 @@
 
 - La presentación y las cuatro secciones numeradas de Inicio se pueden leer en HTML y abrir directamente por ancla. La cabecera compartida enlaza con la raíz, las secciones y el PDF.
 - Desde Mi trabajo se llega a la ficha de RFM CORE, a la aplicación y al repositorio. La tarjeta de Claridez conduce a su repositorio.
-- Cada caso publicado requiere un proyecto con ficha aprobada. La invitación aparece al final de esa ficha. El caso enlaza al proyecto, sus cuatro evidencias documentales y las anclas de ejemplos concretos.
+- Cada proyecto con ficha aprobada puede publicar un único caso de estudio. La invitación aparece al final de esa ficha. El caso enlaza al proyecto, sus cuatro evidencias documentales y las anclas de ejemplos concretos.
 - El CV se abre como PDF. WhatsApp, correo y los perfiles públicos funcionan mediante enlaces. Si el navegador permite copiar al portapapeles, cada control de copia anuncia el resultado.
-- Las rutas antiguas se resuelven con HTTP 301. Una dirección inexistente devuelve HTTP 404 y ofrece un enlace a Inicio.
+- Las rutas antiguas se resuelven con HTTP 301. Una dirección de navegación inexistente redirige a `/` con HTTP 302. Los archivos y datos ausentes devuelven HTTP 404.
 - Las pruebas inspeccionan el artefacto, el HTML inicial, los datos de navegación, las fuentes locales, los encabezados, la selección de contenido aprobado y la configuración con indexación habilitada o deshabilitada. El navegador recorre las tres páginas en 1440, 1280, 1024, 768, 390 y 320 píxeles.
 
 El registro, sus relaciones y el prerenderizado se describen en [Arquitectura de información](arquitectura-de-informacion.md). Los comandos de validación están en el [README](../README.md).
@@ -24,5 +24,5 @@ El registro, sus relaciones y el prerenderizado se describen en [Arquitectura de
 ## Condiciones de publicación
 
 - Revisar la compilación candidata y sus recursos antes de autorizar la publicación. Confirmar un caso de negocio aprobado con al menos una evidencia autorizada que respalde un aporte personal. Confirmar el origen canónico y revisar el PDF oficial y los canales del perfil antes de publicar cambios.
-- Tras publicar, verificar en producción los recorridos, las rutas y el 404, los enlaces a evidencias sin autenticación, HTTPS, los metadatos y el sitemap.
+- Tras publicar, verificar en producción los recorridos, las rutas, los 302 de navegación y los 404 de recursos, los enlaces a evidencias sin autenticación, HTTPS, los metadatos y el sitemap.
 - Registrar la versión publicada y, cuando exista, identificar una versión anterior aprobada a la que se pueda volver si hay una regresión. [Reversión de despliegues en Cloudflare Pages](https://developers.cloudflare.com/pages/configuration/rollbacks/)

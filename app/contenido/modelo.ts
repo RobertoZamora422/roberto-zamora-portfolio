@@ -5,7 +5,7 @@ interface ArchivoRevisado {
   archivo: string;
 }
 
-interface TextoConTitulo {
+export interface TextoConTitulo {
   titulo: string;
   descripcion: string;
 }
@@ -16,7 +16,7 @@ export interface PortadaProfesional {
   titular: readonly [primera: string, segunda: string, enfasis: string];
   estudios: string;
   introduccion: string;
-  enfoque: string;
+  enfoque: readonly string[];
   ubicacion: string;
   ejes: readonly string[];
   capacidades: readonly TextoConTitulo[];
@@ -38,16 +38,16 @@ export interface Perfil {
 export interface PaginaProyecto {
   revision: Revision;
   entradilla: string;
-  problema: string;
-  contexto: string;
-  solucion: string;
-  participacion: string;
+  contexto: readonly string[];
+  solucion: readonly string[];
+  participacion: readonly string[];
   tecnologias?: readonly string[];
   evidencias: readonly string[];
   capturas?: readonly (ArchivoRevisado & {
     titulo: string;
     alt: string;
     descripcion: string;
+    nota?: string;
     ancho: number;
     alto: number;
   })[];
@@ -66,28 +66,40 @@ export interface Proyecto {
   pagina?: PaginaProyecto;
 }
 
+export interface Apartado {
+  titulo: string;
+  parrafos: readonly string[];
+}
+
 export interface Caso {
   revision: Revision;
-  slug: string;
   proyecto: string;
   titulo: string;
   resumen: string;
-  contexto: string;
-  alcance: string;
-  decisiones: string;
-  trabajo: string;
-  validacion: string;
-  resultadosYLimites: string;
-  evidencias: readonly string[];
+  pregunta: string;
+  introduccion: string;
+  resumenVisual: readonly TextoConTitulo[];
+  competencias?: string;
   periodo?: string;
-  competencia?: string;
-  aprendizajes?: string;
-  resumenVisual?: readonly { etiqueta: string; valor: string; detalle?: string }[];
+  contexto: readonly string[];
+  alcance: readonly string[];
+  decisiones: readonly Apartado[];
   ejemplo?: {
-    titulo: string;
-    situaciones: readonly { titulo: string; descripcion: string }[];
+    situaciones: readonly Apartado[];
+    conclusion: string;
     referencias: readonly { evidencia: string; texto: string; ancla: string }[];
   };
+  trazabilidad: readonly string[];
+  validacion: {
+    introduccion: string;
+    escenarios: readonly TextoConTitulo[];
+    ejecucion: string;
+    resultados: readonly TextoConTitulo[];
+    fuente: string;
+    limites: readonly string[];
+  };
+  evidencias: readonly string[];
+  aprendizajes?: readonly string[];
 }
 
 export interface Evidencia {

@@ -11,6 +11,10 @@ export function PageIntro({ title, kicker, children }: { title: string; kicker?:
   );
 }
 
+export function Parrafos({ textos }: { textos: readonly string[] }) {
+  return textos.map((texto) => <p key={texto}>{texto}</p>);
+}
+
 export function Arrow({ back = false }: { back?: boolean }) {
   return <span className="link-arrow" aria-hidden="true">{back ? "←" : "→"}</span>;
 }

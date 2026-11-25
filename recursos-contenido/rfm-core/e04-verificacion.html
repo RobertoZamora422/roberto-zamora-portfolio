@@ -43,7 +43,7 @@ thead th:last-child,tbody td:last-child{white-space:nowrap}
 </head>
 <body>
 <main>
-<nav aria-label="Ubicación de la evidencia"><a href="../../casos-de-estudio/del-interes-comercial-al-contrato/#evidencias">← Volver al caso</a></nav>
+<nav aria-label="Ubicación de la evidencia"><a href="/rfm-core/caso-de-estudio/#evidencias">← Volver al caso</a></nav>
 <header><p class="status">RFM CORE</p><h1>E04 — Pruebas y resultados</h1><p class="status">Auditoría local y validación en CI</p></header>
 
       <h2>Auditoría local del 11 de noviembre de 2026</h2>
@@ -62,7 +62,7 @@ thead th:last-child,tbody td:last-child{white-space:nowrap}
       <p>El <a href="https://github.com/RobertoZamora422/rfm-core---django-react/pull/2">PR #2</a> incorporó las regresiones de E04 y el aislamiento del backend en CI. El <a href="https://github.com/RobertoZamora422/rfm-core---django-react/pull/3">PR #3</a> actualizó las dependencias del frontend. Ambos cambios están en el <a href="https://github.com/RobertoZamora422/rfm-core---django-react/commit/a95ce07fbf26023a70ddfbd3e52512ae58b3796f">commit <code>a95ce07</code> de <code>main</code></a>. Allí se pueden consultar el <a href="https://github.com/RobertoZamora422/rfm-core---django-react/blob/a95ce07fbf26023a70ddfbd3e52512ae58b3796f/docs/evidencias/E04/informe.md">resumen técnico publicado de E04</a> y el <a href="https://github.com/RobertoZamora422/rfm-core---django-react/blob/a95ce07fbf26023a70ddfbd3e52512ae58b3796f/backend/comercial/services.py#L338-L444">código de conversión</a>.</p>
       <h2>Escenarios comprobados</h2>
       <dl class="rules">
-        <dt id="qa-06">QA-06 · Conversión sin paquete</dt><dd>El alta pública de servicio completo devolvió HTTP 201 con el paquete pendiente. La confirmación devolvió HTTP 200. El intento de formalizar devolvió HTTP 400 por el campo paquete, conservó la cotización confirmada y dejó cero contratos. La <a href="https://github.com/RobertoZamora422/rfm-core---django-react/blob/a95ce07fbf26023a70ddfbd3e52512ae58b3796f/backend/comercial/test_servicios_paquetes.py#L275-L308">prueba integrada de QA-06</a> corresponde a <a href="e02-trazabilidad.html#rn-03">RN-03</a>.</dd>
+        <dt id="qa-06">QA-06 · Conversión sin paquete</dt><dd>El alta pública de servicio completo devolvió HTTP 201 con el paquete pendiente. La confirmación devolvió HTTP 200. El intento de formalizar devolvió HTTP 400 por el campo paquete, conservó la cotización confirmada y dejó cero contratos. La <a href="https://github.com/RobertoZamora422/rfm-core---django-react/blob/a95ce07fbf26023a70ddfbd3e52512ae58b3796f/backend/comercial/test_servicios_paquetes.py#L275-L308">prueba integrada de QA-06</a> corresponde a <a href="e02-trazabilidad#rn-03">RN-03</a>.</dd>
         <dt id="qa-14">QA-14 · Condiciones históricas</dt><dd>Con una instantánea reutilizable se mantienen los parámetros y beneficios de la oferta. Si la instantánea es insuficiente o cambia el paquete final, se reconstruyen condiciones con datos vigentes y el valor acordado se mantiene explícito. Consulta las <a href="https://github.com/RobertoZamora422/rfm-core---django-react/blob/a95ce07fbf26023a70ddfbd3e52512ae58b3796f/backend/comercial/test_servicios_paquetes.py#L401-L677">pruebas integradas de conservación y reconstrucción</a>.</dd>
       </dl>
       <h2>Validación independiente en GitHub Actions</h2>

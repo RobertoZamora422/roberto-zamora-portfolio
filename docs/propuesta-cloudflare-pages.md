@@ -20,11 +20,13 @@ El 24 de noviembre de 2026, el dominio `robertozamora.claridez.com` servía Inic
 | `/proyectos/` | `/#trabajo` |
 | `/sobre-mi/` | `/#sobre-mi` |
 | `/cv/` | `/#contacto` |
-| `/casos-de-estudio/` | `/casos-de-estudio/del-interes-comercial-al-contrato/` |
+| `/proyectos/rfm-core/` | `/rfm-core/` |
+| `/casos-de-estudio/del-interes-comercial-al-contrato/` | `/rfm-core/caso-de-estudio/` |
+| `/casos-de-estudio/` | `/rfm-core/caso-de-estudio/` |
 
 Las reglas coinciden con rutas exactas. Un navegador que abre `/cv/#contacto` solicita `/cv/`, recibe el fragmento explícito en `Location` y sitúa al visitante en Contacto. Pages conserva su normalización de las evidencias de `.html` a la URL sin extensión. [Redirecciones de Pages](https://developers.cloudflare.com/pages/configuration/redirects/)
 
-El comportamiento predeterminado de Pages al faltar `404.html` es servir Inicio con HTTP 200 en rutas desconocidas. El pequeño manejador de `cloudflare/respuesta.js` permite recuperar un enlace perdido con HTTP 404 y un acceso a Inicio. El archivo `_routes.json` deja las páginas, evidencias y redirecciones en el servicio estático. [Servicio de páginas](https://developers.cloudflare.com/pages/configuration/serving-pages/) · [Modo avanzado de Pages Functions](https://developers.cloudflare.com/pages/functions/advanced-mode/)
+Un archivo `404.html` vacío permite que el servicio estático devuelva 404 al faltar un recurso. Ante una navegación GET o HEAD a una dirección desconocida, `cloudflare/respuesta.js` responde directamente con HTTP 302 hacia `/`. Las solicitudes de datos y archivos ausentes mantienen su error HTTP. `_routes.json` deja las rutas publicadas, las redirecciones 301, los archivos de `/assets/` y las evidencias de `/recursos/` en el servicio estático. [Servicio de páginas](https://developers.cloudflare.com/pages/configuration/serving-pages/) · [Modo avanzado de Pages Functions](https://developers.cloudflare.com/pages/functions/advanced-mode/)
 
 ## Comprobación de la versión publicada
 

@@ -1,22 +1,21 @@
 import { useLoaderData, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { metadatosPagina } from "../contenido/metadatos";
-import { contenido, urlRecursoLocal } from "../contenido/registro.server";
-import { paths, rutaCaso, rutaProyecto } from "../rutas";
-import { PageIntro, TextLink } from "../ui/elementos";
+import { contenido } from "../contenido/registro.server";
+import { paths, rutaCaso, rutaProyecto, rutaRecursoPublico } from "../rutas";
+import { PageIntro, Parrafos, TextLink } from "../ui/elementos";
 import { EnlacesProyecto } from "../ui/enlaces-proyecto";
 
 export function loader({ params }: LoaderFunctionArgs) {
-  const proyecto = contenido.paginas.find(({ slug }) => slug === params.slug);
+  const proyecto = contenido.paginas.find(({ slug }) => slug === params.proyecto);
   if (!proyecto) throw new Response(null, { status: 404 });
   const { slug, nombre, estado, aplicacion, repositorio, pagina } = proyecto;
-  const { entradilla, contexto, problema, solucion, participacion, tecnologias } = pagina;
+  const { entradilla, contexto, solucion, participacion, tecnologias } = pagina;
+  const caso = contenido.casos.find((entrada) => entrada.proyecto === slug);
   return {
-    slug, nombre, estado, aplicacion, repositorio, entradilla, contexto, problema, solucion, participacion, tecnologias,
+    slug, nombre, estado, aplicacion, repositorio, entradilla, contexto, solucion, participacion, tecnologias,
     capturas: pagina.capturas?.filter(({ revision }) => revision === "aprobado")
-      .map(({ archivo, titulo, alt, descripcion, ancho, alto }) => ({ titulo, alt, descripcion, ancho, alto, url: urlRecursoLocal(archivo) })),
-    casos: contenido.casos.filter((caso) => caso.proyecto === slug).map(({ slug, titulo, resumen }) => ({
-      titulo, resumen, ruta: rutaCaso(slug),
-    })),
+      .map(({ archivo, titulo, alt, descripcion, nota, ancho, alto }) => ({ titulo, alt, descripcion, nota, ancho, alto, url: rutaRecursoPublico(archivo) })),
+    caso: caso && { titulo: caso.titulo, resumen: caso.resumen, ruta: rutaCaso(slug) },
   };
 }
 
@@ -41,22 +40,22 @@ export default function Proyecto() {
       <div className="project-story">
         <section aria-labelledby="problema">
           <h2 id="problema">Contexto y problema</h2>
-          <div className="project-story__body"><p>{proyecto.contexto}</p><p>{proyecto.problema}</p></div>
+          <div className="project-story__body"><Parrafos textos={proyecto.contexto} /></div>
         </section>
         <section aria-labelledby="solucion">
           <h2 id="solucion">La solución</h2>
-          <p>{proyecto.solucion}</p>
+          <div className="project-story__body"><Parrafos textos={proyecto.solucion} /></div>
         </section>
         {!!proyecto.capturas?.length && (
           <section className="project-product" aria-labelledby="producto">
             <h2 id="producto">El producto</h2>
             <div className="project-captures">
-              {proyecto.capturas.map(({ url, titulo, alt, descripcion, ancho, alto }) => (
+              {proyecto.capturas.map(({ url, titulo, alt, descripcion, nota, ancho, alto }) => (
                 <figure key={url}>
                   <a href={url} aria-label={`Ampliar captura de ${titulo}`}>
                     <img src={url} alt={alt} width={ancho} height={alto} loading="lazy" />
                   </a>
-                  <figcaption><strong>{titulo}</strong><p>{descripcion}</p></figcaption>
+                  <figcaption><h3>{titulo}</h3><p>{descripcion}</p>{nota && <small><em>{nota}</em></small>}</figcaption>
                 </figure>
               ))}
             </div>
@@ -64,19 +63,19 @@ export default function Proyecto() {
         )}
         <section aria-labelledby="participacion">
           <h2 id="participacion">Mi participación</h2>
-          <p>{proyecto.participacion}</p>
+          <div className="project-story__body"><Parrafos textos={proyecto.participacion} /></div>
         </section>
       </div>
-      {proyecto.casos.map(({ ruta, titulo, resumen }) => (
-        <section className="lectura-caso" key={ruta} aria-label={`Caso de estudio · ${titulo}`}>
+      {proyecto.caso && (
+        <section className="lectura-caso" aria-label={`Caso de estudio · ${proyecto.caso.titulo}`}>
           <p className="editorial-section__index">Caso de estudio</p>
           <div>
-            <h2>{titulo}.</h2>
-            <p>{resumen}</p>
-            <TextLink to={ruta} label={`Leer caso de estudio: ${titulo}`}>Leer caso de estudio</TextLink>
+            <h2>{proyecto.caso.titulo}</h2>
+            <p>{proyecto.caso.resumen}</p>
+            <TextLink to={proyecto.caso.ruta} label={`Leer caso de estudio: ${proyecto.caso.titulo}`}>Leer caso de estudio</TextLink>
           </div>
         </section>
-      ))}
+      )}
     </article>
   );
 }

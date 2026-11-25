@@ -2,8 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLoaderData, useRouteLoaderData, type MetaFunction } from "react-router";
 import type { loader as loaderGlobal } from "../root";
 import { metadatosPagina } from "../contenido/metadatos";
-import { contenido, urlRecursoLocal } from "../contenido/registro.server";
-import { paths, rutaProyecto } from "../rutas";
+import { contenido } from "../contenido/registro.server";
+import { paths, rutaProyecto, rutaRecursoPublico } from "../rutas";
 import { EnlacesProyecto } from "../ui/enlaces-proyecto";
 import { EnlaceCv } from "../ui/enlace-cv";
 
@@ -26,13 +26,13 @@ export function loader() {
       slug, nombre, meta: `${categoria} · ${estado}`, descripcion, repositorio, aplicacion,
       ruta: pagina ? rutaProyecto(slug) : undefined,
       conceptual: visual === "conceptual",
-      captura: captura && { src: urlRecursoLocal(captura.archivo), alt: captura.alt, ancho: captura.ancho, alto: captura.alto },
+      captura: captura && { src: rutaRecursoPublico(captura.archivo), alt: captura.alt, ancho: captura.ancho, alto: captura.alto },
     };
   });
   return {
     portada, tarjetas,
     descripcion: portada ? `${portada.estudios} ${portada.introduccion}` : undefined,
-    retrato: retrato && { src: urlRecursoLocal(retrato.archivo), alt: retrato.alt },
+    retrato: retrato && { src: rutaRecursoPublico(retrato.archivo), alt: retrato.alt },
     whatsapp: whatsapp?.numero,
   };
 }
@@ -126,7 +126,7 @@ export default function Inicio() {
           {portada && (
             <>
               <p className="editorial-hero__intro"><strong>{portada.estudios}</strong> {portada.introduccion}</p>
-              <p className="editorial-hero__detail">{portada.enfoque}</p>
+              {portada.enfoque.map((parrafo) => <p className="editorial-hero__detail" key={parrafo}>{parrafo}</p>)}
             </>
           )}
         </div>

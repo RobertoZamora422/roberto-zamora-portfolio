@@ -1,19 +1,12 @@
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { Config } from "@react-router/dev/config";
 import { registroPublico as registro } from "./app/contenido/publico";
-import { seleccionarContenido } from "./app/contenido/seleccion";
+import { redirecciones, rutasPublicas as rutas } from "./app/contenido/registro.server";
 import { validarRegistro } from "./app/contenido/validar";
 import { configuracionPublicacion, favicon, tarjetaSocial } from "./app/contenido/publicacion";
 import { metadatosPagina } from "./app/contenido/metadatos";
-import { paths, rutaCaso, rutaProyecto, rutaRecursoPublico } from "./app/rutas";
-
-const { paginas, casos } = seleccionarContenido(registro);
-const rutas = [paths.inicio, ...paginas.map(({ slug }) => rutaProyecto(slug)), ...casos.map(({ slug }) => rutaCaso(slug))];
-const redirecciones = [
-  ["/proyectos", paths.trabajo], ["/sobre-mi", paths.sobreMi], ["/cv", paths.contacto],
-  ["/casos-de-estudio", rutaCaso("del-interes-comercial-al-contrato")],
-].flatMap(([ruta, destino]) => [[ruta, destino], [ruta + "/", destino]]);
+import { rutaRecursoPublico } from "./app/rutas";
 
 const { origen, indexar } = configuracionPublicacion(process.env);
 const escapar = (texto: string) => texto.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
@@ -75,20 +68,11 @@ export default {
       await writeFile(resolve(client, "robots.txt"), robots);
       headers.push("/*\n  X-Robots-Tag: noindex");
     }
-    await writeFile(resolve(client, "_redirects"), redirecciones.map(([ruta, destino]) => `${ruta} ${destino} 301\n`).join(""));
-    // Sin 404.html, Pages sirve Inicio como fallback. Sus páginas reales y los 301
-    // pasan directamente al servicio estático, igual que los recursos de uso habitual.
-    const contenidoEstatico = [...rutas, ...Array.from(documentos.values(), ({ ruta }) => ruta),
-      ...redirecciones.map(([ruta]) => ruta)];
-    const archivosEstaticos = [
-      ...rutas.map((ruta) => ruta + "_.data"), ...Array.from(recursos.keys(), (archivo) => "/recursos/" + archivo),
-      ...(await readdir(resolve(client, "assets"))).map((archivo) => "/assets/" + archivo),
-      favicon.ruta, "/favicon.ico", "/robots.txt", ...(origen ? [tarjetaSocial] : []), ...(indexar ? ["/sitemap.xml"] : []),
-    ];
-    // Pages permite 100 reglas en total. Los recursos adicionales se sirven con ASSETS.fetch.
-    const exclude = [...new Set([...contenidoEstatico, ...archivosEstaticos])].slice(0, 99);
-    if (contenidoEstatico.length > 99) throw new Error("Las rutas HTML y redirecciones superan el límite de reglas de Pages");
-    await writeFile(resolve(client, "_routes.json"), JSON.stringify({ version: 1, include: ["/*"], exclude }));
+    await writeFile(resolve(client, "_redirects"), Array.from(redirecciones, ([ruta, destino]) => `${ruta} ${destino} 301\n`).join(""));
+    // Un marcador vacío desactiva el fallback SPA de Pages y conserva el 404 de los archivos ausentes.
+    await writeFile(resolve(client, "404.html"), "");
+    const exclude = ["/assets/*", "/recursos/*", ...redirecciones.keys(), ...rutas];
+    await writeFile(resolve(client, "_routes.json"), JSON.stringify({ version: 1, include: ["/*"], exclude: exclude.slice(0, 99) }));
     await copyFile(resolve(viteConfig.root, "cloudflare/respuesta.js"), resolve(client, "_worker.js"));
     await writeFile(resolve(client, "_headers"), `${headers.join("\n")}\n`);
   },

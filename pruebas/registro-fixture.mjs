@@ -10,10 +10,9 @@ export const proyectoAprobado = {
   pagina: {
     revision: "aprobado",
     entradilla: "Presentación de ficha QA",
-    problema: "Problema QA",
-    contexto: "Contexto QA",
-    solucion: "Solución documentada QA",
-    participacion: "Participación documentada QA",
+    contexto: ["Contexto QA"],
+    solucion: ["Solución documentada QA"],
+    participacion: ["Participación documentada QA"],
     evidencias: ["archivo-aprobado-qa"],
   },
 };
@@ -31,16 +30,24 @@ export const evidenciaAprobada = {
 
 export const casoAprobado = {
   revision: "aprobado",
-  slug: "caso-qa",
   proyecto: proyectoAprobado.slug,
   titulo: "Caso QA",
   resumen: "Resumen QA",
-  contexto: "Contexto QA",
-  alcance: "Alcance QA",
-  decisiones: "Decisiones QA",
-  trabajo: "Trabajo QA",
-  validacion: "Validación QA",
-  resultadosYLimites: "Resultados QA",
+  pregunta: "¿Cómo se valida el proceso QA?",
+  introduccion: "Introducción QA",
+  resumenVisual: [{ titulo: "Desafío QA", descripcion: "Síntesis QA" }],
+  contexto: ["Contexto QA"],
+  alcance: ["Alcance QA"],
+  decisiones: [{ titulo: "Decisión QA", parrafos: ["Criterio QA"] }],
+  trazabilidad: ["Trazabilidad QA"],
+  validacion: {
+    introduccion: "Comprobación pendiente QA",
+    escenarios: [{ titulo: "Escenario QA", descripcion: "Condición QA" }],
+    ejecucion: "Ejecución QA",
+    resultados: [{ titulo: "Resultado QA", descripcion: "Verificación QA" }],
+    fuente: "Informe QA",
+    limites: ["Medición pendiente QA"],
+  },
   evidencias: [evidenciaAprobada.id],
 };
 
@@ -49,7 +56,7 @@ export const perfilAprobado = {
   nombre: "Perfil QA",
   portada: {
     area: "Área QA", titular: ["Titular", "de", "prueba"], estudios: "Estudios QA",
-    introduccion: "Introducción QA", enfoque: "Enfoque QA", ubicacion: "Lugar QA",
+    introduccion: "Introducción QA", enfoque: ["Enfoque QA"], ubicacion: "Lugar QA",
     ejes: [], capacidades: [], trayectoria: [], datos: [],
   },
   retrato: { revision: "aprobado", archivo: "retrato-qa.png", alt: "Retrato QA" },

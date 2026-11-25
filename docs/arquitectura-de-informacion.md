@@ -14,7 +14,7 @@ Inicio reúne la presentación y las secciones numeradas Mi trabajo (`/#trabajo`
 
 Cada proyecto tiene un identificador, estado, descripción para Inicio, recurso visual y destino de repositorio. Puede incluir una aplicación desplegada y una página individual aprobada por separado. La ficha registra contexto, problema, solución, participación, tecnologías, capturas y referencias de respaldo.
 
-Un caso identifica el proyecto al que pertenece. Para publicarlo se requiere que el proyecto tenga página aprobada y que se puedan resolver sus referencias a evidencias aprobadas. La ficha obtiene sus casos de esa relación. La dirección pública de cada caso conserva el patrón `/casos-de-estudio/:slug/`.
+Un caso identifica el proyecto al que pertenece. Para publicarlo se requiere que el proyecto tenga página aprobada y que se puedan resolver sus referencias a evidencias aprobadas. Cada proyecto puede tener como máximo un caso publicado. Los borradores se excluyen de la navegación y el prerenderizado. La ficha se sirve en `/:proyecto/` y su caso en `/:proyecto/caso-de-estudio/`.
 
 El resumen y el detalle técnico del caso contextualizan los resultados de pruebas. Los documentos de evidencia conservan autoría, fuente y alcance. El perfil, el PDF, el retrato y el número de WhatsApp se publican de acuerdo con sus aprobaciones.
 

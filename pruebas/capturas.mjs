@@ -4,12 +4,12 @@ import { join } from "node:path";
 export const anchos = [1440, 1280, 1024, 768, 390, 320];
 export const vistas = [
   { nombre: "Inicio", clave: "inicio", ruta: "/" },
-  { nombre: "RFM CORE", clave: "rfm-core", ruta: "/proyectos/rfm-core/" },
-  { nombre: "Del interés comercial al contrato", clave: "caso", ruta: "/casos-de-estudio/del-interes-comercial-al-contrato/" },
+  { nombre: "RFM CORE", clave: "rfm-core", ruta: "/rfm-core/" },
+  { nombre: "Del interés comercial al contrato", clave: "caso", ruta: "/rfm-core/caso-de-estudio/" },
 ];
 
 export async function capturarRevision(browser, origin) {
-  const carpeta = ".local/revision-arquitectura";
+  const carpeta = ".local/revision-editorial-rutas";
   await mkdir(carpeta, { recursive: true });
   const page = await browser.newPage({ reducedMotion: "reduce" });
   const grupos = [];

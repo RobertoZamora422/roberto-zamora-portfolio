@@ -19,16 +19,16 @@ const axe = createRequire(import.meta.url).resolve("axe-core/axe.min.js");
 const publico = "build/client";
 const desconocidas = ["/proyectos/slug-desconocido/", "/casos-de-estudio/slug-desconocido/", "/ruta-desconocida/"];
 const marcasRevision = /decision-portafolio-revision|separar-proyecto-y-caso|revision-editorial|rfm_rz_paquete_integracion|E04-evidencia-RFM-CORE\.zip|Vista local de revisión|Recurso de revisión local|Registro sintético|Datos de prueba|Tu nombre|Tu foto|Probar con mi foto|data-planned/iu;
-const rutaRfm = "/proyectos/rfm-core/";
-const slugCasoRfm = "del-interes-comercial-al-contrato";
-const rutaCasoRfm = `/casos-de-estudio/${slugCasoRfm}/`;
+const rutaRfm = "/rfm-core/";
+const rutaCasoRfm = "/rfm-core/caso-de-estudio/";
 const tituloCasoRfm = "Del interés comercial al contrato";
 const rutaCvPdf = perfilPublico.cvPdf?.revision === "aprobado" ? `/recursos/${perfilPublico.cvPdf.archivo}` : null;
 const evidenciasRfm = ["e01-proceso", "e02-trazabilidad", "e03-decisiones", "e04-verificacion"];
 
 const rutaEvidencia = (nombre) => `/recursos/rfm-core/${nombre}`;
 const titulos = ["Roberto Zamora · Software Engineering Student", "RFM CORE · Roberto Zamora", `${tituloCasoRfm} · Roberto Zamora`];
-const antiguas = [["/proyectos", "/#trabajo"], ["/sobre-mi", "/#sobre-mi"], ["/cv", "/#contacto"], ["/casos-de-estudio", rutaCasoRfm]];
+const antiguas = [["/proyectos", "/#trabajo"], ["/sobre-mi", "/#sobre-mi"], ["/cv", "/#contacto"], ["/casos-de-estudio", rutaCasoRfm],
+  ["/proyectos/rfm-core", rutaRfm], ["/casos-de-estudio/del-interes-comercial-al-contrato", rutaCasoRfm]];
 
 async function comprobarArtefacto(carpeta, marcas) {
   const archivos = await readdir(carpeta, { recursive: true, withFileTypes: true });
@@ -42,10 +42,17 @@ async function comprobar404(origin, rutas) {
   for (const ruta of rutas) {
     const respuesta = await fetch(origin + ruta, { redirect: "manual" });
     assert.equal(respuesta.status, 404, ruta);
-    const html = await respuesta.text();
-    assert.match(html, /href="\/">Volver al inicio/);
-    assert.equal(respuesta.headers.get("x-robots-tag"), "noindex");
-    assert.doesNotMatch(html, /<script\b/);
+    assert.equal(respuesta.headers.get("location"), null);
+    assert.equal(await respuesta.text(), "");
+  }
+}
+
+async function comprobar302(origin, rutas) {
+  for (const ruta of rutas) {
+    const respuesta = await fetch(origin + ruta, { redirect: "manual" });
+    assert.equal(respuesta.status, 302, ruta);
+    assert.equal(new URL(respuesta.headers.get("location"), origin).href, origin + "/");
+    assert.equal(await respuesta.text(), "", ruta);
   }
 }
 
@@ -56,7 +63,7 @@ async function comprobarAccesibilidad(page, vista) {
   assert.deepEqual(infracciones, [], vista);
 }
 
-test("Artefacto público real sin datos locales y recuperación HTTP 404", async () => {
+test("Artefacto público con tres páginas, redirecciones HTTP y errores de recursos", async () => {
   await comprobarArtefacto(publico, marcasRevision);
   const recursos = await readdir(join(publico, "recursos"), { recursive: true });
   const pdf = perfilPublico.cvPdf?.revision === "aprobado" ? perfilPublico.cvPdf.archivo : undefined;
@@ -64,8 +71,9 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
   assert(recursos.every((archivo) => !/\.zip$|\.env|\.sqlite|\.pem$/i.test(archivo)));
   const archivos = (await readdir(publico, { recursive: true })).map(ruta => ruta.replaceAll("\\", "/"));
   assert.deepEqual(archivos.filter(f => f.endsWith(".html")).sort(), [
-    ...vistas.map(({ ruta }) => ruta.slice(1) + "index.html"), ...evidenciasRfm.map(nombre => rutaEvidencia(nombre).slice(1) + ".html"),
+    "404.html", ...vistas.map(({ ruta }) => ruta.slice(1) + "index.html"), ...evidenciasRfm.map(nombre => rutaEvidencia(nombre).slice(1) + ".html"),
   ].sort());
+  assert.equal(await readFile(join(publico, "404.html"), "utf8"), "");
   assert.deepEqual(archivos.filter(f => f.endsWith(".data")).sort(), vistas.map(({ ruta }) => ruta.slice(1) + "_.data").sort());
   const html = await readFile(join(publico, "index.html"), "utf8");
   assert.match(html, /name="robots" content="noindex"/);
@@ -83,9 +91,9 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
     const etag = inicio.headers.get("etag");
     assert(etag);
     for (const opciones of [{ method: "HEAD" }, { headers: { "If-None-Match": etag } }, { headers: { Range: "bytes=0-16" } }]) {
-      const perdida = await fetch(origin + "/enlace-perdido", opciones);
-      assert.equal(perdida.status, 404);
-      assert.equal(perdida.headers.get("x-robots-tag"), "noindex");
+      const perdida = await fetch(origin + "/enlace-perdido", { ...opciones, redirect: "manual" });
+      assert.equal(perdida.status, 302);
+      assert.equal(new URL(perdida.headers.get("location"), origin).href, origin + "/");
       if (opciones.method === "HEAD") assert.equal(await perdida.text(), "");
     }
     const robots = await fetch(origin + "/robots.txt");
@@ -133,9 +141,14 @@ test("Artefacto público real sin datos locales y recuperación HTTP 404", async
         assert.equal(new URL(respuesta.headers.get("location"), origin).href, origin + destino);
       }
     }
-    await comprobar404(origin, [...desconocidas, "/404/", "/404.html", "/proyectos/claridez/",
-      "/recursos/pruebas/decision-portafolio-revision.txt", "/recursos/ausente.html", "/assets/perdido.js",
-      ...antiguas.map(([ruta]) => ruta + "/_.data")]);
+    await comprobar302(origin, [...desconocidas, "/404/", "/404.html", "/claridez/", "/proyectos/claridez/",
+      "/rfm-core/subpagina/", "/claridez/caso-de-estudio/", "/desconocida?origen=perfil"]);
+    await comprobar404(origin, ["/recursos/pruebas/decision-portafolio-revision.txt", "/recursos/ausente.html",
+      "/recursos/rfm-core/ausente", "/assets/perdido.js", "/assets/ausente", "/imagen.png", "/cv-ausente.pdf",
+      "/__manifest", "/.well-known/ausente", ...antiguas.map(([ruta]) => ruta + "/_.data")]);
+    for (const headers of [{ Accept: "application/json" }, { Accept: "application/json, text/plain, */*" }, { "Sec-Fetch-Dest": "empty" }]) {
+      assert.equal((await fetch(origin + "/interna-ausente", { headers, redirect: "manual" })).status, 404);
+    }
   });
 });
 
@@ -153,18 +166,16 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
   const [casoBase] = registro.casos;
   registro.evidencias.push({ ...registro.evidencias[0], id: "documento-qa", recurso: { archivo: "documento-qa.html" } });
   Object.assign(casoBase, {
-    competencia: "Análisis funcional QA",
+    competencias: "Análisis funcional QA",
     periodo: "Periodo QA",
-    aprendizajes: "Aprendizajes QA",
-    validacion: "Comprobación pendiente QA",
-    resultadosYLimites: "Medición pendiente QA",
+    aprendizajes: ["Aprendizajes QA"],
   });
   registro.casos.push({
-    ...casoBase, slug: "caso-borrador-qa", revision: "borrador", titulo: "Caso sin aprobar QA",
+    ...casoBase, revision: "borrador", titulo: "Caso sin aprobar QA",
     evidencias: ["archivo-borrador-qa"],
   }, {
-    ...casoBase, slug: "otro-caso-qa", proyecto: "otro-proyecto-qa", titulo: "Otro caso QA",
-    competencia: undefined, periodo: undefined, aprendizajes: undefined,
+    ...casoBase, proyecto: "otro-proyecto-qa", titulo: "Otro caso QA",
+    competencias: undefined, periodo: undefined, aprendizajes: undefined,
   });
   registro.proyectos.push({
     ...base, slug: "borrador-qa", revision: "borrador", nombre: "Borrador aislado QA",
@@ -209,19 +220,19 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
   await comprobarArtefacto(salida, /borrador-qa|Borrador aislado QA|Caso sin aprobar QA|recurso-sin-revision-qa|Copia directa QA|retrato-no-autorizado-qa/iu);
   await comprobarArtefacto(salida, marcasRevision);
   const [inicio, ficha, detalle, otroProyecto, otroCaso] = await Promise.all([
-    "index.html", "proyectos/solucion-qa/index.html", "casos-de-estudio/caso-qa/index.html",
-    "proyectos/otro-proyecto-qa/index.html", "casos-de-estudio/otro-caso-qa/index.html",
+    "index.html", "solucion-qa/index.html", "solucion-qa/caso-de-estudio/index.html",
+    "otro-proyecto-qa/index.html", "otro-proyecto-qa/caso-de-estudio/index.html",
   ].map((archivo) => readFile(join(salida, archivo), "utf8")));
   assert.match(inicio, /Presentación de portada QA/);
   assert.match(inicio, /href="mailto:talento%2Bqa@example\.test\?subject=/);
   assert.match(inicio, /href="https:\/\/example.org\/perfil-qa"/);
   assert.match(inicio, /<img[^>]+src="\/recursos\/retrato-qa.png"[^>]+alt="Retrato QA"/);
-  assert.doesNotMatch(inicio, /12025550147|wa\.me|href="\/casos-de-estudio\//);
+  assert.doesNotMatch(inicio, /12025550147|wa\.me|href="\/[^"]+\/caso-de-estudio\//);
   assert.match(ficha, /Presentación de ficha QA/);
-  assert.match(ficha, /href="\/casos-de-estudio\/caso-qa\/"/);
-  assert.doesNotMatch(ficha, /otro-caso-qa/);
-  assert.match(otroProyecto, /href="\/casos-de-estudio\/otro-caso-qa\/"/);
-  assert.match(otroCaso, /href="\/proyectos\/otro-proyecto-qa\/"/);
+  assert.match(ficha, /href="\/solucion-qa\/caso-de-estudio\/"/);
+  assert.doesNotMatch(ficha, /Otro caso QA/);
+  assert.match(otroProyecto, /href="\/otro-proyecto-qa\/caso-de-estudio\/"/);
+  assert.match(otroCaso, /href="\/otro-proyecto-qa\/"/);
   assert.doesNotMatch(otroCaso, /href="#aprendizajes"/);
   assert.match(detalle, /<title>Caso QA · Roberto Zamora<\/title>/);
   assert.match(detalle, /name="description" content="Resumen QA"/);
@@ -230,8 +241,8 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
     "Evidencia técnica", 'href="https://example.org/tecnica-qa"']) assert(detalle.includes(texto), texto);
   const sitemap = await readFile(join(salida, "sitemap.xml"), "utf8");
   const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(([, url]) => url);
-  assert.deepEqual(urls.toSorted(), ["/", "/proyectos/solucion-qa/", "/proyectos/otro-proyecto-qa/",
-    "/casos-de-estudio/caso-qa/", "/casos-de-estudio/otro-caso-qa/", "/recursos/documento-qa",
+  assert.deepEqual(urls.toSorted(), ["/", "/solucion-qa/", "/otro-proyecto-qa/",
+    "/solucion-qa/caso-de-estudio/", "/otro-proyecto-qa/caso-de-estudio/", "/recursos/documento-qa",
   ].map((ruta) => `https://example.org${ruta}`).sort());
   assert.match(await readFile(join(salida, "robots.txt"), "utf8"), /Sitemap: https:\/\/example\.org\/sitemap\.xml/);
   assert.match(inicio, /property="og:image" content="https:\/\/example.org\/recursos\/sitio\/rz-social.png"/);
@@ -246,8 +257,8 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
       assert.doesNotMatch(html, /name="robots" content="noindex"/, url);
     }
     const [pagina, datos, evidencia, retrato, casoHtml, casoDatos] = await Promise.all([
-      "/proyectos/solucion-qa/", "/proyectos/solucion-qa/_.data", "/recursos/archivo-aprobado-qa.txt",
-      "/recursos/retrato-qa.png", "/casos-de-estudio/caso-qa/", "/casos-de-estudio/caso-qa/_.data",
+      "/solucion-qa/", "/solucion-qa/_.data", "/recursos/archivo-aprobado-qa.txt",
+      "/recursos/retrato-qa.png", "/solucion-qa/caso-de-estudio/", "/solucion-qa/caso-de-estudio/_.data",
     ].map((ruta) => fetch(origin + ruta)));
     for (const respuesta of [pagina, datos, evidencia, retrato, casoHtml, casoDatos]) assert.equal(respuesta.status, 200, respuesta.url);
     assert.match(await pagina.text(), /<h1>Solución QA<\/h1>/);
@@ -256,9 +267,9 @@ test("La compilación pública prerenderiza proyectos y casos aprobados de un re
     assert.deepEqual(Buffer.from(await retrato.arrayBuffer()), png);
     assert.match(await casoHtml.text(), /<h1>Caso QA<\/h1>/);
     assert.match(await casoDatos.text(), /\/recursos\/archivo-aprobado-qa.txt/);
+    await comprobar302(origin, ["/borrador-qa/", "/solo-ficha-qa/", "/solo-ficha-qa/caso-de-estudio/"]);
     await comprobar404(origin, [
-      "/proyectos/borrador-qa/", "/proyectos/solo-ficha-qa/", "/casos-de-estudio/caso-borrador-qa/",
-      "/casos-de-estudio/caso-borrador-qa/_.data", "/recursos/archivo-borrador-qa.txt",
+      "/solo-ficha-qa/caso-de-estudio/_.data", "/recursos/archivo-borrador-qa.txt",
       "/recurso-sin-revision-qa.txt", "/recursos/retrato-no-autorizado-qa.png",
     ]);
   });
@@ -310,6 +321,10 @@ test("Inicio renderiza las cinco secciones, las anclas y los enlaces en escritor
         assert.doesNotMatch(await hero.innerText(), /RFM CORE|Claridez|Presentación profesional/);
         assert.equal(await hero.locator("figcaption strong").textContent(), "Roberto David Zamora Alcívar");
         assert.equal(await hero.locator("figcaption span").textContent(), "Quito · Ecuador");
+        assert.deepEqual(await hero.locator(".editorial-hero__detail").allTextContents(), [
+          "Me interesa especialmente la intersección entre tecnología, procesos y personas, donde comprender un problema, comunicar decisiones y evaluar una solución es tan importante como desarrollarla.",
+          "Este portafolio reúne proyectos, decisiones y evidencias que reflejan no solo lo que he construido, sino también cómo abordo los problemas y fundamento mi trabajo.",
+        ]);
         const accionesHero = ["#trabajo", rutaCvPdf, "#contacto"];
         const fila = await hero.getByRole("link").evaluateAll((links) => links.map((link) => {
           const { left, right, top, height } = link.getBoundingClientRect();
@@ -488,9 +503,10 @@ test("Cabecera global, compatibilidad de enlaces y regreso con y sin JavaScript"
           if (destino.includes("#")) assert.equal(await page.locator(":target").getAttribute("id"), destino.split("#")[1]);
         }
         const perdida = await page.goto(origin + "/este-enlace-no-existe/");
-        assert.equal(perdida.status(), 404);
-        await page.getByRole("link", { name: "Volver al inicio del portafolio" }).press("Enter");
-        await page.waitForURL(origin + "/");
+        assert.equal(perdida.status(), 200);
+        assert.equal(page.url(), origin + "/");
+        assert.equal((await perdida.request().redirectedFrom().response()).status(), 302);
+        await page.getByRole("heading", { level: 1, name: /Del análisis/ }).waitFor();
 
         for (const width of [1440, 390]) {
           await page.setViewportSize({ width, height: 840 });
@@ -525,7 +541,7 @@ test("Cabecera global, compatibilidad de enlaces y regreso con y sin JavaScript"
           if (url.origin !== origin || revisados.has(href)) continue;
           revisados.add(href);
           assert(!antiguas.some(([ruta]) => ruta === url.pathname.replace(/\/$/, "")), href);
-          const respuesta = await page.request.get(href);
+          const respuesta = await page.request.get(href, { maxRedirects: 0 });
           assert.equal(respuesta.status(), 200, href);
           if (url.hash) assert((await respuesta.text()).includes(`id="${decodeURIComponent(url.hash.slice(1))}"`), href);
         }
@@ -550,7 +566,7 @@ test("Cabecera global, compatibilidad de enlaces y regreso con y sin JavaScript"
 test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
   timeout: 240_000,
 }, async () => {
-  assert.equal(registroPublico.casos.find(({ slug }) => slug === slugCasoRfm).evidencias.length, 4);
+  assert.equal(registroPublico.casos.find(({ proyecto }) => proyecto === "rfm-core").evidencias.length, 4);
   await conPages(publico, async (origin) => {
     for (const [ruta, titulo] of [[rutaRfm, "RFM CORE"], [rutaCasoRfm, tituloCasoRfm]]) {
       const documento = await fetch(origin + ruta, { redirect: "manual" });
@@ -639,19 +655,26 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
           }
         }
         await page.goto(origin + rutaCasoRfm);
+        assert.deepEqual(await page.locator(".case-section > h3").allTextContents(), [
+          "Contexto y problema", "Alcance y participación", "Análisis y decisiones de diseño", "Una regla de negocio en la práctica",
+          "Trazabilidad funcional", "Validación y resultados", "Evidencias", "Aprendizajes",
+        ]);
+        const validacion = await page.locator("section[aria-labelledby=validacion]").innerText();
+        for (const dato of ["QA-06", "QA-14", "a95ce07", "171 de 171", "25 de 25", "SQLite en memoria",
+          "datos sintéticos", "secuencial", "concurrencia en PostgreSQL", "envío efectivo de mensajes", "cuantificado"]) assert(validacion.includes(dato), dato);
         const breve = page.getByRole("region", { name: "El caso en breve", exact: true });
         const sintesis = await breve.innerText();
-        for (const texto of ["Problema", "Mi responsabilidad", "Único desarrollador", "Decisiones principales",
-          "Resultados verificables", "nueve reglas de negocio", "171/171", "SQLite", "datos sintéticos", "Consultar evidencias"]) {
+        for (const texto of ["Desafío", "Responsabilidad", "Decisiones de diseño", "Resultados verificables",
+          "Nueve reglas de negocio", "Competencias", "Periodo", "2026", "Consultar evidencias"]) {
           assert(sintesis.includes(texto), texto);
         }
         await breve.getByRole("link", { name: "Ver el detalle técnico" }).press("Enter");
         await page.waitForFunction(() => document.activeElement.id === "detalle-tecnico");
-        const ejemplo = page.getByRole("region", { name: "Cuándo se exige un paquete", exact: true });
+        const ejemplo = page.getByRole("region", { name: "Una regla de negocio en la práctica", exact: true });
         for (const [enlace, archivo, ancla] of [
           ["RN-03 · Regla de negocio", "e02-trazabilidad", "rn-03"],
           ["QA-06 · Prueba de conversión", "e04-verificacion", "qa-06"],
-          ["Ver pantalla de precotización", "e01-proceso", "pantalla-precotizacion"],
+          ["Consultar pantalla de precotización", "e01-proceso", "pantalla-precotizacion"],
         ]) {
           const href = await ejemplo.getByRole("link", { name: enlace }).getAttribute("href");
           assert.equal(href, rutaEvidencia(archivo) + "#" + ancla);

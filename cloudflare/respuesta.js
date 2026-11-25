@@ -1,19 +1,23 @@
-// Las páginas HTML aprobadas están excluidas en _routes.json. El resto del HTML que
-// devuelve ASSETS es el fallback de Inicio, incluso para peticiones parciales.
+// Sec-Fetch-Dest distingue una visita de las solicitudes internas del navegador.
+// Sin esa cabecera, Accept y la ruta permiten atender también clientes HTTP sencillos.
+export function esNavegacion(ruta, destino, acepta) {
+  if (/^\/(?:assets|recursos|api|__manifest|\.well-known)(?:\/|$)/.test(ruta)) return false;
+  if (/\/[^/]*\.[^/]+\/?$/.test(ruta) && !ruta.endsWith(".html")) return false;
+  if (destino && !["document", "iframe"].includes(destino)) return false;
+  const tipos = acepta?.trim();
+  return !tipos || tipos === "*/*" || /(?:^|,)\s*(?:text\/html|application\/xhtml\+xml)(?:\s*[,;]|$)/i.test(tipos);
+}
+
 export default {
   async fetch(request, env) {
-    const asset = await env.ASSETS.fetch(request);
-    if (![200, 206, 304].includes(asset.status)) return asset;
-    // Un 304 puede omitir Content-Type. Consultar las cabeceras sin condiciones
-    // permite distinguir un archivo en caché del fallback de una URL inexistente.
-    const headers = asset.status === 304
-      ? (await env.ASSETS.fetch(new Request(request.url, { method: "HEAD" }))).headers
-      : asset.headers;
-    if (!headers.get("content-type")?.startsWith("text/html")) return asset;
-    return new Response(request.method === "HEAD" ? null :
-      '<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Enlace no disponible</title><main><h1>Enlace no disponible</h1><p><a href="/">Volver al inicio del portafolio</a></p></main></html>', {
-      status: 404,
-      headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex" },
-    });
+    const url = new URL(request.url);
+    // El marcador 404.html del servicio estático no es una página visitable.
+    const marcador = /^\/404(?:\.html)?\/?$/.test(url.pathname);
+    const respuesta = marcador ? new Response(null, { status: 404 }) : await env.ASSETS.fetch(request);
+    if (respuesta.status === 404 && ["GET", "HEAD"].includes(request.method)
+      && esNavegacion(url.pathname, request.headers.get("Sec-Fetch-Dest"), request.headers.get("Accept"))) {
+      return Response.redirect(new URL("/", url), 302);
+    }
+    return respuesta;
   },
 };

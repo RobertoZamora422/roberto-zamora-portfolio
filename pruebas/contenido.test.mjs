@@ -32,7 +32,7 @@ test("La tarjeta y la página individual se aprueban de forma independiente", ()
   assert.deepEqual(seleccionarContenido(registro).paginas.map(({ slug }) => slug), [base.slug, rfm.slug]);
 });
 
-for (const [entidad, grupo] of [["Proyecto", "proyectos"], ["Caso", "casos"], ["Evidencia", "evidencias"]]) {
+for (const [entidad, grupo] of [["Proyecto", "proyectos"], ["Evidencia", "evidencias"]]) {
   test(`Detecta identificadores duplicados de ${entidad.toLowerCase()}`, async () => {
     const registro = registroFixture();
     registro[grupo].push(registro[grupo][0]);
@@ -40,7 +40,21 @@ for (const [entidad, grupo] of [["Proyecto", "proyectos"], ["Caso", "casos"], ["
   });
 }
 
+test("Un proyecto admite borradores y un solo caso publicado, cualquiera que sea su título", async () => {
+  const registro = registroFixture();
+  registro.evidencias[0].recurso = { url: "https://example.org/evidencia" };
+  const borrador = { ...registro.casos[0], titulo: "Otra competencia", revision: "borrador" };
+  registro.casos.push(borrador);
+  await validarRegistro(registro, "");
+  assert.equal(seleccionarContenido(registro).casos.length, 1);
+  borrador.revision = "aprobado";
+  await assert.rejects(validarRegistro(registro, ""), /un caso de estudio por proyecto/);
+});
+
 const erroresDeRegistro = [
+  ["párrafo vacío", (r) => { r.casos[0].decisiones[0].parrafos = [" "]; }, /falta decisiones/],
+  ["URL de proyecto que colisiona con un 301", (r) => { r.proyectos[0].slug = "cv"; }, /URL está reservada/],
+  ["URL de proyecto reservada para recursos", (r) => { r.proyectos[0].slug = "recursos"; }, /URL está reservada/],
   ["slug inválido", (r) => { r.proyectos[0].slug = "../otro"; }, /identificador inválido/],
   ["página aprobada con ficha en borrador", (r) => { r.proyectos[0].revision = "borrador"; }, /página aprobada sin ficha aprobada/],
   ["proyecto inexistente", (r) => { r.casos[0].proyecto = "otro"; }, /referencia inexistente «otro»/],

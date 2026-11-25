@@ -9,7 +9,10 @@ export const perfilPublico: Perfil = {
     titular: ["Del análisis", "a la", "solución."],
     estudios: "Estudiante de 8vo semestre de Ingeniería de Software",
     introduccion: "con experiencia práctica en el entorno empresarial e interés en el análisis funcional, el desarrollo de soluciones tecnológicas y la calidad del software.",
-    enfoque: "Busco una pasantía o una posición junior en tecnología donde pueda aplicar lo que he aprendido sobre procesos y desarrollo de software.",
+    enfoque: [
+      "Me interesa especialmente la intersección entre tecnología, procesos y personas, donde comprender un problema, comunicar decisiones y evaluar una solución es tan importante como desarrollarla.",
+      "Este portafolio reúne proyectos, decisiones y evidencias que reflejan no solo lo que he construido, sino también cómo abordo los problemas y fundamento mi trabajo.",
+    ],
     ubicacion: "Quito · Ecuador",
     ejes: ["Comprensión del negocio", "Soluciones tecnológicas", "Personas y colaboración"],
     capacidades: [

@@ -132,6 +132,7 @@
   font-size: 0.9375rem;
   line-height: 1.7;
 }
+.editorial-hero__detail + .editorial-hero__detail { margin-block-start: 0.75rem; }
 .editorial-actions {
   display: flex;
   align-items: center;

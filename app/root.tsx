@@ -6,9 +6,9 @@ import "@fontsource-variable/newsreader/standard.css";
 import "@fontsource-variable/newsreader/standard-italic.css";
 import { Cabecera } from "./ui/cabecera";
 import { MarcaRz } from "./ui/marca-rz";
-import { contenido, urlRecursoLocal } from "./contenido/registro.server";
+import { contenido } from "./contenido/registro.server";
 import { favicon } from "./contenido/publicacion";
-import { paths } from "./rutas";
+import { paths, rutaRecursoPublico } from "./rutas";
 import "./inicio.css";
 import "./styles.css";
 
@@ -16,7 +16,7 @@ export function loader() {
   const { perfil } = contenido;
   return {
     nombre: perfil?.nombre,
-    cvPdf: perfil?.cvPdf?.revision === "aprobado" ? urlRecursoLocal(perfil.cvPdf.archivo) : undefined,
+    cvPdf: perfil?.cvPdf?.revision === "aprobado" ? rutaRecursoPublico(perfil.cvPdf.archivo) : undefined,
     correo: perfil?.correo,
     mailto: perfil?.correo && `mailto:${encodeURIComponent(perfil.correo).replace("%40", "@")}`,
     enlaces: perfil?.enlaces,
@@ -76,8 +76,4 @@ export function Layout({ children }: { children: ReactNode }) {
 
 export default function App() {
   return <Outlet />;
-}
-
-export function ErrorBoundary() {
-  return <section className="page-intro"><h1>No se pudo cargar esta página</h1><a href="/">Volver al inicio</a></section>;
 }

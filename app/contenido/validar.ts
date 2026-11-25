@@ -1,7 +1,12 @@
 import { open, realpath, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
-import type { Registro, Revision } from "./modelo.ts";
+import type { Apartado, Registro, Revision, TextoConTitulo } from "./modelo.ts";
 
+import { rutasAnteriores } from "../rutas.ts";
+
+const segmentosReservados = new Set(["404", "api", "assets", "recursos",
+  ...rutasAnteriores.map(([ruta]) => ruta.split("/")[1]),
+]);
 const slugValido = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const archivoValido = /^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.[a-z0-9]+$/;
 const formatoImagen = /\.(?:avif|jpe?g|png|webp)$/;
@@ -10,6 +15,28 @@ function exigirTextos(origen: string, campos: Record<string, string>) {
   for (const [campo, valor] of Object.entries(campos)) {
     if (typeof valor !== "string" || !valor.trim()) throw new Error(`${origen}: falta ${campo}`);
   }
+}
+
+function exigirLista<T>(origen: string, campo: string, valores: readonly T[]) {
+  if (!Array.isArray(valores) || !valores.length) throw new Error(`${origen}: falta ${campo}`);
+}
+
+function exigirParrafos(origen: string, campo: string, parrafos: readonly string[]) {
+  exigirLista(origen, campo, parrafos);
+  for (const texto of parrafos) exigirTextos(origen, { [campo]: texto });
+}
+
+function exigirApartados(origen: string, campo: string, apartados: readonly Apartado[]) {
+  exigirLista(origen, campo, apartados);
+  for (const { titulo, parrafos } of apartados) {
+    exigirTextos(origen, { titulo });
+    exigirParrafos(origen, campo, parrafos);
+  }
+}
+
+function exigirEntradas(origen: string, campo: string, entradas: readonly TextoConTitulo[]) {
+  exigirLista(origen, campo, entradas);
+  for (const { titulo, descripcion } of entradas) exigirTextos(origen, { titulo, descripcion });
 }
 
 function validarRevision(origen: string, revision: Revision) {
@@ -61,7 +88,7 @@ async function resolverArchivo(carpeta: string, archivo: string) {
 
 export async function validarRegistro(registro: Registro, carpetaRecursos: string) {
   const proyectos = indexar("Proyecto", registro.proyectos, ({ slug }) => slug);
-  indexar("Caso", registro.casos, ({ slug }) => slug);
+  const proyectosConCaso = new Set<string>();
   const evidencias = indexar("Evidencia", registro.evidencias, ({ id }) => id);
   const archivosAprobados = new Map<string, string>();
 
@@ -92,11 +119,15 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
     if (!pagina) continue;
 
     const { revision: revisionPagina, evidencias: ids, entradilla,
-      problema, contexto, solucion, participacion } = pagina;
+      contexto, solucion, participacion } = pagina;
     validarRevision(origen, revisionPagina);
     if (revisionPagina === "aprobado") {
+      if (segmentosReservados.has(slug)) throw new Error(`${origen}: la URL está reservada`);
       if (revision !== "aprobado") throw new Error(`${origen}: página aprobada sin ficha aprobada`);
-      exigirTextos(origen, { entradilla, problema, contexto, solucion, participacion });
+      exigirTextos(origen, { entradilla });
+      exigirParrafos(origen, "contexto", contexto);
+      exigirParrafos(origen, "solucion", solucion);
+      exigirParrafos(origen, "participacion", participacion);
     }
     validarEvidencias(origen, ids, revisionPagina);
     for (const { revision: revisionCaptura, archivo, titulo, alt, descripcion, ancho, alto } of pagina.capturas ?? []) {
@@ -112,17 +143,28 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
   }
 
   for (const caso of registro.casos) {
-    const { slug, revision, proyecto, evidencias: ids, titulo, resumen, contexto,
-      alcance, decisiones, trabajo, validacion, resultadosYLimites, resumenVisual, ejemplo } = caso;
-    const origen = `Caso «${slug}»`;
+    const { revision, proyecto, evidencias: ids, titulo, resumen, pregunta, introduccion, ejemplo, validacion } = caso;
+    const origen = `Caso de «${proyecto}»`;
     validarRevision(origen, revision);
     validarReferencia(origen, proyecto, proyectos, revision, (entrada) => entrada.pagina?.revision ?? "borrador");
     if (revision === "aprobado") {
-      exigirTextos(origen, { titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites });
-      for (const { etiqueta, valor } of resumenVisual ?? []) exigirTextos(origen, { etiqueta, valor });
+      if (proyectosConCaso.has(proyecto)) throw new Error(`${origen}: solo se puede publicar un caso de estudio por proyecto`);
+      proyectosConCaso.add(proyecto);
+      exigirTextos(origen, { titulo, resumen, pregunta, introduccion });
+      exigirEntradas(origen, "resumenVisual", caso.resumenVisual);
+      exigirParrafos(origen, "contexto", caso.contexto);
+      exigirParrafos(origen, "alcance", caso.alcance);
+      exigirApartados(origen, "decisiones", caso.decisiones);
+      exigirParrafos(origen, "trazabilidad", caso.trazabilidad);
+      if (!validacion) throw new Error(`${origen}: falta validacion`);
+      exigirTextos(origen, { introduccion: validacion.introduccion, ejecucion: validacion.ejecucion, fuente: validacion.fuente });
+      exigirEntradas(origen, "escenarios", validacion.escenarios);
+      exigirEntradas(origen, "resultados", validacion.resultados);
+      exigirParrafos(origen, "limites", validacion.limites);
+      if (caso.aprendizajes) exigirParrafos(origen, "aprendizajes", caso.aprendizajes);
       if (ejemplo) {
-        exigirTextos(origen, { titulo: ejemplo.titulo });
-        for (const situacion of ejemplo.situaciones) exigirTextos(origen, situacion);
+        exigirApartados(origen, "situaciones", ejemplo.situaciones);
+        exigirTextos(origen, { conclusion: ejemplo.conclusion });
         for (const { evidencia, texto, ancla } of ejemplo.referencias) {
           exigirTextos(origen, { texto, ancla });
           if (!ids.includes(evidencia) || !slugValido.test(ancla)) {
@@ -152,7 +194,8 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
       exigirTextos("Perfil", { nombre });
       const { area, nombreCompleto, titular: [primera, segunda, enfasis], estudios, introduccion, enfoque, ubicacion,
         ejes, capacidades, trayectoria, datos } = portada;
-      exigirTextos("Portada", { area, primera, segunda, enfasis, estudios, introduccion, enfoque, ubicacion });
+      exigirTextos("Portada", { area, primera, segunda, enfasis, estudios, introduccion, ubicacion });
+      exigirParrafos("Portada", "enfoque", enfoque);
       if (nombreCompleto !== undefined) exigirTextos("Portada", { nombreCompleto });
       for (const texto of [...ejes, ...trayectoria]) exigirTextos("Portada", { texto });
       for (const entrada of [...capacidades, ...datos]) exigirTextos("Portada", { ...entrada });

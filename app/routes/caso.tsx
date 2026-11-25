@@ -1,33 +1,23 @@
 import { useLoaderData, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { metadatosPagina } from "../contenido/metadatos";
-import { contenido, urlRecursoLocal } from "../contenido/registro.server";
-import { rutaCaso, rutaProyecto } from "../rutas";
-import { PageIntro, TextLink } from "../ui/elementos";
+import type { TextoConTitulo } from "../contenido/modelo";
+import { contenido } from "../contenido/registro.server";
+import { rutaCaso, rutaProyecto, rutaRecursoPublico } from "../rutas";
+import { PageIntro, Parrafos, TextLink } from "../ui/elementos";
 import { ListaEvidencias } from "../ui/evidencias";
 import { IndiceCaso } from "../ui/indice-caso";
 
 export function loader({ params }: LoaderFunctionArgs) {
-  const { casos, paginas, evidencias } = contenido;
-  const caso = casos.find(({ slug }) => slug === params.slug);
-  if (!caso) throw new Response(null, { status: 404 });
-
-  const proyecto = paginas.find(({ slug }) => slug === caso.proyecto);
-  if (!proyecto) throw new Response(null, { status: 404 });
-  const { slug, titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites,
-    competencia, periodo, aprendizajes, resumenVisual, ejemplo } = caso;
+  const caso = contenido.casos.find(({ proyecto }) => proyecto === params.proyecto);
+  const proyecto = contenido.paginas.find(({ slug }) => slug === params.proyecto);
+  if (!caso || !proyecto) throw new Response(null, { status: 404 });
+  const { revision, proyecto: slug, evidencias: ids, ...texto } = caso;
   return {
-    slug, titulo, resumen, contexto, alcance, decisiones, trabajo, validacion, resultadosYLimites,
-    competencia, periodo, aprendizajes, resumenVisual, ejemplo,
-    proyecto: {
-      nombre: proyecto.nombre,
-      ruta: rutaProyecto(proyecto.slug),
-    },
-    evidencias: caso.evidencias.flatMap((referencia) => {
-      const evidencia = evidencias.find(({ id }) => id === referencia);
-      if (!evidencia) return [];
-      const { id, titulo, tipo, fuente, autoria, afirmacion, recurso } = evidencia;
-      return [{ id, titulo, tipo, fuente, autoria, afirmacion,
-        url: "archivo" in recurso ? urlRecursoLocal(recurso.archivo) : recurso.url }];
+    ...texto, slug, nombreProyecto: proyecto.nombre,
+    evidencias: ids.map((id) => {
+      const { titulo, tipo, fuente, autoria, afirmacion, recurso } = contenido.evidencias.find((e) => e.id === id)!;
+      return { id, titulo, tipo, fuente, autoria, afirmacion,
+        url: "archivo" in recurso ? rutaRecursoPublico(recurso.archivo) : recurso.url };
     }),
   };
 }
@@ -36,88 +26,86 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) => loaderData
   ? metadatosPagina({ titulo: `${loaderData.titulo} · Roberto Zamora`, descripcion: loaderData.resumen, ruta: rutaCaso(loaderData.slug), tipo: "article" })
   : [];
 
+function ListaResultados({ entradas }: { entradas: readonly TextoConTitulo[] }) {
+  return <ul>{entradas.map(({ titulo, descripcion }) => (
+    <li key={titulo}><strong>{titulo}</strong> · {descripcion}</li>
+  ))}</ul>;
+}
+
 export default function Caso() {
   const caso = useLoaderData<typeof loader>();
-  const { ejemplo, resumenVisual } = caso;
+  const { ejemplo, validacion } = caso;
   const secciones = [
+    { id: "contexto", titulo: "Contexto y problema", contenido: <Parrafos textos={caso.contexto} /> },
+    { id: "alcance", titulo: "Alcance y participación", contenido: <Parrafos textos={caso.alcance} /> },
+    { id: "decisiones", titulo: "Análisis y decisiones de diseño", contenido: caso.decisiones.map(({ titulo, parrafos }) => (
+      <div className="case-decision" key={titulo}><h4>{titulo}</h4><Parrafos textos={parrafos} /></div>
+    )) },
     ...(ejemplo ? [{
-      id: "ejemplo", titulo: ejemplo.titulo, contenido: (
+      id: "ejemplo", titulo: "Una regla de negocio en la práctica", contenido: (
         <>
           <div className="module-grid case-example">
-            {ejemplo.situaciones.map(({ titulo, descripcion }) => (
-              <div className="panel" key={titulo}>
-                {resumenVisual?.length ? <h4>{titulo}</h4> : <h3>{titulo}</h3>}
-                <p>{descripcion}</p>
-              </div>
+            {ejemplo.situaciones.map(({ titulo, parrafos }) => (
+              <div className="panel" key={titulo}><h4>{titulo}</h4><Parrafos textos={parrafos} /></div>
             ))}
           </div>
+          <p>{ejemplo.conclusion}</p>
           <ul className="project-links case-example__links" role="list">
             {ejemplo.referencias.map(({ evidencia, texto, ancla }) => {
-              const recurso = caso.evidencias.find(({ id }) => id === evidencia);
-              return recurso && (
-                <li key={ancla}><a className="text-link" href={`${recurso.url}#${ancla}`}>{texto}</a></li>
-              );
+              const recurso = caso.evidencias.find(({ id }) => id === evidencia)!;
+              return <li key={ancla}><a className="text-link" href={`${recurso.url}#${ancla}`}>{texto}</a></li>;
             })}
           </ul>
         </>
       ),
     }] : []),
-    { id: "contexto", titulo: "Problema y contexto", contenido: <p>{caso.contexto}</p> },
-    { id: "alcance", titulo: "Alcance y participación", contenido: <p>{caso.alcance}</p> },
-    { id: "decisiones", titulo: "Análisis y decisiones", contenido: <p>{caso.decisiones}</p> },
-    { id: "trabajo", titulo: "Trabajo realizado", contenido: <p>{caso.trabajo}</p> },
+    { id: "trazabilidad", titulo: "Trazabilidad funcional", contenido: <Parrafos textos={caso.trazabilidad} /> },
     { id: "validacion", titulo: "Validación y resultados", contenido: (
       <>
-        <p>{caso.validacion}</p>
-        {resumenVisual?.length ? <h4>Resultados y límites</h4> : <h3>Resultados y límites</h3>}
-        <p>{caso.resultadosYLimites}</p>
+        <p>{validacion.introduccion}</p>
+        <ListaResultados entradas={validacion.escenarios} />
+        <p>{validacion.ejecucion}</p>
+        <ListaResultados entradas={validacion.resultados} />
+        <p>{validacion.fuente}</p>
+        <h4>Alcance y limitaciones de la validación</h4>
+        <Parrafos textos={validacion.limites} />
       </>
     ) },
-    ...(caso.evidencias.length ? [{
-      id: "evidencias", titulo: "Evidencias",
-      contenido: <ListaEvidencias evidencias={caso.evidencias}
-        encabezado={resumenVisual?.length ? "h4" : "h3"} />,
-    }] : []),
-    ...(caso.aprendizajes ? [{ id: "aprendizajes", titulo: "Aprendizajes", contenido: <p>{caso.aprendizajes}</p> }] : []),
+    { id: "evidencias", titulo: "Evidencias", contenido: <ListaEvidencias evidencias={caso.evidencias} /> },
+    ...(caso.aprendizajes ? [{ id: "aprendizajes", titulo: "Aprendizajes", contenido: <Parrafos textos={caso.aprendizajes} /> }] : []),
   ];
 
   return (
     <article className="case-detail">
       <PageIntro title={caso.titulo} kicker={(
-        <TextLink to={caso.proyecto.ruta} back>Volver a {caso.proyecto.nombre}</TextLink>
+        <TextLink to={rutaProyecto(caso.slug)} back>Volver a {caso.nombreProyecto}</TextLink>
       )}>
-        <p className="lead">{caso.resumen}</p>
+        <p className="lead">{caso.pregunta}</p>
+        <p className="case-intro">{caso.introduccion}</p>
       </PageIntro>
-      {!!resumenVisual?.length && (
-        <section className="case-overview" aria-labelledby="resumen-caso">
-          <h2 id="resumen-caso">El caso en breve</h2>
-          <div className="case-overview__links">
-            {!!caso.evidencias.length && <TextLink to="#evidencias">Consultar evidencias</TextLink>}
-            <TextLink to="#detalle-tecnico">Ver el detalle técnico</TextLink>
-          </div>
-          <dl className="project-facts case-facts case-summary">
-            {resumenVisual.map(({ etiqueta, valor, detalle }) => (
-              <div key={etiqueta}>
-                <dt>{etiqueta}</dt>
-                <dd><strong>{valor}</strong>{detalle && <span>{detalle}</span>}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      )}
-      {(caso.competencia || caso.periodo) && <dl className={resumenVisual?.length ? "project-facts case-facts case-facts--secondary" : "project-facts case-facts"} aria-label="Datos del caso">
-        {caso.competencia && <div><dt>Competencia principal</dt><dd>{caso.competencia}</dd></div>}
-        {caso.periodo && <div><dt>Periodo</dt><dd>{caso.periodo}</dd></div>}
-      </dl>}
-      {!!resumenVisual?.length && <h2 className="case-technical-title" id="detalle-tecnico" tabIndex={-1}>Detalle técnico</h2>}
+      <section className="case-overview" aria-labelledby="resumen-caso">
+        <h2 id="resumen-caso">El caso en breve</h2>
+        <div className="case-overview__links">
+          <TextLink to="#evidencias">Consultar evidencias</TextLink>
+          <TextLink to="#detalle-tecnico">Ver el detalle técnico</TextLink>
+        </div>
+        <dl className="project-facts case-facts case-summary">
+          {caso.resumenVisual.map(({ titulo, descripcion }) => (
+            <div key={titulo}><dt>{titulo}</dt><dd>{descripcion}</dd></div>
+          ))}
+        </dl>
+        {(caso.competencias || caso.periodo) && <dl className="project-facts case-facts case-facts--secondary">
+          {caso.competencias && <div><dt>Competencias</dt><dd>{caso.competencias}</dd></div>}
+          {caso.periodo && <div><dt>Periodo</dt><dd>{caso.periodo}</dd></div>}
+        </dl>}
+      </section>
+      <h2 className="case-technical-title" id="detalle-tecnico" tabIndex={-1}>Detalle técnico</h2>
       <div className="case-layout">
         <IndiceCaso key={caso.slug} secciones={secciones} />
         <div className="case-story">
           {secciones.map(({ id, titulo, contenido }) => (
             <section key={id} aria-labelledby={id} className="case-section">
-              {resumenVisual?.length
-                ? <h3 id={id} tabIndex={-1}>{titulo}</h3>
-                : <h2 id={id} tabIndex={-1}>{titulo}</h2>}
+              <h3 id={id} tabIndex={-1}>{titulo}</h3>
               {contenido}
             </section>
           ))}
