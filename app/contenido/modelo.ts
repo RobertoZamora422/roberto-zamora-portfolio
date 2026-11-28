@@ -10,7 +10,7 @@ export interface TextoConTitulo {
   descripcion: string;
 }
 
-export interface PortadaProfesional {
+interface PortadaProfesional {
   area: string;
   nombreCompleto?: string;
   titular: readonly [primera: string, segunda: string, enfasis: string];
@@ -35,7 +35,7 @@ export interface Perfil {
   portada: PortadaProfesional;
 }
 
-export interface PaginaProyecto {
+interface PaginaProyecto {
   revision: Revision;
   entradilla: string;
   contexto: readonly string[];
@@ -53,7 +53,7 @@ export interface PaginaProyecto {
   })[];
 }
 
-export interface Proyecto {
+interface Proyecto {
   slug: string;
   revision: Revision;
   nombre: string;
@@ -71,7 +71,7 @@ export interface Apartado {
   parrafos: readonly string[];
 }
 
-export interface Caso {
+interface Caso {
   revision: Revision;
   proyecto: string;
   titulo: string;

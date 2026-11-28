@@ -1,6 +1,16 @@
 export const tarjetaSocial = "/recursos/sitio/rz-social.png";
 export const favicon = { ruta: "/favicon-rz-v2.ico", tamanos: "16x16 32x32 48x48" } as const;
 
+export function reglasDePages(exclude: string[]) {
+  const include = ["/*"];
+  if (include.length + exclude.length > 100) {
+    throw new Error("Pages admite hasta 100 reglas entre include y exclude. Revisa las rutas antes de publicar.");
+  }
+  const larga = exclude.find((ruta) => ruta.length > 100);
+  if (larga) throw new Error(`Regla de Pages de más de 100 caracteres: ${larga}`);
+  return { version: 1, include, exclude };
+}
+
 export function configuracionPublicacion(env: NodeJS.ProcessEnv) {
   const origen = env.PORTFOLIO_ORIGEN?.trim();
   const indicador = env.PORTFOLIO_INDEXAR ?? "0";

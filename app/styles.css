@@ -192,7 +192,6 @@ a { text-underline-offset: 0.26em; }
 .case-example .panel { background: var(--editorial-sage); }
 .case-example .panel p { color: var(--editorial-muted); }
 .case-example__links { display: flex; flex-wrap: wrap; gap: 0 1.25rem; font-size: 0.875rem; }
-.case-example__links a { align-items: center; }
 
 .evidence-list { display: grid; gap: 0.875rem; margin-block-start: 0.375rem; }
 .evidence-card { background: var(--editorial-sage); }

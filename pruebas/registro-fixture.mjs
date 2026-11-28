@@ -1,4 +1,4 @@
-export const proyectoAprobado = {
+const proyectoAprobado = {
   slug: "solucion-qa",
   revision: "aprobado",
   nombre: "Solución QA",
@@ -17,7 +17,7 @@ export const proyectoAprobado = {
   },
 };
 
-export const evidenciaAprobada = {
+const evidenciaAprobada = {
   revision: "aprobado",
   id: "archivo-aprobado-qa",
   titulo: "Evidencia QA",
@@ -28,7 +28,7 @@ export const evidenciaAprobada = {
   recurso: { archivo: "archivo-aprobado-qa.txt" },
 };
 
-export const casoAprobado = {
+const casoAprobado = {
   revision: "aprobado",
   proyecto: proyectoAprobado.slug,
   titulo: "Caso QA",

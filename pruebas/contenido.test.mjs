@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { seleccionarContenido } from "../app/contenido/seleccion.ts";
-import { configuracionPublicacion } from "../app/contenido/publicacion.ts";
+import { configuracionPublicacion, reglasDePages } from "../app/contenido/publicacion.ts";
 import { validarRegistro } from "../app/contenido/validar.ts";
 import { perfilAprobado, registroFixture } from "./registro-fixture.mjs";
 
@@ -17,6 +17,14 @@ test("La indexación exige un origen HTTPS público y la revisión ignora el ori
   const publicacion = { PORTFOLIO_ORIGEN: "https://example.org/", PORTFOLIO_INDEXAR: "1" };
   assert.deepEqual(configuracionPublicacion(publicacion), { origen: "https://example.org", indexar: true });
   assert.deepEqual(configuracionPublicacion({ ...publicacion, PORTFOLIO_PREVIEW: "1" }), { origen: undefined, indexar: false });
+});
+
+test("Pages conserva cada exclusión válida y avisa al exceder sus límites", () => {
+  const rutas = Array.from({ length: 99 }, (_, i) => `/pagina-${i}/`);
+  assert.deepEqual(reglasDePages(rutas), { version: 1, include: ["/*"], exclude: rutas });
+  assert.throws(() => reglasDePages([...rutas, "/otra/"]), /100 reglas/);
+  assert.doesNotThrow(() => reglasDePages(["/" + "a".repeat(99)]));
+  assert.throws(() => reglasDePages(["/" + "a".repeat(100)]), /100 caracteres/);
 });
 
 test("La tarjeta y la página individual se aprueban de forma independiente", () => {
@@ -73,6 +81,7 @@ const erroresDeRegistro = [
     r.proyectos[0].visual = { captura: "captura-qa.png" };
   }, /la portada requiere una captura aprobada/],
   ["URL de aplicación inválida", (r) => { r.proyectos[0].aplicacion = "http://example.org"; }, /URL HTTPS/],
+  ["credenciales en un enlace público", (r) => { r.proyectos[0].repositorio = "https://usuario:ejemplo@example.org"; }, /contiene credenciales/],
   ["caso de proyecto sin página aprobada", (r) => { delete r.proyectos[0].pagina; }, /referencia sin aprobación/],
 ];
 

@@ -71,18 +71,23 @@ function validarReferencia<T>(
 }
 
 function validarUrl(origen: string, url: string) {
-  if (!URL.canParse(url) || new URL(url).protocol !== "https:") {
+  const destino = URL.canParse(url) ? new URL(url) : undefined;
+  if (destino?.protocol !== "https:") {
     throw new Error(`${origen}: se requiere una URL HTTPS`);
   }
+  if (destino.username || destino.password) throw new Error(`${origen}: la URL pública contiene credenciales`);
 }
 
 async function resolverArchivo(carpeta: string, archivo: string) {
+  const reservado = /^(?:pruebas|revision-editorial)[\\/]/i;
+  if (reservado.test(archivo)) throw new Error(`Recurso reservado para revisión local «${archivo}»`);
   if (!archivoValido.test(archivo)) throw new Error(`Ruta de recurso inválida «${archivo}»`);
   const raiz = await realpath(carpeta).catch(() => undefined);
   const ruta = await realpath(resolve(carpeta, archivo)).catch(() => undefined);
   if (!raiz || !ruta || !(await stat(ruta)).isFile()) throw new Error(`Falta el archivo «${archivo}»`);
   const dentro = relative(raiz, ruta);
   if (dentro.startsWith("..") || isAbsolute(dentro)) throw new Error(`Recurso fuera del directorio «${archivo}»`);
+  if (reservado.test(dentro)) throw new Error(`Recurso reservado para revisión local «${archivo}»`);
   return ruta;
 }
 
@@ -92,10 +97,7 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
   const evidencias = indexar("Evidencia", registro.evidencias, ({ id }) => id);
   const archivosAprobados = new Map<string, string>();
 
-  async function validarArchivo(origen: string, archivo: string, revision: Revision) {
-    if (archivo.startsWith("pruebas/") || archivo.startsWith("revision-editorial/")) {
-      throw new Error(`${origen}: recurso reservado para revisión local`);
-    }
+  async function validarArchivo(archivo: string, revision: Revision) {
     const ruta = await resolverArchivo(carpetaRecursos, archivo);
     if (revision === "aprobado") archivosAprobados.set(archivo, ruta);
     return ruta;
@@ -138,7 +140,7 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
       if (![ancho, alto].every((dimension) => Number.isSafeInteger(dimension) && dimension > 0)) {
         throw new Error(`${captura}: dimensiones de imagen inválidas`);
       }
-      await validarArchivo(captura, archivo, revisionPagina === "aprobado" ? revisionCaptura : "borrador");
+      await validarArchivo(archivo, revisionPagina === "aprobado" ? revisionCaptura : "borrador");
     }
   }
 
@@ -183,7 +185,7 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
     if ("url" in recurso) {
       validarUrl(origen, recurso.url);
     } else {
-      await validarArchivo(origen, recurso.archivo, revision);
+      await validarArchivo(recurso.archivo, revision);
     }
   }
 
@@ -204,7 +206,7 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
       validarRevision("CV", cvPdf.revision);
       if (!cvPdf.archivo.endsWith(".pdf")) throw new Error("CV: se requiere un PDF");
       const revisionDelArchivo = revision === "aprobado" ? cvPdf.revision : "borrador";
-      const ruta = await validarArchivo("CV", cvPdf.archivo, revisionDelArchivo);
+      const ruta = await validarArchivo(cvPdf.archivo, revisionDelArchivo);
       const archivo = await open(ruta);
       try {
         const encabezado = Buffer.alloc(5);
@@ -219,7 +221,7 @@ export async function validarRegistro(registro: Registro, carpetaRecursos: strin
       const revisionDelArchivo = revision === "aprobado" ? retrato.revision : "borrador";
       if (revisionDelArchivo === "aprobado") exigirTextos("Retrato", { alt: retrato.alt });
       if (!formatoImagen.test(retrato.archivo)) throw new Error("Retrato: formato de imagen inválido");
-      await validarArchivo("Retrato", retrato.archivo, revisionDelArchivo);
+      await validarArchivo(retrato.archivo, revisionDelArchivo);
     }
     if (correo !== undefined && (typeof correo !== "string" || !/^[a-z\d.!#$%&'*+/=?^_`{|}~-]+@[a-z\d-]+(?:\.[a-z\d-]+)+$/i.test(correo))) {
       throw new Error("Perfil: correo inválido");

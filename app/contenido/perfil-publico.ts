@@ -1,5 +1,7 @@
 import type { Perfil } from "./modelo.ts";
 
+const semestre = "8vo semestre";
+
 export const perfilPublico: Perfil = {
   revision: "aprobado",
   nombre: "Roberto Zamora",
@@ -7,7 +9,7 @@ export const perfilPublico: Perfil = {
     area: "Ingeniería de Software",
     nombreCompleto: "Roberto David Zamora Alcívar",
     titular: ["Del análisis", "a la", "solución."],
-    estudios: "Estudiante de 8vo semestre de Ingeniería de Software",
+    estudios: `Estudiante de ${semestre} de Ingeniería de Software`,
     introduccion: "con experiencia práctica en el entorno empresarial e interés en el análisis funcional, el desarrollo de soluciones tecnológicas y la calidad del software.",
     enfoque: [
       "Me interesa especialmente la intersección entre tecnología, procesos y personas, donde comprender un problema, comunicar decisiones y evaluar una solución es tan importante como desarrollarla.",
@@ -27,7 +29,7 @@ export const perfilPublico: Perfil = {
     ],
     datos: [
       { titulo: "Formación", descripcion: "Ingeniería de Software · UDLA" },
-      { titulo: "Etapa", descripcion: "8vo semestre · En curso" },
+      { titulo: "Etapa", descripcion: `${semestre} · En curso` },
       { titulo: "Intereses", descripcion: "Análisis funcional · Calidad · Soluciones tecnológicas" },
       { titulo: "Perspectiva adicional", descripcion: "Experiencia en procesos y atención comercial" },
     ],

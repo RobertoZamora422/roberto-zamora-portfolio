@@ -13,6 +13,8 @@ El prerender genera tres páginas y sus datos de navegación. La compilación in
 
 El 24 de noviembre de 2026, el dominio `robertozamora.claridez.com` servía Inicio con canonical a su propia raíz y `noindex` en HTML y en la respuesta HTTP. En ese estado `/sitemap.xml` respondía 404.
 
+Para la publicación definitiva en el dominio aprobado, configurar el entorno **Production** con `PORTFOLIO_ORIGEN=https://robertozamora.claridez.com`, `PORTFOLIO_INDEXAR=1` y sin `PORTFOLIO_PREVIEW=1`. Estos valores se incorporan durante la compilación. Aplicarlos en Cloudflare y recompilar requiere autorización. En **Preview**, establecer `PORTFOLIO_PREVIEW=1` y `PORTFOLIO_INDEXAR=0`. Ese artefacto omite el sitemap y las URLs absolutas. Las direcciones `pages.dev` que sirven el mismo artefacto de producción reciben `X-Robots-Tag: noindex` por host.
+
 ## Compatibilidad de enlaces
 
 | Ruta anterior, con o sin barra final | Destino del 301 |

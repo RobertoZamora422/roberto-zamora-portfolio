@@ -8,7 +8,7 @@ import { EnlacesProyecto } from "../ui/enlaces-proyecto";
 import { EnlaceCv } from "../ui/enlace-cv";
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) => metadatosPagina({
-  titulo: "Roberto Zamora · Software Engineering Student",
+  titulo: "Roberto Zamora · Estudiante de Ingeniería de Software",
   descripcion: loaderData?.descripcion ?? "Portafolio de tecnología, procesos y análisis funcional.",
   ruta: paths.inicio,
 });

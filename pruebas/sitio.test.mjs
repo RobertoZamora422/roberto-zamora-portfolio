@@ -3,7 +3,7 @@ import { execFile } from "node:child_process";
 import { appendFile, cp, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { test } from "node:test";
 import { promisify } from "node:util";
 import { chromium } from "playwright-core";
@@ -26,7 +26,7 @@ const rutaCvPdf = perfilPublico.cvPdf?.revision === "aprobado" ? `/recursos/${pe
 const evidenciasRfm = ["e01-proceso", "e02-trazabilidad", "e03-decisiones", "e04-verificacion"];
 
 const rutaEvidencia = (nombre) => `/recursos/rfm-core/${nombre}`;
-const titulos = ["Roberto Zamora · Software Engineering Student", "RFM CORE · Roberto Zamora", `${tituloCasoRfm} · Roberto Zamora`];
+const titulos = ["Roberto Zamora · Estudiante de Ingeniería de Software", "RFM CORE · Roberto Zamora", `${tituloCasoRfm} · Roberto Zamora`];
 const antiguas = [["/proyectos", "/#trabajo"], ["/sobre-mi", "/#sobre-mi"], ["/cv", "/#contacto"], ["/casos-de-estudio", rutaCasoRfm],
   ["/proyectos/rfm-core", rutaRfm], ["/casos-de-estudio/del-interes-comercial-al-contrato", rutaCasoRfm]];
 
@@ -65,10 +65,16 @@ async function comprobarAccesibilidad(page, vista) {
 
 test("Artefacto público con tres páginas, redirecciones HTTP y errores de recursos", async () => {
   await comprobarArtefacto(publico, marcasRevision);
-  const recursos = await readdir(join(publico, "recursos"), { recursive: true });
-  const pdf = perfilPublico.cvPdf?.revision === "aprobado" ? perfilPublico.cvPdf.archivo : undefined;
-  assert.deepEqual(recursos.filter((archivo) => archivo.endsWith(".pdf")).map((archivo) => archivo.replaceAll("\\", "/")), pdf ? [pdf] : []);
-  assert(recursos.every((archivo) => !/\.zip$|\.env|\.sqlite|\.pem$/i.test(archivo)));
+  const raizRecursos = join(publico, "recursos");
+  const recursos = await readdir(raizRecursos, { recursive: true, withFileTypes: true });
+  const publicados = recursos.filter((entrada) => entrada.isFile()).map(({ parentPath, name }) =>
+    relative(raizRecursos, join(parentPath, name)).replaceAll("\\", "/"));
+  assert.deepEqual(publicados.sort(), [
+    ...(perfilPublico.cvPdf?.revision === "aprobado" ? [perfilPublico.cvPdf.archivo] : []),
+    ...(perfilPublico.retrato?.revision === "aprobado" ? [perfilPublico.retrato.archivo] : []),
+    "rfm-core/panel-operativo.webp", "rfm-core/precotizacion.png",
+    ...evidenciasRfm.map((nombre) => `rfm-core/${nombre}.html`),
+  ].sort());
   const archivos = (await readdir(publico, { recursive: true })).map(ruta => ruta.replaceAll("\\", "/"));
   assert.deepEqual(archivos.filter(f => f.endsWith(".html")).sort(), [
     "404.html", ...vistas.map(({ ruta }) => ruta.slice(1) + "index.html"), ...evidenciasRfm.map(nombre => rutaEvidencia(nombre).slice(1) + ".html"),
@@ -282,9 +288,7 @@ test("Inicio renderiza las cinco secciones, las anclas y los enlaces en escritor
     const respuesta = await fetch(origin);
     const html = await respuesta.text();
     assert.equal(respuesta.status, 200);
-    assert.match(html, /<title>Roberto Zamora · Software Engineering Student<\/title>/);
-    assert.match(html, /name="description" content="Estudiante de 8vo semestre de Ingeniería de Software/);
-    assert.match(html, /property="og:title" content="Roberto Zamora · Software Engineering Student"/);
+    assert(html.includes(`name="description" content="${perfilPublico.portada.estudios} `));
     for (const id of ["inicio", "trabajo", "aportacion", "sobre-mi", "contacto"]) assert.match(html, new RegExp(`id="${id}"`));
     assert.doesNotMatch(html, /raw\.githubusercontent\.com|fonts\.googleapis\.com|MAQUETA CONCEPTUAL/);
     assert.doesNotMatch(html, /Recurso conceptual|editorial-proof|171\/171|Reglas de negocio con trazabilidad documentada|La trazabilidad relaciona reglas|Consultar evidencias/);
@@ -448,7 +452,14 @@ test("Inicio renderiza las cinco secciones, las anclas y los enlaces en escritor
       }
 
       await page.goto(origin);
-      await page.evaluate(() => { window.mismaSesion = true; });
+      await page.evaluate(() => {
+        Object.defineProperty(navigator.clipboard, "writeText", {
+          value: async () => { throw new DOMException("Permiso denegado", "NotAllowedError"); },
+        });
+        window.mismaSesion = true;
+      });
+      await contacto.getByRole("button", { name: "Copiar correo" }).press("Enter");
+      await contacto.getByRole("status").getByText(`No se pudo copiar automáticamente. Copia este dato: ${perfilPublico.correo}`, { exact: true }).waitFor();
       await trabajo.getByRole("link", { name: "Explorar el proyecto" }).press("Enter");
       await page.waitForURL(origin + rutaRfm);
       assert(await page.evaluate(() => window.mismaSesion));
@@ -589,11 +600,12 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
         assert.equal(documento.status, 200, ruta);
         const recurso = await readFile(join("recursos-contenido", archivo), "utf8");
         const html = await documento.text();
-        assert.equal(html.split("</head>")[1], recurso.split("</head>")[1], ruta);
+        assert(html.split("</head>")[1] === recurso.split("</head>")[1], `Cuerpo de evidencia modificado: ${ruta}`);
         const iconos = html.match(/<link rel="icon"[^>]*>/g) ?? [];
         assert.equal(iconos.length, 1, ruta);
         assert(iconos[0].includes(`href="${favicon.ruta}"`), ruta);
         assert.match(html, /property="og:title"/);
+        assert.match(html, /name="robots" content="noindex"/);
         assert.equal(documento.headers.get("x-robots-tag"), "noindex");
       }
     }
@@ -617,6 +629,14 @@ test("RFM CORE se puede recorrer con sus cuatro evidencias y sus límites", {
       }
       await page.getByRole("link", { name: "Volver a RFM CORE", exact: true }).press("Enter");
       await page.getByRole("heading", { name: "RFM CORE", exact: true }).waitFor();
+
+      await page.goto(origin + rutaEvidencia("e01-proceso"));
+      for (const imagen of await page.locator("img").all()) {
+        assert(await imagen.evaluate(async (img) => {
+          await img.decode();
+          return Number(img.getAttribute("width")) === img.naturalWidth && Number(img.getAttribute("height")) === img.naturalHeight;
+        }), "Las dimensiones declaradas en E01 deben coincidir con el PNG");
+      }
 
       for (const ancho of anchos) {
         await page.setViewportSize({ width: ancho, height: 840 });

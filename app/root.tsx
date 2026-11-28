@@ -1,9 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLocation, useRouteLoaderData } from "react-router";
 import "@fontsource/archivo-black/latin-400.css";
-import "@fontsource-variable/dm-sans";
-import "@fontsource-variable/newsreader/standard.css";
-import "@fontsource-variable/newsreader/standard-italic.css";
 import { Cabecera } from "./ui/cabecera";
 import { MarcaRz } from "./ui/marca-rz";
 import { contenido } from "./contenido/registro.server";
@@ -42,7 +39,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#f7f6f1" />
-        <link rel="icon" href={import.meta.env.DEV ? "/recursos-contenido/sitio/favicon.ico" : favicon.ruta}
+        <link rel="icon" href={favicon.ruta}
           sizes={favicon.tamanos} type="image/vnd.microsoft.icon" />
         {process.env.PORTFOLIO_INDEXAR !== "1" && <meta name="robots" content="noindex" />}
         <Meta />
